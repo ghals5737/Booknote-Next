@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useBook } from "@/components/context/BookContext"
 
 export default function NoteEditorView() {
-  const { selectedBook, selectedNote, setCurrentView, addNote, updateNote, addQuote, updateQuote } = useBook()
+  const { selectedBook, selectedNote, setCurrentView, addNote, updateNote, addQuote } = useBook()
 
   // Note states
   const [title, setTitle] = useState("")

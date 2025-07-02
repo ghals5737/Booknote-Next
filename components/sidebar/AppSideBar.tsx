@@ -90,7 +90,7 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-accent font-medium">최근 읽은 책</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {books.slice(0, 3).map((book, index) => (
+              {books.slice(0, 3).map((book) => (
                 <SidebarMenuItem key={book.id} className="animate-slide-up animation-delay-200">
                   <SidebarMenuButton
                     onClick={() => {

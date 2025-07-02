@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { useBook, type BookSearchResult } from "@/components/context/BookContext"
+import Image from "next/image"
 
 interface AddBookDialogProps {
   open: boolean
@@ -182,7 +183,7 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
                 <div className="text-center py-8">
                   <BookOpen className="h-12 w-12 text-accent mx-auto mb-4" />
                   <p className="text-cool">책 제목을 검색하여 정보를 자동으로 가져오세요</p>
-                  <p className="text-sm text-cool/70 mt-1">또는 '직접 입력' 탭에서 수동으로 입력할 수 있습니다</p>
+                  <p className="text-sm text-cool/70 mt-1">{`또는 '직접 입력' 탭에서 수동으로 입력할 수 있습니다`}</p>
                 </div>
               </div>
             )}
@@ -412,7 +413,7 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
                       <CardContent className="p-4">
                         <div className="flex gap-4">
                           <div className="w-16 h-20 rounded bg-muted flex-shrink-0 overflow-hidden">
-                            <img
+                            <Image
                               src={book.image || "/placeholder.svg"}
                               alt={book.title}
                               className="w-full h-full object-cover"

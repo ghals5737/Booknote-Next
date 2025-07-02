@@ -5,7 +5,7 @@ import { RotateCcw, Star, CheckCircle, Shuffle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useBook } from "@/components/context/BookContext"
+import { Book, Note, useBook } from "@/components/context/BookContext"
 
 export default function RemindView() {
   const { books, setCurrentView, setSelectedBook, setSelectedNote } = useBook()
@@ -34,8 +34,8 @@ export default function RemindView() {
     return [...important, ...regular]
   }, [allNotes])
 
-  const handleNoteClick = (note: any) => {
-    setSelectedBook(note.book)
+  const handleNoteClick = (note: Note,book:Book) => {
+    setSelectedBook(book)
     setSelectedNote(note)
     setCurrentView("note-editor")
   }
@@ -89,7 +89,7 @@ export default function RemindView() {
                         ? "bg-green-50 border-green-200"
                         : "bg-muted border-secondary hover:border-accent"
                     }`}
-                    onClick={() => !completedNotes.has(note.id) && handleNoteClick(note)}
+                    onClick={() => !completedNotes.has(note.id) && handleNoteClick(note,note.book)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -139,7 +139,7 @@ export default function RemindView() {
                   <div
                     key={`${note.bookId}-${note.id}`}
                     className="p-3 rounded-lg border border-accent/30 bg-accent/5 hover:border-accent/50 transition-all duration-300 cursor-pointer"
-                    onClick={() => handleNoteClick(note)}
+                    onClick={() => handleNoteClick(note,note.book)}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -196,7 +196,7 @@ export default function RemindView() {
                 <div
                   key={`random-${note.bookId}-${note.id}`}
                   className="p-3 rounded-lg border border-primary/30 bg-primary/5 hover:border-primary/50 transition-all duration-300 cursor-pointer"
-                  onClick={() => handleNoteClick(note)}
+                  onClick={() => handleNoteClick(note,note.book)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

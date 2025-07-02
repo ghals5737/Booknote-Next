@@ -6,17 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { useBook } from "@/components/context/BookContext"
+import { Book, useBook } from "@/components/context/BookContext"
 import { AddBookDialog } from "@/components/book/AddBookDialog"
 import moment from "moment"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 
 export default function LibraryView() {
   const { books, setCurrentView, setSelectedBook } = useBook()
   const [showAddDialog, setShowAddDialog] = useState(false)
   const router = useRouter()
-  
-  const handleBookClick = (book: any) => {
+
+  const handleBookClick = (book: Book) => {
     setSelectedBook(book)
     setCurrentView("book")
     router.push(`/book`)
@@ -47,7 +48,10 @@ export default function LibraryView() {
           >
             <CardHeader className="pb-3">
               <div className="aspect-[3/4] w-full mb-3 rounded-lg overflow-hidden bg-muted shadow-soft">
-                <img src={book.cover || "/placeholder.svg"} alt={book.title} className="w-full h-full object-cover" />
+                <Image 
+                src={book.cover || "/placeholder.svg"} 
+                alt={book.title} 
+                className="w-full h-full object-cover" />
               </div>
               <CardTitle className="text-lg text-foreground line-clamp-2">{book.title}</CardTitle>
               <div className="space-y-1">

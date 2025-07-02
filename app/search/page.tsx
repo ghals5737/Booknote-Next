@@ -5,7 +5,8 @@ import { Search, BookOpen, FileText, Tag, Clock } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useBook } from "@/components/context/BookContext"
+import { Book, Note, useBook } from "@/components/context/BookContext"
+import Image from "next/image"
 
 export default function SearchView() {
   const { books, setCurrentView, setSelectedBook, setSelectedNote } = useBook()
@@ -36,13 +37,13 @@ export default function SearchView() {
     return { books: matchedBooks, notes: matchedNotes }
   }, [books, searchQuery])
 
-  const handleBookClick = (book: any) => {
+  const handleBookClick = (book: Book) => {
     setSelectedBook(book)
     setCurrentView("book-detail")
   }
 
-  const handleNoteClick = (note: any) => {
-    const book = books.find((b) => b.id === note.bookId)
+  const handleNoteClick = (note: Note,bookId:string) => {
+    const book = books.find((b) => b.id === bookId)
     if (book) {
       setSelectedBook(book)
       setSelectedNote(note)
@@ -104,7 +105,7 @@ export default function SearchView() {
                     <CardContent className="p-4">
                       <div className="flex gap-3">
                         <div className="w-12 h-16 rounded bg-muted flex-shrink-0">
-                          <img
+                          <Image
                             src={book.cover || "/placeholder.svg"}
                             alt={book.title}
                             className="w-full h-full object-cover rounded"
@@ -142,7 +143,7 @@ export default function SearchView() {
                   <Card
                     key={`${note.bookId}-${note.id}`}
                     className="cursor-pointer hover:shadow-lg transition-all duration-300 border-secondary hover:border-accent bg-card hover:bg-gradient-to-br hover:from-primary/5 hover:to-accent/5"
-                    onClick={() => handleNoteClick(note)}
+                    onClick={() => handleNoteClick(note,note.bookId)}
                   >
                     <CardContent className="p-4">
                       <div className="space-y-2">

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useBook } from "@/components/context/BookContext"
+import { useBook, type Note } from "@/components/context/BookContext"
+import Image from "next/image"
 
 export default function BookDetailView() {
   const { selectedBook, setCurrentView, setSelectedNote, updateBook } = useBook()
@@ -18,7 +19,7 @@ export default function BookDetailView() {
     )
   }
 
-  const handleNoteClick = (note: any) => {
+  const handleNoteClick = (note: Note) => {
     setSelectedNote(note)
     setCurrentView("note-editor")
   }
@@ -69,7 +70,7 @@ export default function BookDetailView() {
           <Card className="border-secondary bg-card rounded-xl shadow-soft">
             <CardContent className="p-6">
               <div className="aspect-[3/4] w-full mb-4 rounded-lg overflow-hidden bg-muted shadow-soft">
-                <img
+                <Image
                   src={selectedBook.cover || "/placeholder.svg"}
                   alt={selectedBook.title}
                   className="w-full h-full object-cover"
