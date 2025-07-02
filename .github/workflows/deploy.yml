@@ -1,0 +1,32 @@
+name: Build and Deploy on Tag
+
+on:
+  push:
+    tags:
+      - 'v*.*.*' 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Login to Docker registry
+      run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login https://registry.booknote.site -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+
+    - name: Build Docker image
+      run: docker buildx build . -t registry.booknote.site/booknote-front:latest --push
+     
+    - name: Send POST request to webhook
+      run: |
+        curl -X POST https://webhook.booknote.site \
+        -H "Content-Type: application/json" \
+        -d '{"status": "success", "message": "Deployment completed for tag ${{ github.ref_name }}", "authKey": "${{ secrets.WEBHOOK_AUTH_KEY }}", "serviceName": "BooknoteFront"}'
+
+    - name: Logout from Docker registry
+      run: docker logout registry.booknote.site
