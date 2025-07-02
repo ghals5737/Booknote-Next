@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { BookProvider } from "@/components/context/BookContext";
+import { AppSidebar } from "@/components/sidebar/AppSideBar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,11 +26,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <BookProvider>
+          <SidebarProvider defaultOpen={true}>
+            <div className="flex min-h-screen w-full bg-background">
+              <AppSidebar />
+              <SidebarInset className="flex-1">
+                <header className="flex h-16 shrink-0 items-center gap-2 border-b border-secondary glass-effect px-4">
+                  <SidebarTrigger className="text-foreground hover:bg-secondary rounded-lg transition-all duration-200" />
+                  <div className="flex-1" />
+                </header>
+                <main className="flex-1 overflow-auto bg-content">{children}</main>
+              </SidebarInset>
+            </div>
+          </SidebarProvider>
+        </BookProvider>
       </body>
     </html>
   );
