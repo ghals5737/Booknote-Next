@@ -108,6 +108,8 @@ export default function SearchView() {
                           <Image
                             src={book.cover || "/placeholder.svg"}
                             alt={book.title}
+                            width={48}
+                            height={64}
                             className="w-full h-full object-cover rounded"
                           />
                         </div>

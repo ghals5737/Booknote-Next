@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Search, RotateCcw, BarChart3, Home, Plus } from "lucide-react"
+import { BookOpen, Search, RotateCcw, BarChart3, Home, Plus, LogOut, User } from "lucide-react"
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +14,16 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useBook } from "@/components/context/BookContext"
+import { useAuth } from "@/components/context/AuthContext"
 import { useRouter } from "next/navigation"
 
 const menuItems = [
@@ -42,7 +51,13 @@ const menuItems = [
 
 export function AppSidebar() {
   const { currentView, setCurrentView, books } = useBook()
+  const { user, logout } = useAuth()
   const router = useRouter()
+
+  const handleLogout = async () => {
+    await logout()
+  }  
+
   const handleClick = (view: "library" | "book-detail" | "note-editor" | "search" | "remind" | "stats") => {
     setCurrentView(view)
     router.push(`/${view}`)
@@ -56,7 +71,7 @@ export function AppSidebar() {
             <BookOpen className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Booknote</h1>
+            <h1 className="text-xl font-bold text-gradient">Booknote</h1>
             <p className="text-sm text-cool">Smart Library</p>
           </div>
         </div>
@@ -108,10 +123,47 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-secondary bg-background p-4">
-        <Button className="w-full hover:from-primary/90 hover:to-accent/90 text-white rounded-xl" onClick={() => setCurrentView("library")}>
+      <SidebarFooter className="border-t border-secondary bg-background p-4 space-y-3">
+        <Button className="w-full button-primary rounded-xl" onClick={() => setCurrentView("library")}>
           <Plus className="h-4 w-4 mr-2" />새 책 추가
         </Button>
+
+        {/* User Profile */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="w-full justify-start p-2 h-auto hover:bg-secondary rounded-lg transition-all duration-200"
+            >
+              <div className="flex items-center gap-3 w-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
+                  <AvatarFallback className="bg-accent text-white text-sm">
+                    {user?.name?.charAt(0) || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-foreground truncate">{user?.name}</p>
+                  <p className="text-xs text-cool truncate">{user?.email}</p>
+                </div>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 bg-card border-secondary shadow-soft-lg">
+            <DropdownMenuItem className="text-foreground hover:bg-muted cursor-pointer">
+              <User className="h-4 w-4 mr-2" />
+              프로필 설정
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-secondary" />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              로그아웃
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
     </Sidebar>
   )

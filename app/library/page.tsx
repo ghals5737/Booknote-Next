@@ -51,6 +51,8 @@ export default function LibraryView() {
                 <Image 
                 src={book.cover || "/placeholder.svg"} 
                 alt={book.title} 
+                width={300}
+                height={400}
                 className="w-full h-full object-cover" />
               </div>
               <CardTitle className="text-lg text-foreground line-clamp-2">{book.title}</CardTitle>
