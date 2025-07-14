@@ -1,8 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Booknote - 개인 독서 관리 플랫폼
 
-## Getting Started
+독서를 체계적으로 관리하고, 독서 경험을 기록하며, 지식을 체계화할 수 있는 개인 독서 관리 시스템입니다.
 
-First, run the development server:
+## 주요 기능
+
+- 📚 독서 목록 관리
+- 📝 독서 노트 작성
+- 📊 독서 통계 분석
+- 🔍 도서 검색
+- ⏰ 독서 리마인더
+- 🔐 Google OAuth 로그인
+
+## 기술 스택
+
+- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
+- **Authentication**: NextAuth.js
+- **UI Components**: shadcn/ui
+- **Icons**: Lucide React
+
+## 시작하기
+
+### 1. 환경 설정
+
+프로젝트 루트에 `.env.local` 파일을 생성하고 다음 환경 변수를 설정하세요:
+
+```bash
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key-here-change-in-production
+GOOGLE_CLIENT_ID=your-google-client-id-here
+GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+BACKEND_URL=http://localhost:8000
+```
+
+### 2. 의존성 설치
+
+```bash
+npm install
+```
+
+### 3. 개발 서버 실행
 
 ```bash
 npm run dev
