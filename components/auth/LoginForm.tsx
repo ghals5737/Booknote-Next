@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAuth } from "@/components/context/AuthContext"
+import { useNextAuth } from "@/hooks/use-next-auth"
 
 interface LoginFormProps {
   onToggleMode: () => void
@@ -16,7 +16,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onToggleMode, onForgotPassword }: LoginFormProps) {
-  const { login, isLoading } = useAuth()
+  const { login, isLoading } = useNextAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)

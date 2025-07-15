@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useBook } from "@/components/context/BookContext"
-import { useAuth } from "@/components/context/AuthContext"
+import { useNextAuth } from "@/hooks/use-next-auth"
 import { useRouter } from "next/navigation"
 
 const menuItems = [
@@ -51,7 +51,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const { currentView, setCurrentView, books } = useBook()
-  const { user, logout } = useAuth()
+  const { user, logout } = useNextAuth()
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -137,7 +137,7 @@ export function AppSidebar() {
             >
               <div className="flex items-center gap-3 w-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.name} />
+                  <AvatarImage src={user?.image || "/placeholder.svg"} alt={user?.name} />
                   <AvatarFallback className="bg-accent text-white text-sm">
                     {user?.name?.charAt(0) || "U"}
                   </AvatarFallback>

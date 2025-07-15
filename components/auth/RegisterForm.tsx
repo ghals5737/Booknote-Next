@@ -9,14 +9,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useAuth } from "@/components/context/AuthContext"
+import { useNextAuth } from "@/hooks/use-next-auth"
 
 interface RegisterFormProps {
   onToggleMode: () => void
 }
 
 export function RegisterForm({ onToggleMode }: RegisterFormProps) {
-  const { register, isLoading } = useAuth()
+  const { register, isLoading } = useNextAuth()
   const [formData, setFormData] = useState({
     name: "",
     email: "",

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useAuth } from "@/components/context/AuthContext"
+import { useNextAuth } from "@/hooks/use-next-auth"
 
 const ssoProviders = [
   {
@@ -41,7 +41,7 @@ const ssoProviders = [
 ]
 
 export function SSOButtons() {
-  const { loginWithProvider, isLoading } = useAuth()
+  const { loginWithProvider, isLoading } = useNextAuth()
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null)
 
   const handleSSOLogin = async (provider: "google" | "github" | "kakao" | "naver") => {

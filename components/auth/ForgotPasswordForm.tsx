@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAuth } from "@/components/context/AuthContext"
+import { useNextAuth } from "@/hooks/use-next-auth"
 
 interface ForgotPasswordFormProps {
   onBack: () => void
 }
 
 export function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) {
-  const { resetPassword, isLoading } = useAuth()
+  const { resetPassword, isLoading } = useNextAuth()
   const [email, setEmail] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)

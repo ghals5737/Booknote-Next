@@ -1,13 +1,13 @@
 "use client"
 
-import { useAuth } from "@/components/context/AuthContext"
+import { useNextAuth } from "@/hooks/use-next-auth"
 import { AuthPage } from "@/components/auth/AuthPage"
 import { Loader2 } from "lucide-react"
 import { AppSidebar } from "@/components/sidebar/AppSideBar"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading } = useNextAuth()
 
   if (isLoading) {
     return (
