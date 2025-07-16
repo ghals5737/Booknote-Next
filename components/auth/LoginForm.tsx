@@ -2,13 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useNextAuth } from "@/hooks/use-next-auth"
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react"
+import { useState } from "react"
 
 interface LoginFormProps {
   onToggleMode: () => void
@@ -21,6 +21,8 @@ export function LoginForm({ onToggleMode, onForgotPassword }: LoginFormProps) {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+
+  console.log("process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,6 +45,7 @@ export function LoginForm({ onToggleMode, onForgotPassword }: LoginFormProps) {
       <CardHeader className="text-center pb-4">
         <CardTitle className="text-2xl font-bold text-gradient">로그인</CardTitle>
         <p className="text-cool">Booknote에 오신 것을 환영합니다</p>
+
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

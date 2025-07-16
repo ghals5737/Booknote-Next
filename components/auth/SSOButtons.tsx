@@ -45,6 +45,7 @@ export function SSOButtons() {
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null)
 
   const handleSSOLogin = async (provider: "google" | "github" | "kakao" | "naver") => {
+    console.log("handleSSOLogin", provider)
     setLoadingProvider(provider)
     try {
       await loginWithProvider(provider)

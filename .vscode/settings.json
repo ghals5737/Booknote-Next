@@ -1,0 +1,21 @@
+{
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "typescript.validate.enable": true,
+  "javascript.validate.enable": true,
+  "typescript.preferences.includePackageJsonAutoImports": "on",
+  "emmet.includeLanguages": {
+    "typescript": "html",
+    "typescriptreact": "html"
+  },
+  "emmet.triggerExpansionOnTab": true,
+  "files.associations": {
+    "*.tsx": "typescriptreact"
+  }
+} 
