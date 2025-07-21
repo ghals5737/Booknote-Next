@@ -1,6 +1,8 @@
 "use client"
 
+import { createBook, deleteBook, fetchBooks, updateBook } from '@/lib/api'
 import { createContext, useContext, useState, type ReactNode } from "react"
+import useSWR from 'swr'
 
 export interface Note {
   id: string
@@ -58,12 +60,15 @@ interface BookContextType {
   selectedBook: Book | null
   selectedNote: Note | null
   searchQuery: string
+  isLoading: boolean
+  error: Error | null
   setCurrentView: (view: BookContextType["currentView"]) => void
   setSelectedBook: (book: Book | null) => void
   setSelectedNote: (note: Note | null) => void
   setSearchQuery: (query: string) => void
-  addBook: (book: Omit<Book, "id" | "createdAt">) => void
-  updateBook: (bookId: string, updates: Partial<Book>) => void
+  addBook: (book: Omit<Book, "id" | "createdAt">) => Promise<void>
+  updateBook: (bookId: string, updates: Partial<Book>) => Promise<void>
+  deleteBook: (bookId: string) => Promise<void>
   addNote: (bookId: string, note: Omit<Note, "id" | "createdAt" | "updatedAt">) => void
   updateNote: (bookId: string, noteId: string, updates: Partial<Note>) => void
   deleteNote: (bookId: string, noteId: string) => void
@@ -71,6 +76,7 @@ interface BookContextType {
   updateQuote: (bookId: string, quoteId: string, updates: Partial<Quote>) => void
   deleteQuote: (bookId: string, quoteId: string) => void
   searchBooks: (query: string) => Promise<BookSearchResult[]>
+  mutateBooks: (data?: Book[], shouldRevalidate?: boolean) => Promise<Book[] | undefined>
 }
 
 const BookContext = createContext<BookContextType | undefined>(undefined)
@@ -194,25 +200,63 @@ const sampleBooks: Book[] = [
   },
 ]
 
-export function BookProvider({ children }: { children: ReactNode }) {
-  const [books, setBooks] = useState<Book[]>(sampleBooks)
+interface BookProviderProps {
+  children: ReactNode
+  initialBooks?: Book[]
+}
+
+export function BookProvider({ children, initialBooks }: BookProviderProps) {
   const [currentView, setCurrentView] = useState<BookContextType["currentView"]>("library")
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [selectedNote, setSelectedNote] = useState<Note | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
 
-  const addBook = (bookData: Omit<Book, "id" | "createdAt">) => {
-    const newBook: Book = {
-      ...bookData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      quotes: [],
+  // SWR을 사용하여 책 목록 조회
+  const { data: books = [], error, isLoading, mutate: mutateBooks } = useSWR<Book[]>(
+    '/api/v1/users/me/books',
+    fetchBooks,
+    {
+      fallbackData: initialBooks || sampleBooks, // 서버에서 가져온 초기 데이터 또는 샘플 데이터 사용
+      revalidateOnMount: true,
+      revalidateOnFocus: false,
     }
-    setBooks((prev) => [...prev, newBook])
+  )
+
+  const addBook = async (bookData: Omit<Book, "id" | "createdAt">) => {
+    try {
+      const newBook = await createBook(bookData)
+      // SWR 캐시 업데이트
+      await mutateBooks([...books, newBook], false)
+    } catch (error) {
+      console.error('Error adding book:', error)
+      throw error
+    }
   }
 
-  const updateBook = (bookId: string, updates: Partial<Book>) => {
-    setBooks((prev) => prev.map((book) => (book.id === bookId ? { ...book, ...updates } : book)))
+  const updateBookHandler = async (bookId: string, updates: Partial<Book>) => {
+    try {
+      const updatedBook = await updateBook(bookId, updates)
+      // SWR 캐시 업데이트
+      const updatedBooks = books.map(book => 
+        book.id === bookId ? { ...book, ...updatedBook } : book
+      )
+      await mutateBooks(updatedBooks, false)
+    } catch (error) {
+      console.error('Error updating book:', error)
+      throw error
+    }
+  }
+
+  const deleteBookHandler = async (bookId: string) => {
+    try {
+      await deleteBook(bookId)
+      // SWR 캐시 업데이트
+      const updatedBooks = books.filter(book => book.id !== bookId)
+      await mutateBooks(updatedBooks, false)
+    } catch (error) {
+      console.error('Error deleting book:', error)
+      throw error
+    }
   }
 
   const addNote = (bookId: string, noteData: Omit<Note, "id" | "createdAt" | "updatedAt">) => {
@@ -223,30 +267,31 @@ export function BookProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date(),
     }
 
-    setBooks((prev) => prev.map((book) => (book.id === bookId ? { ...book, notes: [...book.notes, newNote] } : book)))
+    const updatedBooks = books.map((book) => 
+      book.id === bookId ? { ...book, notes: [...book.notes, newNote] } : book
+    )
+    mutateBooks(updatedBooks, false)
   }
 
   const updateNote = (bookId: string, noteId: string, updates: Partial<Note>) => {
-    setBooks((prev) =>
-      prev.map((book) =>
-        book.id === bookId
-          ? {
-              ...book,
-              notes: book.notes.map((note) =>
-                note.id === noteId ? { ...note, ...updates, updatedAt: new Date() } : note,
-              ),
-            }
-          : book,
-      ),
+    const updatedBooks = books.map((book) =>
+      book.id === bookId
+        ? {
+            ...book,
+            notes: book.notes.map((note) =>
+              note.id === noteId ? { ...note, ...updates, updatedAt: new Date() } : note,
+            ),
+          }
+        : book,
     )
+    mutateBooks(updatedBooks, false)
   }
 
   const deleteNote = (bookId: string, noteId: string) => {
-    setBooks((prev) =>
-      prev.map((book) =>
-        book.id === bookId ? { ...book, notes: book.notes.filter((note) => note.id !== noteId) } : book,
-      ),
+    const updatedBooks = books.map((book) =>
+      book.id === bookId ? { ...book, notes: book.notes.filter((note) => note.id !== noteId) } : book,
     )
+    mutateBooks(updatedBooks, false)
   }
 
   const addQuote = (bookId: string, quoteData: Omit<Quote, "id" | "createdAt" | "updatedAt">) => {
@@ -257,32 +302,31 @@ export function BookProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date(),
     }
 
-    setBooks((prev) =>
-      prev.map((book) => (book.id === bookId ? { ...book, quotes: [...book.quotes, newQuote] } : book)),
+    const updatedBooks = books.map((book) => 
+      book.id === bookId ? { ...book, quotes: [...book.quotes, newQuote] } : book
     )
+    mutateBooks(updatedBooks, false)
   }
 
   const updateQuote = (bookId: string, quoteId: string, updates: Partial<Quote>) => {
-    setBooks((prev) =>
-      prev.map((book) =>
-        book.id === bookId
-          ? {
-              ...book,
-              quotes: book.quotes.map((quote) =>
-                quote.id === quoteId ? { ...quote, ...updates, updatedAt: new Date() } : quote,
-              ),
-            }
-          : book,
-      ),
+    const updatedBooks = books.map((book) =>
+      book.id === bookId
+        ? {
+            ...book,
+            quotes: book.quotes.map((quote) =>
+              quote.id === quoteId ? { ...quote, ...updates, updatedAt: new Date() } : quote,
+            ),
+          }
+        : book,
     )
+    mutateBooks(updatedBooks, false)
   }
 
   const deleteQuote = (bookId: string, quoteId: string) => {
-    setBooks((prev) =>
-      prev.map((book) =>
-        book.id === bookId ? { ...book, quotes: book.quotes.filter((quote) => quote.id !== quoteId) } : book,
-      ),
+    const updatedBooks = books.map((book) =>
+      book.id === bookId ? { ...book, quotes: book.quotes.filter((quote) => quote.id !== quoteId) } : book,
     )
+    mutateBooks(updatedBooks, false)
   }
 
   // Mock API call for book search
@@ -329,12 +373,15 @@ export function BookProvider({ children }: { children: ReactNode }) {
         selectedBook,
         selectedNote,
         searchQuery,
+        isLoading,
+        error,
         setCurrentView,
         setSelectedBook,
         setSelectedNote,
         setSearchQuery,
         addBook,
-        updateBook,
+        updateBook: updateBookHandler,
+        deleteBook: deleteBookHandler,
         addNote,
         updateNote,
         deleteNote,
@@ -342,6 +389,7 @@ export function BookProvider({ children }: { children: ReactNode }) {
         updateQuote,
         deleteQuote,
         searchBooks,
+        mutateBooks,
       }}
     >
       {children}

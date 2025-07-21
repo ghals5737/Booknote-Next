@@ -1,9 +1,10 @@
+import { BookProvider } from "@/components/context/BookContext";
+import { NextAuthProvider } from "@/components/context/NextAuthProvider";
+import { AuthLayout } from "@/components/layout/AuthLayout";
+import { SWRProvider } from "@/components/providers/SWRProvider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { BookProvider } from "@/components/context/BookContext";
-import { NextAuthProvider } from "@/components/context/NextAuthProvider"
-import { AuthLayout } from "@/components/layout/AuthLayout"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,11 +32,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NextAuthProvider>
-          <BookProvider>
-            <AuthLayout>
-              {children}
-            </AuthLayout>
-          </BookProvider>
+          <SWRProvider>
+            <BookProvider>
+              <AuthLayout>
+                {children}
+              </AuthLayout>
+            </BookProvider>
+          </SWRProvider>
         </NextAuthProvider>
       </body>
     </html>
