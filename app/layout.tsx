@@ -1,6 +1,6 @@
 import { BookProvider } from "@/components/context/BookContext";
 import { NextAuthProvider } from "@/components/context/NextAuthProvider";
-import { AuthLayout } from "@/components/layout/AuthLayout";
+import { PageWrapper } from "@/components/layout/PageWrapper";
 import { SWRProvider } from "@/components/providers/SWRProvider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -34,9 +34,9 @@ export default function RootLayout({
         <NextAuthProvider>
           <SWRProvider>
             <BookProvider>
-              <AuthLayout>
+              <PageWrapper>
                 {children}
-              </AuthLayout>
+              </PageWrapper>
             </BookProvider>
           </SWRProvider>
         </NextAuthProvider>
