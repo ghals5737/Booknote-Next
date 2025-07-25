@@ -1,4 +1,3 @@
-import { BookProvider } from "@/components/context/BookContext";
 import { NextAuthProvider } from "@/components/context/NextAuthProvider";
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { SWRProvider } from "@/components/providers/SWRProvider";
@@ -33,11 +32,11 @@ export default function RootLayout({
       >
         <NextAuthProvider>
           <SWRProvider>
-            <BookProvider>
+            {/* <BookProvider> */}
               <PageWrapper>
                 {children}
               </PageWrapper>
-            </BookProvider>
+            {/* </BookProvider> */}
           </SWRProvider>
         </NextAuthProvider>
       </body>

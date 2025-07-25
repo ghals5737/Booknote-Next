@@ -1,17 +1,16 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
-import { Plus, Search, BookOpen, Loader2, ArrowLeft, Calendar } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { useBook, type BookSearchResult } from "@/components/context/BookContext"
+import { ArrowLeft, BookOpen, Calendar, Loader2, Plus, Search } from "lucide-react"
+import type React from "react"
+import { useState } from "react"
 
 interface AddBookDialogProps {
   open: boolean
@@ -19,9 +18,6 @@ interface AddBookDialogProps {
 }
 
 export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
-  const { addBook, searchBooks } = useBook()
-
-  // Form states
   const [title, setTitle] = useState("")
   const [author, setAuthor] = useState("")
   const [category, setCategory] = useState("")
@@ -37,7 +33,7 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
 
   // Search states
   const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<BookSearchResult[]>([])
+  const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [mode, setMode] = useState<"search" | "manual">("search")
@@ -49,8 +45,8 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
 
     setIsSearching(true)
     try {
-      const results = await searchBooks(searchQuery)
-      setSearchResults(results)
+      //const results = await searchBooks(searchQuery)
+      //setSearchResults(results)
       setShowSearchResults(true)
     } catch (error) {
       console.error("Search failed:", error)
@@ -76,24 +72,24 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
     if (!title.trim() || !author.trim() || !category) return
 
     // Calculate progress from pages if provided
-    const calculatedProgress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : progress
+   // const calculatedProgress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : progress
 
-    addBook({
-      title: title.trim(),
-      author: author.trim(),
-      category,
-      cover: cover || `/placeholder.svg?height=200&width=150&query=${encodeURIComponent(title + " book cover")}`,
-      notes: [],
-      quotes: [],
-      progress: calculatedProgress,
-      currentPage,
-      totalPages,
-      isbn: isbn || undefined,
-      publisher: publisher || undefined,
-      description: description || undefined,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
-    })
+    // addBook({
+    //   title: title.trim(),
+    //   author: author.trim(),
+    //   category,
+    //   cover: cover || `/placeholder.svg?height=200&width=150&query=${encodeURIComponent(title + " book cover")}`,
+    //   notes: [],
+    //   quotes: [],
+    //   progress: calculatedProgress,
+    //   currentPage,
+    //   totalPages,
+    //   isbn: isbn || undefined,
+    //   publisher: publisher || undefined,
+    //   description: description || undefined,
+    //   startDate: startDate ? new Date(startDate) : undefined,
+    //   endDate: endDate ? new Date(endDate) : undefined,
+    // })
 
     // Reset form
     resetForm()

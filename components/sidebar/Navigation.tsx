@@ -1,5 +1,4 @@
 'use client'
-import { useBook } from "@/components/context/BookContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,24 +18,22 @@ interface NavigationProps {
 
 const Navigation = ({ currentPage }: NavigationProps) => {
   const router = useRouter();
-  const { books, setCurrentView } = useBook();
 
   const navItems = [
     { id: 'dashboard', label: '대시보드', icon: Home, count: null, path: '/dashboard' },
-    { id: 'books', label: '내 서재', icon: Book, count: books.length, path: '/books' },
-    { id: 'notes', label: '노트', icon: FileText, count: books.reduce((acc, book) => acc + book.notes.length, 0), path: '/notes' },
+    { id: 'books', label: '내 서재', icon: Book, count: 0, path: '/books' },
+    { id: 'notes', label: '노트', icon: FileText, count: 0 },
     { id: 'review', label: '복습', icon: Brain, count: 8, path: '/review' },
     { id: 'statistics', label: '통계', icon: TrendingUp, count: null, path: '/statistics' },
   ];
 
   const handleNavigation = (item: typeof navItems[0]) => {
-    setCurrentView(item.id as "library" | "book-detail" | "note-editor" | "search" | "remind" | "stats" | "book" | "note");
     router.push(`${item.path}`);
   };
 
   const handleAddBook = () => {
-    setCurrentView('library');
-    router.push('/library');
+    // setCurrentView('library');
+    // router.push('/library');
   };
 
   return (

@@ -1,16 +1,36 @@
-import { fetchBooksServer } from '@/lib/api'
-import { Loader2 } from 'lucide-react'
-import { Suspense } from 'react'
-import { BooksClient } from './BooksClient'
-
+import { Loader2 } from 'lucide-react';
+import { Suspense } from 'react';
+import { UserBookResponsePage } from '../../lib/types/book/book';
+import { BooksClient } from './BooksClient';
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
 // 서버사이드에서 초기 데이터 가져오기
-async function getInitialBooks() {
+async function getInitialBooks(): Promise<UserBookResponsePage> {
   try {
-    const books = await fetchBooksServer()
-    return books
+    const response = await (await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/users/1/books?page=0&size=10`)).json()
+    console.log(response)
+    return response.data
   } catch (error) {
     console.error('Error fetching initial books:', error)
-    return []
+    return {
+      content: [],
+      pageable: {
+        pageNumber: 0,
+        pageSize: 10,
+        sort: { empty: false, sorted: false, unsorted: true },
+        offset: 0,
+        paged: true,
+        unpaged: false
+      },
+      last: false,
+      totalPages: 0,
+      totalElements: 0,
+      size: 10,
+      number: 0,
+      sort: { empty: false, sorted: false, unsorted: true },
+      first: true,
+      numberOfElements: 0,
+      empty: true
+    }
   }
 }
 
