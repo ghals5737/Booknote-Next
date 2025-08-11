@@ -22,7 +22,7 @@ const Navigation = ({ currentPage }: NavigationProps) => {
   const navItems = [
     { id: 'dashboard', label: '대시보드', icon: Home, count: null, path: '/dashboard' },
     { id: 'books', label: '내 서재', icon: Book, count: 0, path: '/books' },
-    { id: 'notes', label: '노트', icon: FileText, count: 0 },
+    { id: 'notes', label: '노트', icon: FileText, count: 0, path: '/notes' },
     { id: 'review', label: '복습', icon: Brain, count: 8, path: '/review' },
     { id: 'statistics', label: '통계', icon: TrendingUp, count: null, path: '/statistics' },
   ];

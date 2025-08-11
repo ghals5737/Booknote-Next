@@ -10,6 +10,9 @@ import { useAddBook, useBooks, useDeleteBook } from "@/hooks/use-books";
 import {
   AlertCircle,
   Book,
+  BookOpen,
+  Calendar,
+  Clock,
   FileText,
   Filter,
   Grid3X3,
@@ -21,7 +24,7 @@ import {
   Star,
   User
 } from "lucide-react";
-import Image from "next/image";
+import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Input } from "../../components/ui/input";
@@ -40,15 +43,23 @@ export function BooksClient() {
   const { deleteBook } = useDeleteBook();
 
   // 새 책 추가 상태
-  const [newBook, setNewBook] = useState({
+  const [newBook, setNewBook] = useState<UserBookResponse>({
     title: '',
     author: '',
     description: '',
     category: '',
-    totalPages: '',
+    totalPages: 0,
     coverImage: '',
     publisher: '',
-    isbn: ''
+    isbn: '',
+    startDate: '',
+    updateDate: '',
+    progress: 0,
+    currentPage: 0,
+    rating: 0,
+    id: 0,
+    noteCnt: 0,
+    quoteCnt: 0,
   });
 
   const handleBookClick = (book: UserBookResponse) => {
@@ -161,336 +172,322 @@ export function BooksClient() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header */}
       <header className="bg-white border-b border-border sticky top-0 z-40">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="animate-slide-up">
-              <h1 className="text-3xl font-bold text-foreground">내 서재</h1>
-              <p className="text-muted-foreground mt-1">
-                총 {pagination?.totalElements || 0}권의 책
-              </p>
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-foreground">내 서재</h1>
+              <Badge variant="secondary">{filteredBooks.length}권</Badge>
             </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => mutateBooks()}
-                className="animate-slide-up"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                새로고침
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="책 검색..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-80 pl-10"
+                />
+              </div>
+              
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4 mr-2" />
+                필터
               </Button>
+              
+              <div className="flex items-center border border-border rounded-lg">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="rounded-r-none"
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="rounded-l-none"
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+              
               <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogTrigger asChild>
-                  <Button className="animate-slide-up">
+                  <Button>
                     <Plus className="h-4 w-4 mr-2" />
                     책 추가
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle>새 책 추가</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium">제목 *</label>
-                        <Input
-                          value={newBook.title}
-                          onChange={(e) => setNewBook({ ...newBook, title: e.target.value })}
-                          placeholder="책 제목"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">저자 *</label>
-                        <Input
-                          value={newBook.author}
-                          onChange={(e) => setNewBook({ ...newBook, author: e.target.value })}
-                          placeholder="저자명"
-                        />
-                      </div>
+                    <div>
+                      <label className="text-sm font-medium">책 제목</label>
+                      <Input
+                        value={newBook.title}
+                        onChange={(e) => setNewBook({ ...newBook, title: e.target.value })}
+                        placeholder="책 제목을 입력하세요"
+                      />
                     </div>
                     <div>
-                      <label className="text-sm font-medium">설명 *</label>
+                      <label className="text-sm font-medium">저자</label>
+                      <Input
+                        value={newBook.author}
+                        onChange={(e) => setNewBook({ ...newBook, author: e.target.value })}
+                        placeholder="저자명을 입력하세요"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">설명 (선택)</label>
                       <Textarea
                         value={newBook.description}
                         onChange={(e) => setNewBook({ ...newBook, description: e.target.value })}
                         placeholder="책에 대한 간단한 설명"
+                        rows={3}
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium">카테고리 *</label>
-                        <Input
-                          value={newBook.category}
-                          onChange={(e) => setNewBook({ ...newBook, category: e.target.value })}
-                          placeholder="예: 소설, 자기계발, 기술서"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">총 페이지 *</label>
+                        <label className="text-sm font-medium">전체 페이지</label>
                         <Input
                           type="number"
                           value={newBook.totalPages}
-                          onChange={(e) => setNewBook({ ...newBook, totalPages: e.target.value })}
-                          placeholder="페이지 수"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium">출판사</label>
-                        <Input
-                          value={newBook.publisher}
-                          onChange={(e) => setNewBook({ ...newBook, publisher: e.target.value })}
-                          placeholder="출판사명"
+                          onChange={(e) => setNewBook({ ...newBook, totalPages: parseInt(e.target.value) })}
+                          placeholder="350"
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium">ISBN</label>
+                        <label className="text-sm font-medium">카테고리</label>
                         <Input
-                          value={newBook.isbn}
-                          onChange={(e) => setNewBook({ ...newBook, isbn: e.target.value })}
-                          placeholder="ISBN 번호"
+                          value={newBook.category}
+                          onChange={(e) => setNewBook({ ...newBook, category: e.target.value })}
+                          placeholder="자기계발"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">표지 이미지 URL</label>
+                      <label className="text-sm font-medium">읽기 시작일</label>
                       <Input
-                        value={newBook.coverImage}
-                        onChange={(e) => setNewBook({ ...newBook, coverImage: e.target.value })}
-                        placeholder="https://example.com/cover.jpg"
+                        type="date"
+                        value={newBook.startDate || ''}
+                        onChange={(e) => setNewBook({ ...newBook, startDate: e.target.value })}
                       />
                     </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                        취소
-                      </Button>
-                      <Button onClick={handleAddBook}>
-                        추가
-                      </Button>
+                    <div className="flex space-x-2">
+                      <Button onClick={handleAddBook} className="flex-1">추가</Button>
+                      <Button variant="outline" onClick={() => setShowAddDialog(false)}>취소</Button>
                     </div>
                   </div>
                 </DialogContent>
               </Dialog>
             </div>
           </div>
-
-          {/* 검색 및 필터 */}
-          <div className="flex flex-col sm:flex-row gap-4 animate-slide-up">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="책 제목이나 저자로 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-border rounded-md bg-background text-sm"
-              >
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {category === 'all' ? '전체' : category}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-1 border border-border rounded-md p-1">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
         </div>
       </header>
 
-      <main className="p-6">
-        {filteredBooks.length === 0 ? (
-          <div className="text-center py-20">
-            <Book className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              {searchTerm || selectedCategory !== 'all' ? '검색 결과가 없습니다' : '아직 추가된 책이 없습니다'}
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              {searchTerm || selectedCategory !== 'all' 
-                ? '다른 검색어나 필터를 시도해보세요' 
-                : '첫 번째 책을 추가해보세요'
-              }
-            </p>
-            {!searchTerm && selectedCategory === 'all' && (
-              <Button onClick={() => setShowAddDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                책 추가하기
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className={viewMode === 'grid' 
-            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' 
-            : 'space-y-4'
-          }>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Books Grid/List */}
+        {viewMode === 'grid' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredBooks.map((book) => (
-              <Card 
-                key={book.id} 
-                className={`cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] ${
-                  viewMode === 'list' ? 'flex' : ''
-                }`}
-                onClick={() => handleBookClick(book)}
-              >
-                {viewMode === 'list' ? (
-                  <>
-                    <div className="flex-shrink-0 p-4">
-                      <div className="w-16 h-20 bg-muted rounded flex items-center justify-center overflow-hidden">
-                        {book.coverImage ? (
-                          <Image
-                            src={book.coverImage}
-                            alt={book.title}
-                            width={64}
-                            height={80}
-                            className="object-cover"
-                          />
-                        ) : (
-                          <Book className="h-8 w-8 text-muted-foreground" />
-                        )}
-                      </div>
+              <Card key={book.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
+                <CardHeader className="pb-3">
+                  {book.coverImage && (
+                    <div className="mb-3 overflow-hidden rounded-lg">
+                      <img 
+                        src={book.coverImage} 
+                        alt={book.title}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     </div>
-                    <div className="flex-1 p-4">
-                      <CardHeader className="p-0 pb-2">
-                        <div className="flex justify-between items-start">
-                          <CardTitle className="text-lg">{book.title}</CardTitle>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteBook(book.id, book.title);
-                            }}
-                          >
-                            <FileText className="h-4 w-4" />
-                          </Button>
+                  )}
+                  <div className="flex items-start justify-between">
+                    <Badge variant="secondary" className="text-xs">
+                      {book.category}
+                    </Badge>
+                    <div className="flex items-center space-x-1">
+                      {book.rating && (
+                        <div className="flex">
+                          {Array.from({ length: book.rating }).map((_, i) => (
+                            <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                          ))}
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <User className="h-3 w-3" />
-                          <span>{book.author}</span>
-                          {book.publisher && (
-                            <>
-                              <span>•</span>
-                              <span>{book.publisher}</span>
-                            </>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-0">
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                          {book.description}
-                        </p>
-                                                 <div className="flex items-center justify-between">
-                           <div className="flex items-center gap-2">
-                             <Badge variant="secondary">{book.category}</Badge>
-                             {book.rating && book.rating > 0 && (
-                               <Badge variant="outline">
-                                 <Star className="h-3 w-3 mr-1" />
-                                 {book.rating}
-                               </Badge>
-                             )}
-                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {book.currentPage}/{book.totalPages} 페이지
-                          </div>
-                        </div>
-                        <div className="mt-3">
-                          <Progress value={book.progress} className="h-2" />
-                          <div className="text-xs text-muted-foreground mt-1">
-                            진행도: {book.progress}%
-                          </div>
-                        </div>
-                      </CardContent>
+                      )}
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <CardHeader className="p-4">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg line-clamp-2">{book.title}</CardTitle>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteBook(book.id, book.title);
-                          }}
-                        >
-                          <FileText className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <User className="h-3 w-3" />
-                        <span className="line-clamp-1">{book.author}</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                      <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center overflow-hidden mb-4">
-                        {book.coverImage ? (
-                          <Image
-                            src={book.coverImage}
-                            alt={book.title}
-                            width={200}
-                            height={200}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <Book className="h-12 w-12 text-muted-foreground" />
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
-                        {book.description}
-                      </p>
-                                             <div className="flex items-center justify-between mb-3">
-                         <Badge variant="secondary">{book.category}</Badge>
-                         {book.rating && book.rating > 0 && (
-                           <Badge variant="outline">
-                             <Star className="h-3 w-3 mr-1" />
-                             {book.rating}
-                           </Badge>
-                         )}
-                       </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm text-muted-foreground">
-                          <span>진행도</span>
+                  </div>
+                  <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
+                    {book.title}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">{book.author}</p>
+                </CardHeader>
+                <CardContent>
+                  {book.description && (
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                      {book.description}
+                    </p>
+                  )}
+                  
+                  <div className="space-y-3">
+                    {book.progress < 100 && (
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>진행률</span>
                           <span>{book.progress}%</span>
                         </div>
                         <Progress value={book.progress} className="h-2" />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>{book.currentPage} / {book.totalPages} 페이지</span>
-                          <span>{Math.round((book.currentPage / book.totalPages) * 100)}%</span>
-                        </div>
+                        {book.totalPages && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {book.currentPage || 0} / {book.totalPages} 페이지
+                          </p>
+                        )}
                       </div>
-                    </CardContent>
-                  </>
-                )}
+                    )}
+                    
+                    <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        시작: {moment(book.startDate).format('YYYY-MM-DD')}
+                      </div>
+                      {book.updateDate && (
+                        <div className="flex items-center">
+                          <Clock className="h-3 w-3 mr-1" />
+                          완료: {moment(book.updateDate).format('YYYY-MM-DD')}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t">
+                      <span className="flex items-center">
+                        <FileText className="h-3 w-3 mr-1" />
+                        노트 {book.noteCnt}개
+                      </span>
+                      <span className="flex items-center">
+                        <BookOpen className="h-3 w-3 mr-1" />
+                        문장 {book.quoteCnt}개
+                      </span>
+                    </div>
+                    
+                    <Button 
+                      size="sm" 
+                      className="w-full bg-gradient-primary hover:opacity-90"
+                      onClick={() => handleBookClick(book)}
+                    >
+                      상세보기
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredBooks.map((book) => (
+              <Card key={book.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-4">
+                    {book.coverImage && (
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={book.coverImage} 
+                          alt={book.title}
+                          className="w-20 h-28 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {book.category}
+                        </Badge>
+                        <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                          {book.title}
+                        </h3>
+                        {book.rating && (
+                          <div className="flex ml-2">
+                            {Array.from({ length: book.rating }).map((_, i) => (
+                              <Star key={i} className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <p className="text-muted-foreground mb-3 flex items-center">
+                        <User className="h-4 w-4 mr-1" />
+                        {book.author}
+                      </p>
+                      
+                      {book.description && (
+                        <p className="text-muted-foreground mb-3 line-clamp-1">
+                          {book.description}
+                        </p>
+                      )}
+                      
+                      <div className="flex items-center space-x-6 text-sm text-muted-foreground">
+                        <span className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          {moment(book.startDate).format('YYYY-MM-DD')} ~ {moment(book.updateDate).format('YYYY-MM-DD')}
+                        </span>
+                        <span className="flex items-center">
+                          <FileText className="h-4 w-4 mr-1" />
+                          노트 {book.noteCnt}개
+                        </span>
+                        <span className="flex items-center">
+                          <BookOpen className="h-4 w-4 mr-1" />
+                          문장 {book.quoteCnt}개
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="ml-4 text-right">
+                      <div className="text-2xl font-bold text-primary mb-1">{book.progress}%</div>
+                      {book.totalPages && (
+                        <p className="text-xs text-muted-foreground">
+                          {book.currentPage || 0} / {book.totalPages}p
+                        </p>
+                      )}
+                      <Button 
+                        size="sm"
+                        className="bg-gradient-primary hover:opacity-90 mt-2"
+                        onClick={() => handleBookClick(book)}
+                      >
+                        상세보기
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>
         )}
-      </main>
+
+        {filteredBooks.length === 0 && (
+          <div className="text-center py-12">
+            <Book className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">검색 결과가 없습니다</h3>
+            <p className="text-muted-foreground mb-4">다른 키워드로 검색해보거나 새 책을 추가해보세요</p>
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              새 책 추가
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Floating Action Button */}
+      <button 
+        className="floating-action"
+        onClick={() => setShowAddDialog(true)}
+      >
+        <Plus className="h-6 w-6" />
+      </button>
     </div>
   );
 } 
