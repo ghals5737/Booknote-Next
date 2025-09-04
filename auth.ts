@@ -37,7 +37,7 @@ export const {handlers: {GET, POST}, auth, signIn, signOut} = NextAuth({
         }),
 
     ],
-    secret: process.env.NEXT_PUBLIC_NEXTAUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET || "your-secret-key-here-please-change-this-in-production",
 
 
 });
