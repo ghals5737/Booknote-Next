@@ -7,19 +7,19 @@ import { Input } from "@/components/ui/input";
 import { useAddNote, useDeleteNote, useNotes } from "@/hooks/use-notes";
 import { NoteResponse } from "@/lib/types/note/note";
 import {
-    AlertCircle,
-    ArrowUpDown,
-    Book,
-    Calendar,
-    FileText,
-    Filter,
-    Grid3X3,
-    List,
-    Loader2,
-    Plus,
-    RefreshCw,
-    Search,
-    Tag
+  AlertCircle,
+  ArrowUpDown,
+  Book,
+  Calendar,
+  FileText,
+  Filter,
+  Grid3X3,
+  List,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Search,
+  Tag
 } from "lucide-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
@@ -156,7 +156,9 @@ export function NotesClient() {
                 </Button>
               </div>
               
-              <Button>
+              <Button
+                onClick={() => router.push('/notes/create')}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 새 노트
               </Button>

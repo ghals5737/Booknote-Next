@@ -1,3 +1,4 @@
+'use client'
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,29 +8,30 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    ArrowLeft,
-    Bold,
-    BookOpen,
-    Calendar,
-    Code,
-    Eye,
-    EyeOff,
-    Hash,
-    Heart,
-    Image,
-    Italic,
-    Link,
-    List,
-    ListOrdered,
-    Palette,
-    Plus,
-    Quote,
-    Save,
-    Share,
-    Tag,
-    Trash2
+  ArrowLeft,
+  Bold,
+  BookOpen,
+  Calendar,
+  Code,
+  Eye,
+  EyeOff,
+  Hash,
+  Heart,
+  Image,
+  Italic,
+  Link,
+  List,
+  ListOrdered,
+  Palette,
+  Plus,
+  Quote,
+  Save,
+  Share,
+  Tag,
+  Trash2
 } from "lucide-react";
 import { useRef, useState } from "react";
+import { Markdown } from "./Markdown";
 
 const NoteEditor = () => {
   const [title, setTitle] = useState("새로운 노트");
@@ -139,24 +141,7 @@ const NoteEditor = () => {
   const removeQuote = (quoteId: number) => {
     setFavoriteQuotes(favoriteQuotes.filter(quote => quote.id !== quoteId));
   };
-
-  const renderMarkdownPreview = (text: string) => {
-    // Simple markdown rendering (in a real app, use a proper markdown parser)
-    return text
-      .replace(/^# (.*$)/gm, '<h1 class="text-2xl font-bold mb-4">$1</h1>')
-      .replace(/^## (.*$)/gm, '<h2 class="text-xl font-semibold mb-3">$1</h2>')
-      .replace(/^### (.*$)/gm, '<h3 class="text-lg font-medium mb-2">$1</h3>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
-      .replace(/`(.*?)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-sm font-mono">$1</code>')
-      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="note-link">$1</a>')
-      .replace(/\[\[(.*?)\]\]/g, '<a href="#" class="note-link bg-primary-muted px-1 py-0.5 rounded">$1</a>')
-      .replace(/^> (.*$)/gm, '<blockquote class="border-l-4 border-primary pl-4 italic text-muted-foreground">$1</blockquote>')
-      .replace(/^- (.*$)/gm, '<li class="ml-4">• $1</li>')
-      .replace(/^---$/gm, '<hr class="my-6 border-border">')
-      .replace(/\n/g, '<br>');
-  };
-
+ 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -313,10 +298,7 @@ const NoteEditor = () => {
                   {showPreview && (
                     <div className="border-l border-border pl-4">
                       <div className="min-h-[600px] p-4 bg-reading-bg rounded-lg">
-                        <div 
-                          className="prose prose-sm max-w-none text-reading-text leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: renderMarkdownPreview(content) }}
-                        />
+                        <Markdown content={content} />
                       </div>
                     </div>
                   )}
@@ -364,7 +346,7 @@ const NoteEditor = () => {
                           <Card key={quote.id} className="bg-gradient-warm">
                             <CardContent className="p-4">
                               <blockquote className="text-foreground mb-2 leading-relaxed">
-                                "{quote.text}"
+                                {`"${quote.text}"`}
                               </blockquote>
                               <div className="flex items-center justify-between text-sm text-muted-foreground">
                                 <div className="flex items-center space-x-4">
