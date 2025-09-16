@@ -1,5 +1,28 @@
 import { PageResponse } from "../pagenation/pagenation";
 
+// 백엔드 BookResponse와 매칭되는 타입
+export type BookResponse = {
+  id: number | null;
+  title: string;
+  description: string;
+  author: string;
+  category: string | null;
+  progress: number | null;
+  totalPages: number | null;
+  imgUrl: string;
+  isbn: string;
+  publisher: string;
+  pubdate: string | null;
+}
+
+// 백엔드 API 응답 타입
+export type BookApiResponse = {
+  success: boolean;
+  status: number;
+  message: string;
+  data: BookResponse;
+}
+
 export type UserBookResponse = {
     id: number;
     title: string;

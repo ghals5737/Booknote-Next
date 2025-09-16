@@ -17,27 +17,36 @@ export const {handlers: {GET, POST}, auth, signIn, signOut} = NextAuth({
 
             if (parsedCredentials.success) {
                 const {email, password} = parsedCredentials.data;
-                // const user = await getUser(email);
 
-                // if (!user) return null;
-
-                // return user
-                // const passwordsMatch = await bcrypt.compare(password, user.password);
-                //
-                // if (passwordsMatch) return user;
-
+                // 간단한 데모용 인증: 비밀번호 규칙만 통과하면 로그인 허용
+                // 실제 서비스에서는 DB 조회 및 해시 검증이 필요합니다.
+                if (typeof password === 'string' && password.length >= 6) {
+                    return {
+                        id: email,
+                        name: email.split('@')[0] || 'User',
+                        email,
+                        image: undefined,
+                    };
+                }
             }
             console.log('Invalid credentials');
             return null;
         },
     }),
-        GoogleProvider({
-            clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-            clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET,
-        }),
+        ...(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET ? [
+            GoogleProvider({
+                clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+                clientSecret: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET,
+            })
+        ] : []),
 
     ],
-    secret: process.env.NEXTAUTH_SECRET || "your-secret-key-here-please-change-this-in-production",
+    secret: process.env.NEXTAUTH_SECRET || (() => {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('NEXTAUTH_SECRET must be set in production');
+        }
+        return 'development-secret-key-change-in-production';
+    })(),
 
 
 });

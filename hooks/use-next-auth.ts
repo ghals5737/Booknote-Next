@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 export function useNextAuth() {
   const { data: session, status } = useSession()
   const [isInitialized, setIsInitialized] = useState(false)
+  const [storedUserId, setStoredUserId] = useState<string | null>(null)
 
   useEffect(() => {
     if (status !== "loading") {
@@ -13,16 +14,36 @@ export function useNextAuth() {
     }
   }, [status])
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const login = async (_email: string, _password: string) => {
-    // 이메일/비밀번호 로그인은 별도 구현 필요
-    throw new Error("이메일 로그인은 지원하지 않습니다. 소셜 로그인을 사용해주세요.")
+  useEffect(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? window.localStorage.getItem('bn_user_id') : null
+      if (saved) setStoredUserId(saved)
+    } catch (_) {
+      // ignore localStorage errors
+    }
+  }, [isInitialized])
+
+  const login = async (email: string, password: string) => {
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    })
+
+    if (!result) {
+      throw new Error("로그인에 실패했습니다.")
+    }
+    if (result.error) {
+      throw new Error(result.error)
+    }
+    // 성공 시 이동
+    window.location.href = "/books"
   }
 
   const loginWithProvider = async (provider: "google" | "github" | "kakao" | "naver") => {
     try {
       if (provider === "google") {
-        await signIn("google", { callbackUrl: "/book" })
+        await signIn("google", { callbackUrl: "/books" })
       } else {
         throw new Error(`${provider} 로그인은 아직 지원하지 않습니다.`)
       }
@@ -32,10 +53,32 @@ export function useNextAuth() {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const register = async (_email: string, _password: string, _name: string) => {
-    // 회원가입은 별도 구현 필요
-    throw new Error("회원가입은 소셜 로그인을 통해 진행됩니다.")
+  const register = async (email: string, password: string, name: string) => {
+    const response = await fetch('/api/v1/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, password }),
+    })
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '')
+      throw new Error(text || '회원가입 요청에 실패했습니다.')
+    }
+
+    // 서버에서 반환된 사용자 ID를 저장하여 이후 요청에서 사용
+    try {
+      const json = await response.json()
+      const newUserId = json?.data?.id ?? json?.id
+      if (newUserId != null) {
+        window.localStorage.setItem('bn_user_id', String(newUserId))
+        setStoredUserId(String(newUserId))
+      }
+    } catch (_) {
+      // JSON 파싱 실패는 무시하고 진행
+    }
+
+    // 가입 완료 후 로그인 페이지로 이동
+    window.location.href = '/auth'
   }
 
   const logout = async () => {
@@ -47,14 +90,15 @@ export function useNextAuth() {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const resetPassword = async (_email: string) => {
-    // 비밀번호 재설정은 별도 구현 필요
+    // 별도 비밀번호 재설정 API 없음
     throw new Error("비밀번호 재설정은 소셜 로그인 계정에서 직접 진행해주세요.")
   }
 
   return {
-    user: session?.user || null,
+    user: session?.user
+      ? { ...session.user, id: (storedUserId ?? session.user.id) as string }
+      : null,
     isLoading: status === "loading" || !isInitialized,
     isAuthenticated: status === "authenticated",
     login,

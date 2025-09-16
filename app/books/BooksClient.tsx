@@ -1,12 +1,13 @@
 'use client'
 
+import { AddBookDialog } from "@/components/book/AddBookDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
-import { useAddBook, useBooks, useDeleteBook } from "@/hooks/use-books";
+import { useBooks, useDeleteBook } from "@/hooks/use-books";
+import { useNextAuth } from "@/hooks/use-next-auth";
 import {
   AlertCircle,
   Book,
@@ -18,6 +19,7 @@ import {
   Grid3X3,
   List,
   Loader2,
+  LogIn,
   Plus,
   RefreshCw,
   Search,
@@ -27,7 +29,6 @@ import {
 import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Input } from "../../components/ui/input";
 import { UserBookResponse } from "../../lib/types/book/book";
 
 export function BooksClient() {  
@@ -37,69 +38,14 @@ export function BooksClient() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
+  const { isAuthenticated, isLoading: authLoading } = useNextAuth();
+
   // SWR 훅 사용
   const { books, pagination, isLoading, error, mutateBooks } = useBooks(0, 10);
-  const { addBook } = useAddBook();
   const { deleteBook } = useDeleteBook();
-
-  // 새 책 추가 상태
-  const [newBook, setNewBook] = useState<UserBookResponse>({
-    title: '',
-    author: '',
-    description: '',
-    category: '',
-    totalPages: 0,
-    coverImage: '',
-    publisher: '',
-    isbn: '',
-    startDate: '',
-    updateDate: '',
-    progress: 0,
-    currentPage: 0,
-    rating: 0,
-    id: 0,
-    noteCnt: 0,
-    quoteCnt: 0,
-  });
 
   const handleBookClick = (book: UserBookResponse) => {
     router.push(`/books/detail/${book.id}`);
-  };
-
-  const handleAddBook = async () => {
-    if (!newBook.title || !newBook.author || !newBook.description || !newBook.category || !newBook.totalPages) {
-      alert('필수 필드를 모두 입력해주세요.');
-      return;
-    }
-
-    try {
-      await addBook({
-        title: newBook.title,
-        author: newBook.author,
-        description: newBook.description,
-        category: newBook.category,
-        totalPages: parseInt(newBook.totalPages),
-        coverImage: newBook.coverImage || undefined,
-        publisher: newBook.publisher || undefined,
-        isbn: newBook.isbn || undefined,
-      });
-
-      // 폼 초기화
-      setNewBook({
-        title: '',
-        author: '',
-        description: '',
-        category: '',
-        totalPages: '',
-        coverImage: '',
-        publisher: '',
-        isbn: ''
-      });
-      setShowAddDialog(false);
-    } catch (error) {
-      console.error('책 추가 실패:', error);
-      alert('책 추가에 실패했습니다.');
-    }
   };
 
   const handleDeleteBook = async (bookId: number, bookTitle: string) => {
@@ -123,6 +69,28 @@ export function BooksClient() {
 
   // 카테고리 목록
   const categories = ['all', ...Array.from(new Set(books.map(book => book.category)))];
+
+  if (!authLoading && !isAuthenticated) {
+    return (
+      <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div className="animate-slide-up">
+            <h1 className="text-3xl font-bold text-foreground">내 서재</h1>
+            <p className="text-cool mt-1">로그인이 필요한 서비스입니다</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <div className="flex flex-col items-center gap-3 text-cool">
+            <LogIn className="h-12 w-12" />
+            <span>로그인 후 내 서재를 이용할 수 있어요</span>
+            <Button onClick={() => router.push('/auth')} className="mt-4">
+              로그인하러 가기
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -217,77 +185,15 @@ export function BooksClient() {
                 </Button>
               </div>
               
-              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    책 추가
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>새 책 추가</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">책 제목</label>
-                      <Input
-                        value={newBook.title}
-                        onChange={(e) => setNewBook({ ...newBook, title: e.target.value })}
-                        placeholder="책 제목을 입력하세요"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">저자</label>
-                      <Input
-                        value={newBook.author}
-                        onChange={(e) => setNewBook({ ...newBook, author: e.target.value })}
-                        placeholder="저자명을 입력하세요"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">설명 (선택)</label>
-                      <Textarea
-                        value={newBook.description}
-                        onChange={(e) => setNewBook({ ...newBook, description: e.target.value })}
-                        placeholder="책에 대한 간단한 설명"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium">전체 페이지</label>
-                        <Input
-                          type="number"
-                          value={newBook.totalPages}
-                          onChange={(e) => setNewBook({ ...newBook, totalPages: parseInt(e.target.value) })}
-                          placeholder="350"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">카테고리</label>
-                        <Input
-                          value={newBook.category}
-                          onChange={(e) => setNewBook({ ...newBook, category: e.target.value })}
-                          placeholder="자기계발"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">읽기 시작일</label>
-                      <Input
-                        type="date"
-                        value={newBook.startDate || ''}
-                        onChange={(e) => setNewBook({ ...newBook, startDate: e.target.value })}
-                      />
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button onClick={handleAddBook} className="flex-1">추가</Button>
-                      <Button variant="outline" onClick={() => setShowAddDialog(false)}>취소</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Button onClick={() => setShowAddDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                책 추가
+              </Button>
+              
+              <AddBookDialog 
+                open={showAddDialog} 
+                onOpenChange={setShowAddDialog} 
+              />
             </div>
           </div>
         </div>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { useAddBook, useAddUserBook, useSearchBooks } from "@/hooks/use-books"
 import { ArrowLeft, BookOpen, Calendar, Loader2, Plus, Search } from "lucide-react"
 import type React from "react"
 import { useState } from "react"
@@ -15,6 +16,15 @@ import { useState } from "react"
 interface AddBookDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+}
+
+interface BookSearchResult {
+  title: string
+  author: string
+  publisher: string
+  isbn: string
+  description: string
+  cover: string
 }
 
 export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
@@ -30,6 +40,7 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
   const [cover, setCover] = useState("")
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
+  const [pubdate, setPubdate] = useState("")
 
   // Search states
   const [searchQuery, setSearchQuery] = useState("")
@@ -37,7 +48,11 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
   const [isSearching, setIsSearching] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [mode, setMode] = useState<"search" | "manual">("search")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const { addBook } = useAddBook()
+  const { addUserBook } = useAddUserBook()
+  const { searchBooks } = useSearchBooks()
   const categories = ["자기계발", "개발", "역사", "소설", "에세이", "경제", "과학", "철학", "기타"]
 
   const handleSearch = async () => {
@@ -45,11 +60,14 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
 
     setIsSearching(true)
     try {
-      //const results = await searchBooks(searchQuery)
-      //setSearchResults(results)
+      console.log('[AddBookDialog] handleSearch start, query=', searchQuery)
+      const results = await searchBooks(searchQuery)
+      console.log('[AddBookDialog] handleSearch results length=', Array.isArray(results) ? results.length : 'n/a')
+      setSearchResults(results)
       setShowSearchResults(true)
     } catch (error) {
       console.error("Search failed:", error)
+      alert('책 검색에 실패했습니다. 다시 시도해주세요.')
     } finally {
       setIsSearching(false)
     }
@@ -61,39 +79,59 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
     setPublisher(book.publisher)
     setIsbn(book.isbn)
     setDescription(book.description)
-    setCover(book.image)
+    setCover(book.cover)
     setShowSearchResults(false)
     setMode("manual")
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!title.trim() || !author.trim() || !category) return
 
-    // Calculate progress from pages if provided
-   // const calculatedProgress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : progress
+    setIsSubmitting(true)
+    try {
+      console.log('[AddBookDialog] handleSubmit fired')
+      // Calculate progress from pages if provided
+      const calculatedProgress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : progress
 
-    // addBook({
-    //   title: title.trim(),
-    //   author: author.trim(),
-    //   category,
-    //   cover: cover || `/placeholder.svg?height=200&width=150&query=${encodeURIComponent(title + " book cover")}`,
-    //   notes: [],
-    //   quotes: [],
-    //   progress: calculatedProgress,
-    //   currentPage,
-    //   totalPages,
-    //   isbn: isbn || undefined,
-    //   publisher: publisher || undefined,
-    //   description: description || undefined,
-    //   startDate: startDate ? new Date(startDate) : undefined,
-    //   endDate: endDate ? new Date(endDate) : undefined,
-    // })
+      const created = await addBook({
+        title: title.trim(),
+        author: author.trim(),
+        description: description.trim(),
+        category,
+        progress: calculatedProgress,
+        totalPages: totalPages || 0,
+        imgUrl: cover || `/placeholder.svg?height=200&width=150&query=${encodeURIComponent(title + " book cover")}`,
+        isbn: isbn.trim(),
+        publisher: publisher.trim(),
+        pubdate: pubdate || new Date().toISOString().split('T')[0],
+      })
+      console.log('[AddBookDialog] addBook ok, created id=', created?.id)
 
-    // Reset form
-    resetForm()
-    onOpenChange(false)
+      // 사용자-책 연결 (요청: POST /api/v1/user-books, body: { userId, bookId })
+      const createdBookId = (created && (created.id as number)) || null
+      if (createdBookId) {
+        try {
+          console.log('[AddBookDialog] addUserBook start', { userId: 1, bookId: createdBookId })
+          await addUserBook({ userId: 1, bookId: createdBookId })
+          console.log('[AddBookDialog] addUserBook ok')
+        } catch (linkErr) {
+          console.error('사용자-책 연결 실패:', linkErr)
+          // 링크 실패해도 책 생성 자체는 성공했으므로 알림만 표시
+          alert('책은 추가되었지만 내 서재 연결에 실패했습니다.')
+        }
+      }
+
+      // Reset form
+      resetForm()
+      onOpenChange(false)
+    } catch (error) {
+      console.error('책 추가 실패:', error)
+      alert('책 추가에 실패했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const resetForm = () => {
@@ -109,6 +147,7 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
     setCover("")
     setStartDate("")
     setEndDate("")
+    setPubdate("")
     setSearchQuery("")
     setSearchResults([])
     setShowSearchResults(false)
@@ -249,6 +288,34 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="isbn" className="text-cool font-medium">
+                      ISBN
+                    </Label>
+                    <Input
+                      id="isbn"
+                      value={isbn}
+                      onChange={(e) => setIsbn(e.target.value)}
+                      placeholder="ISBN을 입력하세요"
+                      className="border-secondary focus:border-accent bg-muted rounded-lg text-foreground placeholder:text-cool"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="pubdate" className="text-cool font-medium">
+                      출판일
+                    </Label>
+                    <Input
+                      id="pubdate"
+                      type="date"
+                      value={pubdate}
+                      onChange={(e) => setPubdate(e.target.value)}
+                      className="border-secondary focus:border-accent bg-muted rounded-lg text-foreground"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="description" className="text-cool font-medium">
                     책 설��
@@ -360,13 +427,23 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
                     type="button"
                     variant="outline"
                     onClick={handleClose}
+                    disabled={isSubmitting}
                     className="border-accent text-accent hover:bg-accent/10 rounded-lg bg-transparent"
                   >
                     취소
                   </Button>
-                  <Button type="submit" className="button-primary rounded-lg">
-                    <Plus className="h-4 w-4 mr-2" />
-                    추가
+                  <Button 
+                    type="submit" 
+                    onClick={() => console.log('[AddBookDialog] submit button clicked')}
+                    disabled={isSubmitting}
+                    className="button-primary rounded-lg"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4 mr-2" />
+                    )}
+                    {isSubmitting ? "추가 중..." : "추가"}
                   </Button>
                 </div>
               </form>
@@ -409,7 +486,7 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
                         <div className="flex gap-4">
                           <div className="w-16 h-20 rounded bg-muted flex-shrink-0 overflow-hidden">
                             <img
-                              src={book.image || "/placeholder.svg"}
+                              src={book.cover || "/placeholder.svg"}
                               alt={book.title}
                               className="w-full h-full object-cover"
                             />

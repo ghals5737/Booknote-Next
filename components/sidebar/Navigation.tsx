@@ -1,6 +1,9 @@
 'use client'
+import { AddBookDialog } from "@/components/book/AddBookDialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useNextAuth } from "@/hooks/use-next-auth";
 import {
   Book,
   Brain,
@@ -11,6 +14,8 @@ import {
   TrendingUp
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import useSWR from "swr";
 
 interface NavigationProps {
   currentPage: string;
@@ -18,22 +23,41 @@ interface NavigationProps {
 
 const Navigation = ({ currentPage }: NavigationProps) => {
   const router = useRouter();
+  const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
+  const { user, logout } = useNextAuth();
 
-  const navItems = [
-    { id: 'dashboard', label: '대시보드', icon: Home, count: null, path: '/dashboard' },
+  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+  const { data: notesCount } = useSWR<number>(
+    user?.id && NEXT_PUBLIC_API_URL ? ["notes-count", user.id] : null,
+    async () => {
+      const res = await fetch(
+        `${NEXT_PUBLIC_API_URL}/api/v1/notes/users/${user!.id}?page=0&size=1`
+      );
+      if (!res.ok) return 0;
+      const json = await res.json();
+      const data = json?.data;
+      if (!data) return 0;
+      if (typeof data.totalElements === "number") return data.totalElements as number;
+      if (Array.isArray(data)) return data.length;
+      return 0;
+    }
+  );
+
+  const navItems = useMemo(() => ([
+    { id: 'dashboard', label: '대시보드', icon: Home, count: null as number | null, path: '/dashboard' },
     { id: 'books', label: '내 서재', icon: Book, count: 0, path: '/books' },
-    { id: 'notes', label: '노트', icon: FileText, count: 0, path: '/notes' },
+    { id: 'notes', label: '노트', icon: FileText, count: typeof notesCount === 'number' ? notesCount : 0, path: '/notes' },
     { id: 'review', label: '복습', icon: Brain, count: 8, path: '/review' },
-    { id: 'statistics', label: '통계', icon: TrendingUp, count: null, path: '/statistics' },
-  ];
+    { id: 'statistics', label: '통계', icon: TrendingUp, count: null as number | null, path: '/statistics' },
+  ]), [notesCount]);
 
   const handleNavigation = (item: typeof navItems[0]) => {
     router.push(`${item.path}`);
   };
 
   const handleAddBook = () => {
-    // setCurrentView('library');
-    // router.push('/library');
+    setIsAddBookDialogOpen(true);
   };
 
   return (
@@ -118,8 +142,8 @@ const Navigation = ({ currentPage }: NavigationProps) => {
         </div>
       </div>
 
-      {/* Settings */}
-      <div className="p-4 border-t border-border">
+      {/* Settings & Auth */}
+      <div className="p-4 border-t border-border space-y-2">
         <Button 
           variant="ghost" 
           size="sm" 
@@ -129,7 +153,50 @@ const Navigation = ({ currentPage }: NavigationProps) => {
           <Settings className="h-4 w-4 mr-2" />
           설정
         </Button>
+
+        {!user ? (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full justify-start"
+            onClick={() => router.push('/auth')}
+          >
+            로그인
+          </Button>
+        ) : (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <Avatar className="size-7">
+                {user.image ? (
+                  <AvatarImage src={user.image as string} alt={user.name || 'user'} />
+                ) : (
+                  <AvatarFallback>{(user.name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
+                )}
+              </Avatar>
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="text-sm font-medium truncate max-w-[9rem]">{user.name || '사용자'}</span>
+                {user.email && (
+                  <span className="text-xs text-muted-foreground truncate max-w-[9rem]">{user.email}</span>
+                )}
+              </div>
+            </div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={logout}
+              className="text-destructive"
+            >
+              로그아웃
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Add Book Dialog */}
+      <AddBookDialog 
+        open={isAddBookDialogOpen} 
+        onOpenChange={setIsAddBookDialogOpen} 
+      />
     </nav>
   );
 };

@@ -2,14 +2,14 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { useNextAuth } from "@/hooks/use-next-auth"
+import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react"
+import { useState } from "react"
 
 interface RegisterFormProps {
   onToggleMode: () => void
@@ -67,7 +67,6 @@ export function RegisterForm({ onToggleMode }: RegisterFormProps) {
     <Card className="w-full max-w-md border-secondary bg-card shadow-soft-lg">
       <CardHeader className="text-center pb-4">
         <CardTitle className="text-2xl font-bold text-gradient">회원가입</CardTitle>
-        <p className="text-cool">Booknote와 함께 독서 여행을 시작하세요</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

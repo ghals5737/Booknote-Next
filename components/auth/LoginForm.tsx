@@ -44,7 +44,6 @@ export function LoginForm({ onToggleMode, onForgotPassword }: LoginFormProps) {
     <Card className="w-full max-w-md border-secondary bg-card shadow-soft-lg">
       <CardHeader className="text-center pb-4">
         <CardTitle className="text-2xl font-bold text-gradient">로그인</CardTitle>
-        <p className="text-cool">Booknote에 오신 것을 환영합니다</p>
 
       </CardHeader>
       <CardContent>

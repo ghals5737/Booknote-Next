@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useNextAuth } from "@/hooks/use-next-auth"
+import { Loader2 } from "lucide-react"
+import { useState } from "react"
 
 const ssoProviders = [
   {
@@ -14,38 +14,13 @@ const ssoProviders = [
     textColor: "text-gray-700",
     borderColor: "border-gray-300",
   },
-  {
-    id: "github" as const,
-    name: "GitHub",
-    icon: "🐙",
-    bgColor: "bg-gray-900 hover:bg-gray-800",
-    textColor: "text-white",
-    borderColor: "border-gray-900",
-  },
-  {
-    id: "kakao" as const,
-    name: "카카오",
-    icon: "💬",
-    bgColor: "bg-yellow-400 hover:bg-yellow-500",
-    textColor: "text-gray-900",
-    borderColor: "border-yellow-400",
-  },
-  {
-    id: "naver" as const,
-    name: "네이버",
-    icon: "🟢",
-    bgColor: "bg-green-500 hover:bg-green-600",
-    textColor: "text-white",
-    borderColor: "border-green-500",
-  },
 ]
 
 export function SSOButtons() {
   const { loginWithProvider, isLoading } = useNextAuth()
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null)
 
-  const handleSSOLogin = async (provider: "google" | "github" | "kakao" | "naver") => {
-    console.log("handleSSOLogin", provider)
+  const handleSSOLogin = async (provider: "google") => {
     setLoadingProvider(provider)
     try {
       await loginWithProvider(provider)
@@ -67,7 +42,7 @@ export function SSOButtons() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         {ssoProviders.map((provider) => (
           <Button
             key={provider.id}

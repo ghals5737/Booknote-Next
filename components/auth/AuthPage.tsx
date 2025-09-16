@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
 import { BookOpen } from "lucide-react"
+import { useState } from "react"
+import { ForgotPasswordForm } from "./ForgotPasswordForm"
 import { LoginForm } from "./LoginForm"
 import { RegisterForm } from "./RegisterForm"
-import { ForgotPasswordForm } from "./ForgotPasswordForm"
 import { SSOButtons } from "./SSOButtons"
+
+// register 화면은 /signup 별도 경로로 이동
 
 type AuthMode = "login" | "register" | "forgot-password"
 
@@ -17,7 +19,7 @@ export function AuthPage() {
       case "login":
         return (
           <div className="space-y-6">
-            <LoginForm onToggleMode={() => setMode("register")} onForgotPassword={() => setMode("forgot-password")} />
+            <LoginForm onToggleMode={() => { window.location.href = '/signup' }} onForgotPassword={() => setMode("forgot-password")} />
             <SSOButtons />
           </div>
         )
@@ -46,7 +48,6 @@ export function AuthPage() {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gradient mb-2">Booknote</h1>
-          <p className="text-cool text-lg">Smart Reading Companion</p>
         </div>
 
         {/* Auth Forms */}
@@ -54,7 +55,7 @@ export function AuthPage() {
 
         {/* Footer */}
         <div className="text-center text-sm text-cool/70 animate-slide-up animation-delay-400">
-          <p>© 2024 Booknote. All rights reserved.</p>
+          <p>© 2025 Booknote. All rights reserved.</p>
           <div className="flex justify-center gap-4 mt-2">
             <button className="hover:text-accent transition-colors">이용약관</button>
             <button className="hover:text-accent transition-colors">개인정보처리방침</button>
