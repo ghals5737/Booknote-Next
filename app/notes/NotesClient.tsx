@@ -106,7 +106,6 @@ export function NotesClient() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="bg-white border-b border-border sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -168,7 +167,6 @@ export function NotesClient() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Notes Grid/List */}
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredNotes.map((note) => (
