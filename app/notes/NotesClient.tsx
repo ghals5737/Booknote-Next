@@ -36,6 +36,7 @@ export function NotesClient() {
   const { deleteNote } = useDeleteNote();
 
   const handleNoteClick = (note: NoteResponse) => {
+    console.log(note);
     router.push(`/notes/detail/${note.id}`);
   };
 
@@ -170,7 +171,9 @@ export function NotesClient() {
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredNotes.map((note) => (
-              <Card key={note.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
+              <Card key={note.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300"
+              onClick={() => handleNoteClick(note)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-2">
@@ -211,7 +214,9 @@ export function NotesClient() {
         ) : (
           <div className="space-y-4">
             {filteredNotes.map((note) => (
-              <Card key={note.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
+              <Card key={note.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300"
+              onClick={() => handleNoteClick(note)}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
