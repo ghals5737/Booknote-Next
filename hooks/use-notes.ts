@@ -1,30 +1,25 @@
 import { NoteResponse, NoteResponsePage } from '@/lib/types/note/note';
 import useSWR from 'swr';
 import { useNextAuth } from './use-next-auth';
+import { apiGet, apiPost, apiDelete } from '@/lib/api/client';
 
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// SWR fetcher 함수 (타임아웃 및 에러 처리 강화)
+// SWR fetcher 함수 (API 클라이언트 사용)
 const fetcher = async (url: string) => {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
   try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch data: ${response.status}`);
-    }
-    const json = await response.json();
-    return json.data;
-  } finally {
-    clearTimeout(timeout);
+    const response = await apiGet<NoteResponsePage>(url);
+    return response.data;
+  } catch (error) {
+    throw error;
   }
 };
 
 export function useNotes(page: number, size: number) {
   const { user } = useNextAuth();
 
-  const key = user?.id && NEXT_PUBLIC_API_URL
-    ? `${NEXT_PUBLIC_API_URL}/api/v1/notes/users/${user.id}?page=${page}&size=${size}`
+  const key = user?.id 
+    ? `/api/v1/notes/user?page=${page}&size=${size}`
     : null;
 
   const { data, error, isLoading, mutate } = useSWR<NoteResponsePage | NoteResponse[]>(
@@ -64,21 +59,23 @@ export function useAddNote() {
     bookId: number;
     title: string;
     content: string;
-    tagList: string[];
+    html?: string;
+    isImportant?: boolean;
   }) => {
-    const response = await fetch('/api/v1/notes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(noteData),
-    });
+    const requestData = {
+      bookId: noteData.bookId,
+      title: noteData.title,
+      content: noteData.content,
+      html: noteData.html || '',
+      isImportant: noteData.isImportant || false
+    };
 
-    if (!response.ok) {
+    try {
+      const response = await apiPost<NoteResponse>('/api/v1/notes', requestData);
+      return response.data;
+    } catch (error) {
       throw new Error('노트 추가에 실패했습니다.');
     }
-
-    return response.json();
   };
 
   return { addNote };
@@ -86,11 +83,14 @@ export function useAddNote() {
 
 export function useDeleteNote() {
   const deleteNote = async (noteId: number) => {
-    const response = await fetch(`/api/v1/notes/${noteId}`, {
-      method: 'DELETE',
-    });
+    const requestData = {
+      id: noteId
+    };
 
-    if (!response.ok) {
+    try {
+      await apiDelete('/api/v1/notes', requestData);
+      return true;
+    } catch (error) {
       throw new Error('노트 삭제에 실패했습니다.');
     }
   };

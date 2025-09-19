@@ -11,11 +11,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAddBook, useAddUserBook, useSearchBooks } from "@/hooks/use-books"
 import { ArrowLeft, BookOpen, Calendar, Loader2, Plus, Search } from "lucide-react"
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface AddBookDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  selectedBook?: BookSearchResult | null
 }
 
 interface BookSearchResult {
@@ -27,7 +28,7 @@ interface BookSearchResult {
   cover: string
 }
 
-export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
+export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialogProps) {
   const [title, setTitle] = useState("")
   const [author, setAuthor] = useState("")
   const [category, setCategory] = useState("")
@@ -49,11 +50,106 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [mode, setMode] = useState<"search" | "manual">("search")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Autocomplete states
+  const [autocompleteResults, setAutocompleteResults] = useState<any[]>([])
+  const [showAutocomplete, setShowAutocomplete] = useState(false)
+  const [isAutoCompleting, setIsAutoCompleting] = useState(false)
+  
+  // Pagination states for autocomplete
+  const [autocompletePage, setAutocompletePage] = useState(1)
+  const [hasMoreAutocomplete, setHasMoreAutocomplete] = useState(false)
+  const [isLoadingMoreAutocomplete, setIsLoadingMoreAutocomplete] = useState(false)
+  const [lastScrollTime, setLastScrollTime] = useState(0)
+  
+  // 검색어 하이라이트 함수
+  const highlightSearchTerm = (text: string, searchTerm: string) => {
+    if (!searchTerm.trim()) return text;
+    
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? (
+        <span key={index} className="bg-accent/20 text-accent font-medium">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  }
 
   const { addBook } = useAddBook()
   const { addUserBook } = useAddUserBook()
   const { searchBooks } = useSearchBooks()
   const categories = ["자기계발", "개발", "역사", "소설", "에세이", "경제", "과학", "철학", "기타"]
+
+  // 선택된 책 정보로 폼 자동 채우기
+  useEffect(() => {
+    if (selectedBook) {
+      setTitle(selectedBook.title || "");
+      setAuthor(selectedBook.author || "");
+      setPublisher(selectedBook.publisher || "");
+      setIsbn(selectedBook.isbn || "");
+      setDescription(selectedBook.description || "");
+      setCover(selectedBook.cover || "");
+      setMode("manual"); // 수동 입력 모드로 전환
+    }
+  }, [selectedBook]);
+
+  // 실시간 자동완성 검색 (debounce 적용)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim() && searchQuery.length >= 2) {
+        // 새로운 검색어일 때는 페이지를 1로 리셋 (1-based)
+        setAutocompletePage(1);
+        handleAutocompleteSearch(searchQuery, 1, true);
+      } else {
+        setShowAutocomplete(false);
+        setAutocompleteResults([]);
+        setHasMoreAutocomplete(false);
+      }
+    }, 300); // 300ms 딜레이
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const handleAutocompleteSearch = async (query: string, page: number = 1, resetResults: boolean = false) => {
+    if (!query.trim() || query.length < 2) return
+
+    setIsAutoCompleting(true)
+    try {
+      // 자동완성 API 엔드포인트 호출 (페이지네이션 지원)
+      const response = await fetch(`/api/v1/search/books/autocomplete?query=${encodeURIComponent(query)}&page=${page}&size=10`)
+      const data = await response.json()
+      
+      if (data.success && Array.isArray(data.data)) {
+        if (resetResults) {
+          setAutocompleteResults(data.data)
+        } else {
+          setAutocompleteResults(prev => {
+            // 중복 제거 (ISBN 기준)
+            const existingIsbns = new Set(prev.map(book => book.isbn))
+            const newBooks = data.data.filter((book: any) => !existingIsbns.has(book.isbn))
+            return [...prev, ...newBooks]
+          })
+        }
+        setShowAutocomplete(true)
+        
+        // 페이지네이션 정보 업데이트
+        if (data.pagination) {
+          setAutocompletePage(data.pagination.page)
+          setHasMoreAutocomplete(data.pagination.hasMore)
+        }
+      }
+    } catch (error) {
+      console.error("Autocomplete search failed:", error)
+      // 자동완성 실패 시 조용히 처리 (사용자에게 알리지 않음)
+    } finally {
+      setIsAutoCompleting(false)
+    }
+  }
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
@@ -65,6 +161,7 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
       console.log('[AddBookDialog] handleSearch results length=', Array.isArray(results) ? results.length : 'n/a')
       setSearchResults(results)
       setShowSearchResults(true)
+      setShowAutocomplete(false) // 전체 검색 시 자동완성 숨김
     } catch (error) {
       console.error("Search failed:", error)
       alert('책 검색에 실패했습니다. 다시 시도해주세요.')
@@ -72,6 +169,7 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
       setIsSearching(false)
     }
   }
+
 
   const handleSelectBook = (book: BookSearchResult) => {
     setTitle(book.title)
@@ -81,6 +179,19 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
     setDescription(book.description)
     setCover(book.cover)
     setShowSearchResults(false)
+    setShowAutocomplete(false)
+    setMode("manual")
+  }
+
+  const handleSelectAutocompleteBook = (book: any) => {
+    setTitle(book.title || "")
+    setAuthor(book.author || "")
+    setPublisher(book.publisher || "")
+    setIsbn(book.isbn || "")
+    setDescription(book.description || "")
+    setCover(book.image || "")
+    setSearchQuery(book.title || "")
+    setShowAutocomplete(false)
     setMode("manual")
   }
 
@@ -151,6 +262,12 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
     setSearchQuery("")
     setSearchResults([])
     setShowSearchResults(false)
+    setAutocompleteResults([])
+    setShowAutocomplete(false)
+    setAutocompletePage(1)
+    setHasMoreAutocomplete(false)
+    setIsLoadingMoreAutocomplete(false)
+    setLastScrollTime(0)
     setMode("search")
   }
 
@@ -161,7 +278,7 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-card border-secondary rounded-xl shadow-soft-lg">
+      <DialogContent className="sm:max-w-[800px] max-h-[95vh] overflow-y-auto bg-card border-secondary rounded-xl shadow-soft-lg">
         <DialogHeader>
           <DialogTitle className="text-gradient flex items-center gap-2">
             <BookOpen className="h-5 w-5" />새 책 추가
@@ -196,21 +313,117 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-cool font-medium">책 제목으로 검색</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="검색할 책 제목을 입력하세요"
-                      className="border-secondary focus:border-accent bg-muted rounded-lg text-foreground placeholder:text-cool"
-                      onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                    />
-                    <Button
-                      onClick={handleSearch}
-                      disabled={isSearching || !searchQuery.trim()}
-                      className="button-primary rounded-lg"
-                    >
-                      {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                    </Button>
+                  <div className="relative">
+                    <div className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="검색할 책 제목을 입력하세요 (2글자 이상)"
+                          className="border-secondary focus:border-accent bg-muted rounded-lg text-foreground placeholder:text-cool"
+                          onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                          onFocus={() => {
+                            if (autocompleteResults.length > 0) {
+                              setShowAutocomplete(true)
+                            }
+                          }}
+                          onBlur={() => {
+                            // 약간의 딜레이를 주어 클릭 이벤트가 처리될 수 있도록 함
+                            setTimeout(() => setShowAutocomplete(false), 150)
+                          }}
+                        />
+                        {isAutoCompleting && (
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        onClick={handleSearch}
+                        disabled={isSearching || !searchQuery.trim()}
+                        className="button-primary rounded-lg"
+                      >
+                        {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                      </Button>
+                    </div>
+
+                    {/* 자동완성 드롭다운 */}
+                    {showAutocomplete && (
+                      <div 
+                        className="autocomplete-container absolute top-full left-0 right-12 z-50 mt-1 bg-card border border-secondary rounded-lg shadow-lg max-h-80 overflow-y-auto"
+                        onScroll={(e) => {
+                          const target = e.currentTarget
+                          const scrollTop = target.scrollTop
+                          const scrollHeight = target.scrollHeight
+                          const clientHeight = target.clientHeight
+                          
+                          // 디바운싱: 마지막 호출로부터 500ms 이내면 무시
+                          const now = Date.now()
+                          if (now - lastScrollTime < 500) return
+                          
+                          // 하단에서 100px 이내에 도달했을 때 다음 페이지 로드
+                          if (scrollTop + clientHeight >= scrollHeight - 100 && 
+                              hasMoreAutocomplete && 
+                              !isLoadingMoreAutocomplete) {
+                            
+                            setLastScrollTime(now)
+                            setIsLoadingMoreAutocomplete(true)
+                            
+                            handleAutocompleteSearch(searchQuery, autocompletePage + 1, false)
+                              .finally(() => setIsLoadingMoreAutocomplete(false))
+                          }
+                        }}
+                      >
+                        {autocompleteResults.length > 0 ? (
+                          <>
+                            {autocompleteResults.map((book, index) => (
+                              <div
+                                key={`${book.isbn || 'unknown'}-${index}`}
+                                className="p-3 hover:bg-muted cursor-pointer border-b border-secondary/50 last:border-b-0 flex items-center gap-3"
+                                onClick={() => handleSelectAutocompleteBook(book)}
+                              >
+                                {book.image && (
+                                  <img
+                                    src={book.image}
+                                    alt={book.title}
+                                    className="w-8 h-10 object-cover rounded"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none'
+                                    }}
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-foreground truncate">
+                                    {highlightSearchTerm(book.title, searchQuery)}
+                                  </div>
+                                  <div className="text-sm text-cool truncate">
+                                    {highlightSearchTerm(book.author, searchQuery)}
+                                  </div>
+                                  {book.publisher && (
+                                    <div className="text-xs text-cool/70 truncate">
+                                      {highlightSearchTerm(book.publisher, searchQuery)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                            
+                            {/* 로딩 인디케이터 */}
+                            {isLoadingMoreAutocomplete && (
+                              <div className="p-3 text-center">
+                                <Loader2 className="h-4 w-4 animate-spin text-accent mx-auto" />
+                                <div className="text-sm text-cool mt-1">더 많은 결과를 불러오는 중...</div>
+                              </div>
+                            )}
+                            
+                          </>
+                        ) : (
+                          <div className="p-3 text-center text-cool/70">
+                            검색 결과가 없습니다
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -318,7 +531,7 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
 
                 <div className="space-y-2">
                   <Label htmlFor="description" className="text-cool font-medium">
-                    책 설��
+                    책 설명
                   </Label>
                   <Textarea
                     id="description"
@@ -494,13 +707,13 @@ export function AddBookDialog({ open, onOpenChange }: AddBookDialogProps) {
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-foreground truncate">{book.title}</h4>
                             <p className="text-sm text-cool truncate">{book.author}</p>
-                            <div className="flex gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs border-accent/30 text-accent">
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              <Badge variant="outline" className="text-xs border-accent/30 text-accent flex-shrink-0">
                                 {book.publisher}
                               </Badge>
                               {book.isbn && (
-                                <Badge variant="outline" className="text-xs border-cool/30 text-cool">
-                                  ISBN: {book.isbn}
+                                <Badge variant="outline" className="text-xs border-cool/30 text-cool max-w-full overflow-hidden">
+                                  <span className="truncate">ISBN: {book.isbn}</span>
                                 </Badge>
                               )}
                             </div>

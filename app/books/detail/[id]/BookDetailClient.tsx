@@ -39,6 +39,7 @@ export default function BookDetailClient({
   bookId 
 }: BookDetailClientProps) {
   const router = useRouter();
+  const { user } = useNextAuth();
   const [currentQuotes, setCurrentQuotes] = useState<QuoteData[]>(quotes);
   const [currentNotes, setCurrentNotes] = useState<NoteData[]>(notes);
   const [isAddingNote, setIsAddingNote] = useState(false);
@@ -52,24 +53,41 @@ export default function BookDetailClient({
 
   const addNote = async () => {
     if (!newNote.title.trim() || !newNote.content.trim()) return;
+    
+    if (!user?.id) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
 
     try {
-      const response = await fetch(`http://localhost:9377/api/v1/notes/users/1/books/${bookId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100'}/api/v1/notes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
         },
         body: JSON.stringify({
+          bookId: parseInt(bookId),
           title: newNote.title,
           content: newNote.content,
-          tagName: newNote.tagName || newNote.title,
+          html: '',
           isImportant: false
         }),
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setCurrentNotes([data.data, ...currentNotes]);
+        const result = await response.json();
+        const newNoteData = {
+          id: result.data.id,
+          bookId: result.data.bookId,
+          title: result.data.title,
+          content: result.data.content,
+          html: result.data.html,
+          isImportant: result.data.isImportant,
+          tagName: '',
+          tagList: []
+        };
+        setCurrentNotes([newNoteData, ...currentNotes]);
         setNewNote({ title: '', content: '', tagName: '' });
         setIsAddingNote(false);
       }

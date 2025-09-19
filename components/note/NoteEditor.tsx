@@ -32,8 +32,10 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Markdown } from "./Markdown";
+import { useNextAuth } from "@/hooks/use-next-auth";
 
 const NoteEditor = () => {
+  const { user } = useNextAuth();
   const [title, setTitle] = useState("새로운 노트");
   const [selectedBook, setSelectedBook] = useState("");
   const [currentPage, setCurrentPage] = useState("");
@@ -60,6 +62,7 @@ const NoteEditor = () => {
   const [tags, setTags] = useState(["학습", "마크다운", "지식관리"]);
   const [newTag, setNewTag] = useState("");
   const [showPreview, setShowPreview] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   
   // 좋아하는 문장 관리
   const [favoriteQuotes, setFavoriteQuotes] = useState([
@@ -87,6 +90,56 @@ const NoteEditor = () => {
   ]);
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const saveNote = async () => {
+    if (!title.trim() || !content.trim()) {
+      alert('제목과 내용을 입력해주세요.');
+      return;
+    }
+
+    if (!selectedBook) {
+      alert('책을 선택해주세요.');
+      return;
+    }
+
+    if (!user?.id) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100'}/api/v1/notes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({
+          bookId: parseInt(selectedBook),
+          title: title,
+          content: content,
+          html: content, // 마크다운을 HTML로 변환하는 로직 필요
+          isImportant: false
+        }),
+      });
+
+      if (response.ok) {
+        alert('노트가 성공적으로 저장되었습니다.');
+        // 페이지 이동 또는 폼 초기화
+        setTitle("새로운 노트");
+        setContent("");
+        setSelectedBook("");
+      } else {
+        throw new Error('노트 저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error saving note:', error);
+      alert('노트 저장에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const insertMarkdown = (before: string, after: string = "") => {
     if (!textareaRef.current) return;
@@ -166,9 +219,9 @@ const NoteEditor = () => {
                 <Share className="h-4 w-4 mr-2" />
                 공유
               </Button>
-              <Button size="sm">
+              <Button size="sm" onClick={saveNote} disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
-                저장
+                {isSaving ? '저장 중...' : '저장'}
               </Button>
             </div>
           </div>

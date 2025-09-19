@@ -1,19 +1,21 @@
 import { BookApiResponse, UserBookResponsePage } from '@/lib/types/book/book';
 import useSWR, { mutate } from 'swr';
 import { useNextAuth } from './use-next-auth';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api/client';
 
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
 
-// SWR fetcher 함수 (타임아웃 포함)
+// SWR fetcher 함수 (API 클라이언트 사용)
 const fetcher = async (url: string) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
-  const response = await fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timeoutId));
-  if (!response.ok) {
-    throw new Error('Failed to fetch data');
+  try {
+    console.log('Fetching books from:', url);
+    const response = await apiGet<UserBookResponsePage>(url);
+    console.log('Books response:', response);
+    return response.data;
+  } catch (error) {
+    console.error('Books fetch error:', error);
+    throw error;
   }
-  const data = await response.json();
-  return data?.data ?? data;
 };
 
 // 책 목록 조회 훅
@@ -22,7 +24,8 @@ export function useBooks(page: number = 0, size: number = 10) {
   const userId = user?.id;
 
   const shouldFetch = isAuthenticated && !!userId;
-  const key = shouldFetch ? `/api/v1/users/${userId}/books?page=${page}&size=${size}` : null;
+  // API 클라이언트가 자동으로 BASE_URL을 추가하므로 상대 경로만 사용
+  const key = shouldFetch ? `/api/v1/user/books?page=${page}&size=${size}` : null;
 
   const { data, error, isLoading, mutate: mutateBooks } = useSWR<UserBookResponsePage>(
     key,
@@ -50,9 +53,10 @@ export function useBooks(page: number = 0, size: number = 10) {
   };
 }
 
-// 백엔드 책 추가 훅 (BookController API 사용)
+// 통합된 책 추가 훅 (책 생성 + 사용자 서재에 추가)
 export function useAddBook() {
   const { user } = useNextAuth();
+  
   const addBook = async (bookData: {
     title: string;
     author: string;
@@ -65,27 +69,29 @@ export function useAddBook() {
     publisher: string;
     pubdate: string;
   }) => {
+    if (!user?.id) {
+      throw new Error('사용자 정보가 없습니다.');
+    }
+
     try {
-      const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/books`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bookData),
+      // 1단계: 책 생성 (API 클라이언트 사용)
+      const createResult = await apiPost<BookApiResponse['data']>('/api/v1/books', bookData);
+      const bookId = createResult.data.id;
+
+      if (!bookId) {
+        throw new Error('생성된 책의 ID를 가져올 수 없습니다.');
+      }
+
+      // 2단계: 사용자 서재에 추가 (API 클라이언트 사용)
+      await apiPost('/api/v1/user-books', {
+        userId: user.id,
+        bookId: bookId
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to add book');
-      }
-
-      const result: BookApiResponse = await response.json();
+      // 책 목록 캐시 무효화하여 새로고침
+      await mutate(`/api/v1/user/books?page=0&size=10`);
       
-      // 책 목록 캐시 무효화하여 새로고침 (세션 사용자 기준)
-      if (user?.id) {
-        await mutate(`/api/v1/users/${user.id}/books?page=0&size=10`);
-      }
-      
-      return result.data;
+      return createResult.data;
     } catch (error) {
       console.error('Error adding book:', error);
       throw error;
@@ -100,20 +106,10 @@ export function useAddUserBook() {
   // 사용자와 기존 책(bookId)을 연결하는 API 호출
   const addUserBook = async (payload: { userId: number; bookId: number }) => {
     try {
-      const response = await fetch(`/api/v1/user-books`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to add book');
-      }
-
-      const result = await response.json();
-      // 책 목록 캐시 무효화하여 새로고침 (userId는 payload.userId 사용)
-      await mutate(`${NEXT_PUBLIC_API_URL}/api/v1/users/${payload.userId}/books?page=0&size=10`);
-      return result.data || result;
+      const result = await apiPost('/api/v1/user-books', payload);
+      // 책 목록 캐시 무효화하여 새로고침
+      await mutate(`/api/v1/user/books?page=0&size=10`);
+      return result.data;
     } catch (error) {
       console.error('Error adding book:', error);
       throw error;
@@ -128,18 +124,9 @@ export function useDeleteBook() {
   const { user } = useNextAuth();
   const deleteBook = async (bookId: number) => {
     try {
-      const response = await fetch(`/api/v1/users/${user?.id}/books/${bookId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete book');
-      }
-
+      await apiDelete(`/api/v1/users/${user?.id}/books/${bookId}`);
       // 책 목록 캐시 무효화하여 새로고침
-      if (user?.id) {
-        await mutate(`/api/v1/users/${user.id}/books?page=0&size=10`);
-      }
+      await mutate(`/api/v1/user/books?page=0&size=10`);
       
       return true;
     } catch (error) {
@@ -168,24 +155,10 @@ export function useUpdateBook() {
     isbn?: string;
   }) => {
     try {
-      const response = await fetch(`/api/v1/users/${user?.id}/books/${bookId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(bookData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update book');
-      }
-
-      const result = await response.json();
+      const result = await apiPut(`/api/v1/users/${user?.id}/books/${bookId}`, bookData);
       
       // 책 목록 캐시 무효화하여 새로고침
-      if (user?.id) {
-        await mutate(`/api/v1/users/${user.id}/books?page=0&size=10`);
-      }
+      await mutate(`/api/v1/user/books?page=0&size=10`);
       
       return result.data;
     } catch (error) {
@@ -199,29 +172,24 @@ export function useUpdateBook() {
 
 // 책 검색 훅 (외부 API 사용)
 export function useSearchBooks() {
-  const searchBooks = async (query: string, limit: number = 10) => {
+  const searchBooks = async (query: string) => {
     try {
-      // 내부 프록시 경유 (신규 엔드포인트 형태: /api/v1/search/books?query=)
-      const response = await fetch(`/api/v1/search/books?query=${encodeURIComponent(query)}&limit=${limit}`);
+      // API 클라이언트 사용
+      const result = await apiGet(`/api/v1/search/books?query=${encodeURIComponent(query)}`);
+      console.log('[useSearchBooks] 백엔드 응답:', result);
       
-      if (!response.ok) {
-        throw new Error('Failed to search books');
-      }
-
-      const result = await response.json();
-      // 응답이 배열인 경우(예: 네이버 쇼핑 책 검색 형태)도 지원
-      const rawItems = Array.isArray(result)
-        ? result
-        : (result?.data?.books || result?.books || []);
+      // 백엔드 ApiResponse 형식에 맞게 파싱
+      const books = result?.data || [];
+      console.log('[useSearchBooks] 파싱된 책 목록:', books);
 
       // 결과를 다이얼로그에서 기대하는 형태로 정규화
-      const normalized = (rawItems as any[]).map((item) => ({
+      const normalized = (books as any[]).map((item) => ({
         title: item.title ?? '',
         author: item.author ?? '',
         publisher: item.publisher ?? '',
         isbn: item.isbn ?? '',
         description: item.description ?? '',
-        cover: item.cover ?? item.image ?? '',
+        cover: item.image ?? item.cover ?? '',
       }));
 
       return normalized;

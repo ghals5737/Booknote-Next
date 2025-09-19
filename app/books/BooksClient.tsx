@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { useBooks, useDeleteBook } from "@/hooks/use-books";
+import { useBooks, useDeleteBook, useSearchBooks } from "@/hooks/use-books";
 import { useNextAuth } from "@/hooks/use-next-auth";
 import {
   AlertCircle,
@@ -37,12 +37,17 @@ export function BooksClient() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [externalSearchResults, setExternalSearchResults] = useState<any[]>([]);
+  const [isExternalSearching, setIsExternalSearching] = useState(false);
+  const [showExternalResults, setShowExternalResults] = useState(false);
+  const [selectedBookForAdd, setSelectedBookForAdd] = useState<any>(null);
 
   const { isAuthenticated, isLoading: authLoading } = useNextAuth();
 
   // SWR 훅 사용
   const { books, pagination, isLoading, error, mutateBooks } = useBooks(0, 10);
   const { deleteBook } = useDeleteBook();
+  const { searchBooks } = useSearchBooks();
 
   const handleBookClick = (book: UserBookResponse) => {
     router.push(`/books/detail/${book.id}`);
@@ -56,6 +61,38 @@ export function BooksClient() {
         console.error('책 삭제 실패:', error);
         alert('책 삭제에 실패했습니다.');
       }
+    }
+  };
+
+  const handleExternalSearch = async () => {
+    if (!searchTerm.trim()) return;
+    
+    setIsExternalSearching(true);
+    try {
+      console.log('[BooksClient] 외부 검색 시작:', searchTerm);
+      
+      // 백엔드 API 사용 (네이버 검색 API)
+      const results = await searchBooks(searchTerm);
+      console.log('[BooksClient] 외부 검색 결과:', results?.length || 0, '개');
+      
+      // 백엔드 응답을 우리 형식으로 변환
+      const books = (results || []).map((item: any) => ({
+        title: item.title || '제목 없음',
+        author: item.author || '저자 없음',
+        publisher: item.publisher || '출판사 없음',
+        isbn: item.isbn || 'ISBN 없음',
+        description: item.description || '설명 없음',
+        cover: item.image || '/placeholder.svg'
+      }));
+      
+      console.log('[BooksClient] 변환된 책 목록:', books);
+      setExternalSearchResults(books);
+      setShowExternalResults(true);
+    } catch (error) {
+      console.error('외부 검색 실패:', error);
+      alert('책 검색에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsExternalSearching(false);
     }
   };
 
@@ -124,14 +161,34 @@ export function BooksClient() {
           <div className="flex flex-col items-center gap-3 text-cool">
             <AlertCircle className="h-12 w-12 text-red-500" />
             <span>책 목록을 불러오는 중 오류가 발생했습니다</span>
-            <Button 
-              onClick={() => mutateBooks()}
-              variant="outline"
-              className="mt-4"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              다시 시도
-            </Button>
+            <div className="text-sm text-muted-foreground mt-2">
+              오류: {error.message || '알 수 없는 오류'}
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button 
+                onClick={() => mutateBooks()}
+                variant="outline"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                다시 시도
+              </Button>
+              <Button 
+                onClick={() => {
+                  // 토큰 확인 및 재로그인 안내
+                  const token = localStorage.getItem('access_token');
+                  if (!token) {
+                    alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+                    router.push('/auth');
+                  } else {
+                    mutateBooks();
+                  }
+                }}
+                variant="default"
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                로그인 확인
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -150,15 +207,34 @@ export function BooksClient() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="책 검색..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-80 pl-10"
-                />
+              <div className="flex items-center space-x-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="책 검색..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-80 pl-10"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleExternalSearch();
+                      }
+                    }}
+                  />
+                </div>
+                <Button 
+                  onClick={handleExternalSearch}
+                  disabled={isExternalSearching || !searchTerm.trim()}
+                  variant="outline"
+                  size="sm"
+                >
+                  {isExternalSearching ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
               
               <Button variant="outline" size="sm">
@@ -192,7 +268,13 @@ export function BooksClient() {
               
               <AddBookDialog 
                 open={showAddDialog} 
-                onOpenChange={setShowAddDialog} 
+                onOpenChange={(open) => {
+                  setShowAddDialog(open);
+                  if (!open) {
+                    setSelectedBookForAdd(null);
+                  }
+                }} 
+                selectedBook={selectedBookForAdd}
               />
             </div>
           </div>
@@ -200,6 +282,78 @@ export function BooksClient() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* External Search Results */}
+        {showExternalResults && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-foreground">검색 결과 ({externalSearchResults.length}개)</h2>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowExternalResults(false)}
+              >
+                검색 결과 닫기
+              </Button>
+            </div>
+            
+            {externalSearchResults.length === 0 ? (
+              <Card className="border-secondary bg-muted/50 rounded-lg">
+                <CardContent className="p-6 text-center">
+                  <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-muted-foreground">검색 결과가 없습니다</p>
+                  <p className="text-sm text-muted-foreground/70">다른 키워드로 검색해보세요</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {externalSearchResults.map((book, index) => (
+                  <Card key={index} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
+                    <CardHeader className="pb-3">
+                      {book.cover && (
+                        <div className="mb-3 overflow-hidden rounded-lg">
+                          <img 
+                            src={book.cover} 
+                            alt={book.title}
+                            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                      )}
+                      <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
+                        {book.title}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">{book.author}</p>
+                      {book.publisher && (
+                        <Badge variant="secondary" className="text-xs w-fit max-w-full overflow-hidden">
+                          <span className="truncate">{book.publisher}</span>
+                        </Badge>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      {book.description && (
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
+                          {book.description}
+                        </p>
+                      )}
+                      
+                      <Button 
+                        size="sm" 
+                        className="w-full bg-gradient-primary hover:opacity-90"
+                        onClick={() => {
+                          setSelectedBookForAdd(book);
+                          setShowAddDialog(true);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        내 서재에 추가
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Books Grid/List */}
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

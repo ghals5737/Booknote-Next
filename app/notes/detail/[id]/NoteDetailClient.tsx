@@ -1,3 +1,5 @@
+'use client'
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,39 +7,59 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useDeleteNote } from "@/hooks/use-notes";
+import { NoteResponse } from "@/lib/types/note/note";
 import {
     ArrowLeft,
     Calendar,
     Edit,
     FileText,
+    Loader2,
     Save,
     Tag,
     Trash2,
     X
 } from "lucide-react";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  tags: string[];
+interface NoteDetailClientProps {
+  noteId: string;
 }
 
-interface NoteDetailViewProps {
-  note: Note;
-  bookTitle: string;
-  onBack: () => void;
-  onUpdateNote: (note: Note) => void;
-  onDeleteNote: (noteId: number) => void;
-}
-
-const NoteDetailView = ({ note, bookTitle, onBack, onUpdateNote, onDeleteNote }: NoteDetailViewProps) => {
+export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
+  const router = useRouter();
+  const [note, setNote] = useState<NoteResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedNote, setEditedNote] = useState<Note>(note);
+  const [editedNote, setEditedNote] = useState<NoteResponse | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const { deleteNote } = useDeleteNote();
+
+  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
+
+  useEffect(() => {
+    const fetchNote = async () => {
+      try {
+        const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/notes/${noteId}`);
+        if (response.ok) {
+          const result = await response.json();
+          setNote(result.data);
+          setEditedNote(result.data);
+        } else {
+          throw new Error('노트를 불러올 수 없습니다.');
+        }
+      } catch (error) {
+        console.error('Error fetching note:', error);
+        alert('노트를 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNote();
+  }, [noteId, NEXT_PUBLIC_API_URL]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -49,19 +71,50 @@ const NoteDetailView = ({ note, bookTitle, onBack, onUpdateNote, onDeleteNote }:
     });
   };
 
-  const handleSave = () => {
-    const updatedNote = {
-      ...editedNote,
-      updatedAt: new Date().toISOString()
-    };
-    onUpdateNote(updatedNote);
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (!editedNote) return;
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/notes/${noteId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: editedNote.title,
+          content: editedNote.content,
+          html: editedNote.html,
+          isImportant: editedNote.isImportant
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setNote(result.data);
+        setIsEditing(false);
+        alert('노트가 성공적으로 수정되었습니다.');
+      } else {
+        throw new Error('노트 수정에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Error updating note:', error);
+      alert('노트 수정에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleDelete = () => {
-    onDeleteNote(note.id);
+  const handleDelete = async () => {
+    try {
+      await deleteNote(parseInt(noteId));
+      alert('노트가 성공적으로 삭제되었습니다.');
+      router.push('/notes');
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      alert('노트 삭제에 실패했습니다.');
+    }
     setShowDeleteDialog(false);
-    onBack();
   };
 
   const handleCancel = () => {
@@ -88,6 +141,35 @@ const NoteDetailView = ({ note, bookTitle, onBack, onUpdateNote, onDeleteNote }:
       .replace(/\n/g, '<br>');
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="flex items-center justify-center py-20">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>노트를 불러오는 중...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!note) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-foreground mb-2">노트를 찾을 수 없습니다</h2>
+            <p className="text-muted-foreground mb-4">요청하신 노트가 존재하지 않거나 삭제되었습니다.</p>
+            <Button onClick={() => router.push('/notes')}>
+              노트 목록으로 돌아가기
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const processedContent = `<p class="mb-4 text-foreground leading-relaxed">${renderMarkdownPreview(note.content)}</p>`;
 
   return (
@@ -97,7 +179,7 @@ const NoteDetailView = ({ note, bookTitle, onBack, onUpdateNote, onDeleteNote }:
         <div className="flex items-center justify-between mb-4">
           <Button 
             variant="ghost" 
-            onClick={onBack}
+            onClick={() => router.push('/notes')}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -136,10 +218,11 @@ const NoteDetailView = ({ note, bookTitle, onBack, onUpdateNote, onDeleteNote }:
                 </Button>
                 <Button
                   onClick={handleSave}
+                  disabled={isSaving}
                   className="flex items-center gap-2"
                 >
                   <Save className="h-4 w-4" />
-                  저장
+                  {isSaving ? '저장 중...' : '저장'}
                 </Button>
               </>
             )}
@@ -148,7 +231,7 @@ const NoteDetailView = ({ note, bookTitle, onBack, onUpdateNote, onDeleteNote }:
 
         {/* Book info */}
         <div className="text-sm text-muted-foreground mb-2">
-          <span>{bookTitle}</span>
+          <span>{note.bookTitle}</span>
         </div>
 
         {/* Note title */}
@@ -158,8 +241,8 @@ const NoteDetailView = ({ note, bookTitle, onBack, onUpdateNote, onDeleteNote }:
           </h1>
         ) : (
           <Input
-            value={editedNote.title}
-            onChange={(e) => setEditedNote({ ...editedNote, title: e.target.value })}
+            value={editedNote?.title || ''}
+            onChange={(e) => setEditedNote({ ...editedNote!, title: e.target.value })}
             className="text-3xl font-bold mb-2 h-auto text-foreground border-none shadow-none px-0"
             placeholder="노트 제목을 입력하세요"
           />
@@ -169,22 +252,22 @@ const NoteDetailView = ({ note, bookTitle, onBack, onUpdateNote, onDeleteNote }:
         <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
           <div className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />
-            <span>작성: {formatDate(note.createdAt)}</span>
+            <span>작성: {note.startDate ? formatDate(note.startDate) : '날짜 정보 없음'}</span>
           </div>
-          {note.updatedAt !== note.createdAt && (
+          {note.updateDate && note.updateDate !== note.startDate && (
             <div className="flex items-center gap-1">
               <Edit className="h-4 w-4" />
-              <span>수정: {formatDate(note.updatedAt)}</span>
+              <span>수정: {formatDate(note.updateDate)}</span>
             </div>
           )}
         </div>
 
         {/* Tags */}
-        {note.tags.length > 0 && (
+        {note.tagList && note.tagList.length > 0 && (
           <div className="flex items-center gap-2 mb-6">
             <Tag className="h-4 w-4 text-muted-foreground" />
             <div className="flex flex-wrap gap-2">
-              {note.tags.map((tag, index) => (
+              {note.tagList.map((tag, index) => (
                 <Badge key={index} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>
@@ -216,8 +299,8 @@ const NoteDetailView = ({ note, bookTitle, onBack, onUpdateNote, onDeleteNote }:
                 <Label htmlFor="note-content">내용</Label>
                 <Textarea
                   id="note-content"
-                  value={editedNote.content}
-                  onChange={(e) => setEditedNote({ ...editedNote, content: e.target.value })}
+                  value={editedNote?.content || ''}
+                  onChange={(e) => setEditedNote({ ...editedNote!, content: e.target.value })}
                   placeholder="노트 내용을 입력하세요 (마크다운 지원)"
                   className="min-h-[400px] font-mono text-sm"
                 />
@@ -250,6 +333,4 @@ const NoteDetailView = ({ note, bookTitle, onBack, onUpdateNote, onDeleteNote }:
       </Dialog>
     </div>
   );
-};
-
-export default NoteDetailView;
+}

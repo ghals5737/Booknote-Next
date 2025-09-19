@@ -32,7 +32,33 @@ const Navigation = ({ currentPage }: NavigationProps) => {
     user?.id && NEXT_PUBLIC_API_URL ? ["notes-count", user.id] : null,
     async () => {
       const res = await fetch(
-        `${NEXT_PUBLIC_API_URL}/api/v1/notes/users/${user!.id}?page=0&size=1`
+        `${NEXT_PUBLIC_API_URL}/api/v1/notes/user?page=0&size=1`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        }
+      );
+      if (!res.ok) return 0;
+      const json = await res.json();
+      const data = json?.data;
+      if (!data) return 0;
+      if (typeof data.totalElements === "number") return data.totalElements as number;
+      if (Array.isArray(data)) return data.length;
+      return 0;
+    }
+  );
+
+  const { data: booksCount } = useSWR<number>(
+    user?.id && NEXT_PUBLIC_API_URL ? ["books-count", user.id] : null,
+    async () => {
+      const res = await fetch(
+        `${NEXT_PUBLIC_API_URL}/api/v1/user/books?page=0&size=1`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        }
       );
       if (!res.ok) return 0;
       const json = await res.json();
@@ -46,11 +72,11 @@ const Navigation = ({ currentPage }: NavigationProps) => {
 
   const navItems = useMemo(() => ([
     { id: 'dashboard', label: '대시보드', icon: Home, count: null as number | null, path: '/dashboard' },
-    { id: 'books', label: '내 서재', icon: Book, count: 0, path: '/books' },
+    { id: 'books', label: '내 서재', icon: Book, count: typeof booksCount === 'number' ? booksCount : 0, path: '/books' },
     { id: 'notes', label: '노트', icon: FileText, count: typeof notesCount === 'number' ? notesCount : 0, path: '/notes' },
     { id: 'review', label: '복습', icon: Brain, count: 8, path: '/review' },
     { id: 'statistics', label: '통계', icon: TrendingUp, count: null as number | null, path: '/statistics' },
-  ]), [notesCount]);
+  ]), [notesCount, booksCount]);
 
   const handleNavigation = (item: typeof navItems[0]) => {
     router.push(`${item.path}`);
