@@ -7,18 +7,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useDeleteNote } from "@/hooks/use-notes";
+import { useDeleteNote, useNote } from "@/hooks/use-notes";
 import { NoteResponse } from "@/lib/types/note/note";
 import {
-    ArrowLeft,
-    Calendar,
-    Edit,
-    FileText,
-    Loader2,
-    Save,
-    Tag,
-    Trash2,
-    X
+  ArrowLeft,
+  Calendar,
+  Edit,
+  FileText,
+  Loader2,
+  Save,
+  Tag,
+  Trash2,
+  X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -29,37 +29,21 @@ interface NoteDetailClientProps {
 
 export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
   const router = useRouter();
-  const [note, setNote] = useState<NoteResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editedNote, setEditedNote] = useState<NoteResponse | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { deleteNote } = useDeleteNote();
+  const { note, isLoading, error, mutateNote } = useNote(noteId);
 
   const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
 
+  // 노트가 로드되면 편집용 상태 초기화
   useEffect(() => {
-    const fetchNote = async () => {
-      try {
-        const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/notes/${noteId}`);
-        if (response.ok) {
-          const result = await response.json();
-          setNote(result.data);
-          setEditedNote(result.data);
-        } else {
-          throw new Error('노트를 불러올 수 없습니다.');
-        }
-      } catch (error) {
-        console.error('Error fetching note:', error);
-        alert('노트를 불러오는데 실패했습니다.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchNote();
-  }, [noteId, NEXT_PUBLIC_API_URL]);
+    if (note) {
+      setEditedNote(note);
+    }
+  }, [note]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
@@ -91,7 +75,8 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
 
       if (response.ok) {
         const result = await response.json();
-        setNote(result.data);
+        // SWR 캐시 업데이트
+        mutateNote(result.data, false);
         setIsEditing(false);
         alert('노트가 성공적으로 수정되었습니다.');
       } else {
@@ -118,7 +103,7 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
   };
 
   const handleCancel = () => {
-    setEditedNote(note);
+    setEditedNote(note || null);
     setIsEditing(false);
   };
 
@@ -148,6 +133,22 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
           <div className="flex items-center gap-3 text-muted-foreground">
             <Loader2 className="h-6 w-6 animate-spin" />
             <span>노트를 불러오는 중...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-foreground mb-2">노트를 불러오는데 실패했습니다</h2>
+            <p className="text-muted-foreground mb-4">네트워크 오류가 발생했습니다.</p>
+            <Button onClick={() => mutateNote()}>
+              다시 시도
+            </Button>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
+import { apiDelete, apiGet, apiPost } from '@/lib/api/client';
 import { NoteResponse, NoteResponsePage } from '@/lib/types/note/note';
 import useSWR from 'swr';
 import { useNextAuth } from './use-next-auth';
-import { apiGet, apiPost, apiDelete } from '@/lib/api/client';
 
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -9,6 +9,16 @@ const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
 const fetcher = async (url: string) => {
   try {
     const response = await apiGet<NoteResponsePage>(url);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 개별 노트 조회용 fetcher 함수
+const noteFetcher = async (url: string) => {
+  try {
+    const response = await apiGet<NoteResponse>(url);
     return response.data;
   } catch (error) {
     throw error;
@@ -61,13 +71,15 @@ export function useAddNote() {
     content: string;
     html?: string;
     isImportant?: boolean;
+    tagList?: string[];
   }) => {
     const requestData = {
       bookId: noteData.bookId,
       title: noteData.title,
       content: noteData.content,
       html: noteData.html || '',
-      isImportant: noteData.isImportant || false
+      isImportant: noteData.isImportant || false,
+      tagList: noteData.tagList || []
     };
 
     try {
@@ -79,6 +91,50 @@ export function useAddNote() {
   };
 
   return { addNote };
+}
+
+// 인용구 추가 훅
+export function useAddQuote() {
+  const addQuote = async (quoteData: {
+    bookId: number;
+    text: string;
+    page?: number;
+  }) => {
+    const requestData = {
+      bookId: quoteData.bookId,
+      text: quoteData.text,
+      page: quoteData.page ?? null,
+    };
+
+    try {
+      const response = await apiPost('/api/v1/quotes', requestData);
+      return response.data;
+    } catch (error) {
+      throw new Error('인용구 추가에 실패했습니다.');
+    }
+  };
+
+  return { addQuote };
+}
+
+export function useNote(noteId: string) {
+  const { user } = useNextAuth();
+
+  const key = user?.id && noteId 
+    ? `/api/v1/notes/${noteId}`
+    : null;
+
+  const { data, error, isLoading, mutate } = useSWR<NoteResponse>(
+    key,
+    noteFetcher
+  );
+
+  return {
+    note: data,
+    isLoading,
+    error,
+    mutateNote: mutate
+  };
 }
 
 export function useDeleteNote() {

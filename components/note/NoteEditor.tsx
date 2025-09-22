@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useBooks } from "@/hooks/use-books";
 import { useNextAuth } from "@/hooks/use-next-auth";
+import { useAddNote, useAddQuote } from "@/hooks/use-notes";
 import {
   ArrowLeft,
   Bold,
@@ -87,6 +88,8 @@ const NoteEditor = () => {
   // 하드코딩된 책 목록 제거 - useBooks 훅에서 가져옴
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { addNote } = useAddNote();
+  const { addQuote } = useAddQuote();
 
   const saveNote = async () => {
     if (!title.trim() || !content.trim()) {
@@ -106,29 +109,37 @@ const NoteEditor = () => {
 
     setIsSaving(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100'}/api/v1/notes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify({
-          bookId: parseInt(selectedBook),
-          title: title,
-          content: content,
-          html: content, // 마크다운을 HTML로 변환하는 로직 필요
-          isImportant: false
-        }),
+      const result = await addNote({
+        bookId: parseInt(selectedBook),
+        title: title,
+        content: content,
+        html: content,
+        isImportant: false,
+        tagList: tags,
       });
 
-      if (response.ok) {
+      if (result) {
+        // 좋아하는 문장들을 인용구로 저장
+        if (favoriteQuotes.length > 0) {
+          try {
+            await Promise.all(
+              favoriteQuotes.map((q) =>
+                addQuote({
+                  bookId: parseInt(selectedBook),
+                  text: q.text,
+                  page: q.page,
+                })
+              )
+            );
+          } catch (e) {
+            console.error('일부 인용구 저장 실패:', e);
+          }
+        }
         alert('노트가 성공적으로 저장되었습니다.');
-        // 페이지 이동 또는 폼 초기화
         setTitle("새로운 노트");
         setContent("");
         setSelectedBook("");
-      } else {
-        throw new Error('노트 저장에 실패했습니다.');
+        setFavoriteQuotes([]);
       }
     } catch (error) {
       console.error('Error saving note:', error);
@@ -164,9 +175,14 @@ const NoteEditor = () => {
   };
 
   const addTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim())) {
-      setTags([...tags, newTag.trim()]);
+    const trimmedTag = newTag.trim();
+    if (trimmedTag && !tags.includes(trimmedTag)) {
+      setTags([...tags, trimmedTag]);
       setNewTag("");
+    } else if (trimmedTag && tags.includes(trimmedTag)) {
+      alert('이미 존재하는 태그입니다.');
+    } else {
+      alert('태그를 입력해주세요.');
     }
   };
 
@@ -532,7 +548,12 @@ const NoteEditor = () => {
                       onChange={(e) => setNewTag(e.target.value)}
                       placeholder="새 태그..."
                       className="text-sm"
-                      onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addTag();
+                        }
+                      }}
                     />
                     <Button size="sm" onClick={addTag}>
                       추가
