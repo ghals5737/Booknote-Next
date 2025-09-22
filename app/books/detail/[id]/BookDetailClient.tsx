@@ -8,40 +8,53 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useNextAuth } from "@/hooks/use-next-auth";
+import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api/client";
 import { BookDetailData, NoteData, QuoteData } from "@/lib/types/book/book";
 import {
-    ArrowLeft,
-    Building,
-    Edit,
-    Eye,
-    FileText,
-    Hash,
-    Plus,
-    Quote,
-    Star,
-    Trash2,
-    User
+  ArrowLeft,
+  Building,
+  Edit,
+  Eye,
+  FileText,
+  Hash,
+  Plus,
+  Quote,
+  Star,
+  Trash2,
+  User
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import useSWR from "swr";
 
 interface BookDetailClientProps {
-  bookDetail: BookDetailData;
-  quotes: QuoteData[];
-  notes: NoteData[];
   bookId: string;
 }
 
-export default function BookDetailClient({ 
-  bookDetail, 
-  quotes, 
-  notes, 
-  bookId 
-}: BookDetailClientProps) {
+export default function BookDetailClient({ bookId }: BookDetailClientProps) {
   const router = useRouter();
   const { user } = useNextAuth();
-  const [currentQuotes, setCurrentQuotes] = useState<QuoteData[]>(quotes);
-  const [currentNotes, setCurrentNotes] = useState<NoteData[]>(notes);
+  const userId = user?.id?.toString();
+  const shouldFetch = !!userId && !!bookId;
+
+  // SWR fetchers
+  const fetcher = async <T,>(endpoint: string) => {
+    const res = await apiGet<T>(endpoint);
+    return res.data as unknown as T;
+  };
+
+  // Keys
+  const bookKey = shouldFetch ? `/api/v1/users/${userId}/books/${bookId}` : null;
+  const quotesKey = shouldFetch ? `/api/v1/quotes/users/${userId}/books/${bookId}?page=0&size=100&sort=id,desc` : null;
+  const notesKey = shouldFetch ? `/api/v1/notes/users/${userId}/books/${bookId}?page=0&size=100&sort=id,desc` : null;
+
+  const { data: bookDetail, isLoading: bookLoading } = useSWR<BookDetailData>(bookKey, fetcher);
+  const { data: quotesData, isLoading: quotesLoading, mutate: mutateQuotes } = useSWR<any>(quotesKey, fetcher);
+  const { data: notesData, isLoading: notesLoading, mutate: mutateNotes } = useSWR<any>(notesKey, fetcher);
+
+  const currentQuotes: QuoteData[] = Array.isArray(quotesData?.content) ? quotesData.content : (quotesData ?? []);
+  const currentNotes: NoteData[] = Array.isArray(notesData?.content) ? notesData.content : (notesData ?? []);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [isAddingQuote, setIsAddingQuote] = useState(false);
   const [newNote, setNewNote] = useState({ title: '', content: '', tagName: '' });
@@ -60,37 +73,33 @@ export default function BookDetailClient({
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100'}/api/v1/notes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify({
-          bookId: parseInt(bookId),
-          title: newNote.title,
-          content: newNote.content,
-          html: '',
-          isImportant: false
-        }),
+      const result = await apiPost<NoteData>(`/api/v1/notes`, {
+        bookId: parseInt(bookId),
+        title: newNote.title,
+        content: newNote.content,
+        html: '',
+        isImportant: false,
+        tagName: newNote.tagName || ''
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        const newNoteData = {
-          id: result.data.id,
-          bookId: result.data.bookId,
-          title: result.data.title,
-          content: result.data.content,
-          html: result.data.html,
-          isImportant: result.data.isImportant,
-          tagName: '',
-          tagList: []
-        };
-        setCurrentNotes([newNoteData, ...currentNotes]);
-        setNewNote({ title: '', content: '', tagName: '' });
-        setIsAddingNote(false);
-      }
+      const created = {
+        id: (result.data as any).id,
+        bookId: (result.data as any).bookId,
+        title: (result.data as any).title,
+        content: (result.data as any).content,
+        html: (result.data as any).html,
+        isImportant: (result.data as any).isImportant,
+        tagName: newNote.tagName || '',
+        tagList: [] as string[]
+      } as NoteData;
+
+      await mutateNotes(async (prev: any) => {
+        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
+        return { ...(prev || {}), content: [created, ...prevList] };
+      }, { revalidate: true });
+
+      setNewNote({ title: '', content: '', tagName: '' });
+      setIsAddingNote(false);
     } catch (error) {
       console.error('Error adding note:', error);
     }
@@ -100,25 +109,22 @@ export default function BookDetailClient({
     if (!newQuote.content.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:9377/api/v1/quotes/users/1/books/${bookId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: newQuote.content,
-          page: newQuote.page ? parseInt(newQuote.page) : 0,
-          memo: newQuote.memo || '',
-          isImportant: false
-        }),
-      });
+      const payload = {
+        content: newQuote.content,
+        page: newQuote.page ? parseInt(newQuote.page) : 0,
+        memo: newQuote.memo || '',
+        isImportant: false
+      };
+      const res = await apiPost<QuoteData>(`/api/v1/quotes/users/${userId}/books/${bookId}`, payload);
 
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentQuotes([data.data, ...currentQuotes]);
-        setNewQuote({ content: '', page: '', memo: '' });
-        setIsAddingQuote(false);
-      }
+      const created = res.data as unknown as QuoteData;
+      await mutateQuotes(async (prev: any) => {
+        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
+        return { ...(prev || {}), content: [created, ...prevList] };
+      }, { revalidate: true });
+
+      setNewQuote({ content: '', page: '', memo: '' });
+      setIsAddingQuote(false);
     } catch (error) {
       console.error('Error adding quote:', error);
     }
@@ -126,13 +132,11 @@ export default function BookDetailClient({
 
   const deleteNote = async (noteId: number) => {
     try {
-      const response = await fetch(`http://localhost:9377/api/v1/notes/${noteId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setCurrentNotes(currentNotes.filter(note => note.id !== noteId));
-      }
+      await apiDelete(`/api/v1/notes/${noteId}`);
+      await mutateNotes(async (prev: any) => {
+        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
+        return { ...(prev || {}), content: prevList.filter((n: NoteData) => n.id !== noteId) };
+      }, { revalidate: true });
     } catch (error) {
       console.error('Error deleting note:', error);
     }
@@ -140,13 +144,11 @@ export default function BookDetailClient({
 
   const deleteQuote = async (quoteId: number) => {
     try {
-      const response = await fetch(`http://localhost:9377/api/v1/quotes/${quoteId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setCurrentQuotes(currentQuotes.filter(quote => quote.id !== quoteId));
-      }
+      await apiDelete(`/api/v1/quotes/${quoteId}`);
+      await mutateQuotes(async (prev: any) => {
+        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
+        return { ...(prev || {}), content: prevList.filter((q: QuoteData) => q.id !== quoteId) };
+      }, { revalidate: true });
     } catch (error) {
       console.error('Error deleting quote:', error);
     }
@@ -154,26 +156,20 @@ export default function BookDetailClient({
 
   const updateNote = async (updatedNote: NoteData) => {
     try {
-      const response = await fetch(`http://localhost:9377/api/v1/notes/${updatedNote.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: updatedNote.title,
-          content: updatedNote.content,
-          tagName: updatedNote.tagName,
-          isImportant: updatedNote.isImportant
-        }),
+      const res = await apiPut(`/api/v1/notes/${updatedNote.id}`, {
+        title: updatedNote.title,
+        content: updatedNote.content,
+        tagName: updatedNote.tagName,
+        isImportant: updatedNote.isImportant
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentNotes(currentNotes.map(note => 
-          note.id === updatedNote.id ? data.data : note
-        ));
-        setEditingNote(null);
-      }
+      const saved = res.data as any;
+      await mutateNotes(async (prev: any) => {
+        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
+        const nextList = prevList.map((n: NoteData) => n.id === updatedNote.id ? { ...n, ...saved } : n);
+        return { ...(prev || {}), content: nextList };
+      }, { revalidate: true });
+      setEditingNote(null);
     } catch (error) {
       console.error('Error updating note:', error);
     }
@@ -231,6 +227,14 @@ export default function BookDetailClient({
             </div>
           </CardContent>
         </Card>
+      </div>
+    );
+  }
+
+  if (bookLoading || quotesLoading || notesLoading || !bookDetail) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="text-muted-foreground">불러오는 중...</div>
       </div>
     );
   }

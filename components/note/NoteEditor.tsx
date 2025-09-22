@@ -190,7 +190,7 @@ const NoteEditor = () => {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const addQuote = () => {
+  const addFavoriteQuote = () => {
     if (newQuote.trim()) {
       const quote = {
         id: favoriteQuotes.length + 1,
@@ -399,7 +399,7 @@ const NoteEditor = () => {
                             placeholder="페이지"
                             className="w-20"
                           />
-                          <Button onClick={addQuote}>
+                          <Button onClick={addFavoriteQuote}>
                             <Plus className="h-4 w-4 mr-2" />
                             추가
                           </Button>
