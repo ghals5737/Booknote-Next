@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useBooks } from "@/hooks/use-books";
+import { useNextAuth } from "@/hooks/use-next-auth";
 import {
   ArrowLeft,
   Bold,
@@ -32,10 +34,10 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Markdown } from "./Markdown";
-import { useNextAuth } from "@/hooks/use-next-auth";
 
 const NoteEditor = () => {
   const { user } = useNextAuth();
+  const { books, isLoading: booksLoading, error: booksError } = useBooks(0, 100); // 사용자 서재에서 책 목록 가져오기
   const [title, setTitle] = useState("새로운 노트");
   const [selectedBook, setSelectedBook] = useState("");
   const [currentPage, setCurrentPage] = useState("");
@@ -82,12 +84,7 @@ const NoteEditor = () => {
   const [newQuote, setNewQuote] = useState("");
   const [quotePage, setQuotePage] = useState("");
 
-  // 사용 가능한 책 목록
-  const [availableBooks] = useState([
-    { id: 1, title: "원자 습관", author: "제임스 클리어" },
-    { id: 2, title: "클린 코드", author: "로버트 마틴" },
-    { id: 3, title: "사피엔스", author: "유발 하라리" }
-  ]);
+  // 하드코딩된 책 목록 제거 - useBooks 훅에서 가져옴
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -452,18 +449,36 @@ const NoteEditor = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <Select value={selectedBook} onValueChange={setSelectedBook}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="책을 선택하세요" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableBooks.map((book) => (
-                        <SelectItem key={book.id} value={book.title}>
-                          {book.title} - {book.author}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {booksLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="text-sm text-muted-foreground">책 목록을 불러오는 중...</div>
+                    </div>
+                  ) : booksError ? (
+                    <div className="text-sm text-red-500">책 목록을 불러오는데 실패했습니다.</div>
+                  ) : books.length === 0 ? (
+                    <div className="text-sm text-muted-foreground text-center py-4">
+                      아직 서재에 책이 없습니다.<br />
+                      먼저 책을 추가해주세요.
+                    </div>
+                  ) : (
+                    <Select value={selectedBook} onValueChange={setSelectedBook}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="책을 선택하세요" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {books.map((book) => {
+                          const truncatedTitle = book.title.length > 20 
+                            ? `${book.title.substring(0, 20)}...` 
+                            : book.title;
+                          return (
+                            <SelectItem key={book.id} value={book.id.toString()}>
+                              {truncatedTitle} - {book.author}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  )}
                   
                   {selectedBook && (
                     <div>
@@ -478,10 +493,12 @@ const NoteEditor = () => {
                     </div>
                   )}
                   
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    새 책 추가
-                  </Button>
+                  {books.length === 0 && (
+                    <Button variant="outline" size="sm" className="w-full">
+                      <Plus className="h-4 w-4 mr-2" />
+                      새 책 추가
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
