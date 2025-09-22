@@ -273,7 +273,7 @@ export function NotesClient() {
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">검색 결과가 없습니다</h3>
             <p className="text-muted-foreground mb-4">다른 키워드로 검색해보세요</p>
-            <Button>
+            <Button onClick={() => router.push('/notes/create')}>
               <Plus className="h-4 w-4 mr-2" />
               새 노트 작성
             </Button>
@@ -282,7 +282,10 @@ export function NotesClient() {
       </div>
 
       {/* Floating Action Button */}
-      <button className="floating-action">
+      <button 
+        className="floating-action"
+        onClick={() => router.push('/notes/create')}
+      >
         <Plus className="h-6 w-6" />
       </button>
     </div>

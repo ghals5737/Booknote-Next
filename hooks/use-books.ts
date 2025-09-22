@@ -1,7 +1,7 @@
+import { apiDelete, apiGet, apiPost, apiPut } from '@/lib/api/client';
 import { BookApiResponse, UserBookResponsePage } from '@/lib/types/book/book';
 import useSWR, { mutate } from 'swr';
 import { useNextAuth } from './use-next-auth';
-import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api/client';
 
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
 
@@ -69,13 +69,20 @@ export function useAddBook() {
     publisher: string;
     pubdate: string;
   }) => {
+    console.log('[useAddBook] addBook called with user:', user);
+    console.log('[useAddBook] bookData:', bookData);
+    
     if (!user?.id) {
+      console.error('[useAddBook] No user ID found:', user);
       throw new Error('사용자 정보가 없습니다.');
     }
 
     try {
       // 1단계: 책 생성 (API 클라이언트 사용)
-      const createResult = await apiPost<BookApiResponse['data']>('/api/v1/books', bookData);
+      console.log('[useAddBook] Step 1: Creating book...');
+      const createResult = await apiPost<BookApiResponse['data']>('/api/v1/user-books', bookData);
+      console.log('[useAddBook] Book created:', createResult);
+      
       const bookId = createResult.data.id;
 
       if (!bookId) {
@@ -83,17 +90,20 @@ export function useAddBook() {
       }
 
       // 2단계: 사용자 서재에 추가 (API 클라이언트 사용)
+      console.log('[useAddBook] Step 2: Linking user to book...', { userId: user.id, bookId });
       await apiPost('/api/v1/user-books', {
         userId: user.id,
         bookId: bookId
       });
+      console.log('[useAddBook] User-book link created successfully');
 
       // 책 목록 캐시 무효화하여 새로고침
+      console.log('[useAddBook] Step 3: Invalidating cache...');
       await mutate(`/api/v1/user/books?page=0&size=10`);
       
       return createResult.data;
     } catch (error) {
-      console.error('Error adding book:', error);
+      console.error('[useAddBook] Error adding book:', error);
       throw error;
     }
   };

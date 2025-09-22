@@ -50,7 +50,12 @@ export function BooksClient() {
   const { searchBooks } = useSearchBooks();
 
   const handleBookClick = (book: UserBookResponse) => {
-    router.push(`/books/detail/${book.id}`);
+    console.log('상세보기 버튼 클릭됨:', book);
+    try {
+      router.push(`/books/detail/${book.id}`);
+    } catch (error) {
+      console.error('네비게이션 오류:', error);
+    }
   };
 
   const handleDeleteBook = async (bookId: number, bookTitle: string) => {
@@ -437,8 +442,14 @@ export function BooksClient() {
                     
                     <Button 
                       size="sm" 
-                      className="w-full bg-gradient-primary hover:opacity-90"
-                      onClick={() => handleBookClick(book)}
+                      className="w-full bg-gradient-primary hover:opacity-90 relative z-10"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('버튼 클릭 이벤트 발생:', book.id, book.title);
+                        alert(`상세보기 클릭: ${book.title}`);
+                        handleBookClick(book);
+                      }}
                     >
                       상세보기
                     </Button>
@@ -515,8 +526,14 @@ export function BooksClient() {
                       )}
                       <Button 
                         size="sm"
-                        className="bg-gradient-primary hover:opacity-90 mt-2"
-                        onClick={() => handleBookClick(book)}
+                        className="bg-gradient-primary hover:opacity-90 mt-2 relative z-10"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          console.log('리스트 뷰 버튼 클릭 이벤트 발생:', book.id, book.title);
+                          alert(`상세보기 클릭: ${book.title}`);
+                          handleBookClick(book);
+                        }}
                       >
                         상세보기
                       </Button>

@@ -1,6 +1,6 @@
 // API 클라이언트 유틸리티
 
-import { getAuthHeader, getStoredTokens, isTokenExpired } from './token';
+import { getAuthHeader, getStoredTokens } from './token';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
 
@@ -48,6 +48,7 @@ export const apiRequest = async <T>(
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> => {
   const url = `${API_BASE_URL}${endpoint}`;
+  console.log('[apiRequest] Making request to:', url);
   
   // 기본 헤더 설정
   const headers: HeadersInit = {
@@ -60,16 +61,24 @@ export const apiRequest = async <T>(
     const authHeader = getAuthHeader();
     if (authHeader) {
       headers['Authorization'] = authHeader;
+      console.log('[apiRequest] Added auth header');
+    } else {
+      console.warn('[apiRequest] No auth header found');
     }
   }
 
+  console.log('[apiRequest] Request options:', { method: options.method, headers });
+  
   let response = await fetch(url, {
     ...options,
     headers,
   });
 
+  console.log('[apiRequest] Response status:', response.status);
+
   // 401 에러인 경우 토큰 갱신 시도
   if (response.status === 401 && !endpoint.includes('/auth/')) {
+    console.log('[apiRequest] 401 error, attempting token refresh...');
     const refreshed = await refreshToken();
     if (refreshed) {
       // 토큰 갱신 성공 시 재시도
@@ -82,15 +91,19 @@ export const apiRequest = async <T>(
         ...options,
         headers,
       });
+      console.log('[apiRequest] Retry response status:', response.status);
     }
   }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    console.error('[apiRequest] Request failed:', response.status, errorData);
     throw new Error(errorData.message || `API 요청 실패: ${response.status}`);
   }
 
-  return response.json();
+  const result = await response.json();
+  console.log('[apiRequest] Request successful:', result);
+  return result;
 };
 
 // GET 요청
@@ -100,6 +113,7 @@ export const apiGet = <T>(endpoint: string): Promise<ApiResponse<T>> => {
 
 // POST 요청
 export const apiPost = <T>(endpoint: string, data?: any): Promise<ApiResponse<T>> => {
+  console.log('[apiPost] Making POST request to:', endpoint, 'with data:', data);
   return apiRequest<T>(endpoint, {
     method: 'POST',
     body: data ? JSON.stringify(data) : undefined,

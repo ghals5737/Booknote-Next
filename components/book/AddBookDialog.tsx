@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { useAddBook, useAddUserBook, useSearchBooks } from "@/hooks/use-books"
+import { useAddBook, useSearchBooks } from "@/hooks/use-books"
 import { ArrowLeft, BookOpen, Calendar, Loader2, Plus, Search } from "lucide-react"
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 
 interface AddBookDialogProps {
   open: boolean
@@ -31,7 +31,7 @@ interface BookSearchResult {
 export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialogProps) {
   const [title, setTitle] = useState("")
   const [author, setAuthor] = useState("")
-  const [category, setCategory] = useState("")
+  const [category, setCategory] = useState("기타")
   const [progress, setProgress] = useState(0)
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
@@ -81,7 +81,6 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
   }
 
   const { addBook } = useAddBook()
-  const { addUserBook } = useAddUserBook()
   const { searchBooks } = useSearchBooks()
   const categories = ["자기계발", "개발", "역사", "소설", "에세이", "경제", "과학", "철학", "기타"]
 
@@ -197,15 +196,24 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('[AddBookDialog] handleSubmit fired - form submitted!')
 
-    if (!title.trim() || !author.trim() || !category) return
+    if (!title.trim() || !author.trim() || !category) {
+      console.log('[AddBookDialog] Validation failed:', { title, author, category })
+      alert('책 제목, 저자, 카테고리는 필수 입력 항목입니다.')
+      return
+    }
 
     setIsSubmitting(true)
     try {
-      console.log('[AddBookDialog] handleSubmit fired')
+      console.log('[AddBookDialog] Starting book creation process...')
+      console.log('[AddBookDialog] form data:', { title, author, category, description, isbn, publisher })
+      
       // Calculate progress from pages if provided
       const calculatedProgress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : progress
 
+      // useAddBook 훅이 책 생성과 사용자-책 연결을 모두 처리합니다
+      console.log('[AddBookDialog] calling addBook...')
       const created = await addBook({
         title: title.trim(),
         author: author.trim(),
@@ -219,20 +227,6 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
         pubdate: pubdate || new Date().toISOString().split('T')[0],
       })
       console.log('[AddBookDialog] addBook ok, created id=', created?.id)
-
-      // 사용자-책 연결 (요청: POST /api/v1/user-books, body: { userId, bookId })
-      const createdBookId = (created && (created.id as number)) || null
-      if (createdBookId) {
-        try {
-          console.log('[AddBookDialog] addUserBook start', { userId: 1, bookId: createdBookId })
-          await addUserBook({ userId: 1, bookId: createdBookId })
-          console.log('[AddBookDialog] addUserBook ok')
-        } catch (linkErr) {
-          console.error('사용자-책 연결 실패:', linkErr)
-          // 링크 실패해도 책 생성 자체는 성공했으므로 알림만 표시
-          alert('책은 추가되었지만 내 서재 연결에 실패했습니다.')
-        }
-      }
 
       // Reset form
       resetForm()
@@ -647,7 +641,6 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
                   </Button>
                   <Button 
                     type="submit" 
-                    onClick={() => console.log('[AddBookDialog] submit button clicked')}
                     disabled={isSubmitting}
                     className="button-primary rounded-lg"
                   >
