@@ -1,5 +1,6 @@
 "use client";
 
+import { Markdown } from "@/components/note/Markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -226,9 +227,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm max-w-none">
-              <div className="whitespace-pre-wrap text-foreground">
-                {viewingNote.content}
-              </div>
+              <Markdown content={viewingNote.content} />
             </div>
             <div className="mt-4 flex gap-2">
               <Button
