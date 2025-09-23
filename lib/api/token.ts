@@ -74,14 +74,33 @@ export const getAuthHeader = (): string | null => {
 // 토큰에서 사용자 ID 추출 (JWT 파싱)
 export const getUserIdFromToken = (): string | null => {
   const tokens = getStoredTokens();
-  if (!tokens?.accessToken) return null;
+  console.log('[getUserIdFromToken] Stored tokens:', tokens);
+  
+  if (!tokens?.accessToken) {
+    console.log('[getUserIdFromToken] No access token found');
+    return null;
+  }
   
   try {
     // JWT 토큰 파싱 (Base64 디코딩)
-    const payload = JSON.parse(atob(tokens.accessToken.split('.')[1]));
-    return payload.uid?.toString() || payload.sub;
+    const tokenParts = tokens.accessToken.split('.');
+    console.log('[getUserIdFromToken] Token parts count:', tokenParts.length);
+    
+    if (tokenParts.length !== 3) {
+      console.error('[getUserIdFromToken] Invalid JWT format');
+      return null;
+    }
+    
+    const payload = JSON.parse(atob(tokenParts[1]));
+    console.log('[getUserIdFromToken] JWT payload:', payload);
+    console.log('[getUserIdFromToken] UID from payload:', payload.uid);
+    
+    // 백엔드에서 uid 클레임으로 사용자 ID를 저장함
+    const userId = payload.uid?.toString() || null;
+    console.log('[getUserIdFromToken] Extracted user ID:', userId);
+    return userId;
   } catch (error) {
-    console.error('토큰 파싱 실패:', error);
+    console.error('[getUserIdFromToken] 토큰 파싱 실패:', error);
     return null;
   }
 };

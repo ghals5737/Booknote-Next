@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import moment from "moment";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserBookResponse } from "../../lib/types/book/book";
 
 export function BooksClient() {  
@@ -43,6 +43,15 @@ export function BooksClient() {
   const [selectedBookForAdd, setSelectedBookForAdd] = useState<any>(null);
 
   const { isAuthenticated, isLoading: authLoading } = useNextAuth();
+  
+  // 디버깅을 위한 로그 (클라이언트에서만 실행)
+  useEffect(() => {
+    console.log('[BooksClient] Auth state:', { isAuthenticated, authLoading });
+    console.log('[BooksClient] LocalStorage tokens:', {
+      accessToken: localStorage.getItem('access_token'),
+      refreshToken: localStorage.getItem('refresh_token')
+    });
+  }, [isAuthenticated, authLoading]);
 
   // SWR 훅 사용
   const { books, pagination, isLoading, error, mutateBooks } = useBooks(0, 10);
@@ -127,44 +136,69 @@ export function BooksClient() {
   // 카테고리 목록
   const categories = ['all', ...Array.from(new Set(books.map(book => book.category)))];
 
+  // 인증 상태 확인 및 처리
   if (!authLoading && !isAuthenticated) {
-    return (
-      <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div className="animate-slide-up">
-            <h1 className="text-3xl font-bold text-foreground">내 서재</h1>
-            <p className="text-cool mt-1">로그인이 필요한 서비스입니다</p>
+    // 토큰이 있는지 확인 (클라이언트에서만)
+    const hasToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    
+    if (hasToken) {
+      // 토큰이 있지만 인증이 안된 경우 - 토큰이 만료되었을 수 있음
+      return (
+        <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div className="animate-slide-up">
+              <h1 className="text-3xl font-bold text-foreground">내 서재</h1>
+              <p className="text-cool mt-1">토큰이 만료되었습니다</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-center py-20">
+            <div className="flex flex-col items-center gap-3 text-cool">
+              <AlertCircle className="h-12 w-12 text-orange-500" />
+              <span>토큰이 만료되었습니다. 다시 로그인해주세요</span>
+              <div className="flex gap-2 mt-4">
+                <Button onClick={() => router.push('/auth')}>
+                  다시 로그인
+                </Button>
+                <Button 
+                  onClick={() => {
+                    // 토큰 삭제 후 새로고침 (클라이언트에서만)
+                    if (typeof window !== 'undefined') {
+                      localStorage.removeItem('access_token');
+                      localStorage.removeItem('refresh_token');
+                      window.location.reload();
+                    }
+                  }}
+                  variant="outline"
+                >
+                  토큰 삭제
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="flex flex-col items-center gap-3 text-cool">
-            <LogIn className="h-12 w-12" />
-            <span>로그인 후 내 서재를 이용할 수 있어요</span>
-            <div className="flex gap-2 mt-4">
+      );
+    } else {
+      // 토큰이 없는 경우
+      return (
+        <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div className="animate-slide-up">
+              <h1 className="text-3xl font-bold text-foreground">내 서재</h1>
+              <p className="text-cool mt-1">로그인이 필요한 서비스입니다</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-center py-20">
+            <div className="flex flex-col items-center gap-3 text-cool">
+              <LogIn className="h-12 w-12" />
+              <span>로그인 후 내 서재를 이용할 수 있어요</span>
               <Button onClick={() => router.push('/auth')} className="mt-4">
                 로그인하러 가기
-              </Button>
-              <Button 
-                onClick={() => {
-                  // 토큰 확인 및 재로그인 안내
-                  const token = localStorage.getItem('access_token');
-                  if (!token) {
-                    alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
-                    router.push('/auth');
-                  } else {
-                    // 토큰이 있으면 페이지 새로고침
-                    window.location.reload();
-                  }
-                }}
-                variant="outline"
-              >
-                토큰 확인
               </Button>
             </div>
           </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   if (isLoading) {
@@ -212,13 +246,15 @@ export function BooksClient() {
               </Button>
               <Button 
                 onClick={() => {
-                  // 토큰 확인 및 재로그인 안내
-                  const token = localStorage.getItem('access_token');
-                  if (!token) {
-                    alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
-                    router.push('/auth');
-                  } else {
-                    mutateBooks();
+                  // 토큰 확인 및 재로그인 안내 (클라이언트에서만)
+                  if (typeof window !== 'undefined') {
+                    const token = localStorage.getItem('access_token');
+                    if (!token) {
+                      alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+                      router.push('/auth');
+                    } else {
+                      mutateBooks();
+                    }
                   }
                 }}
                 variant="default"

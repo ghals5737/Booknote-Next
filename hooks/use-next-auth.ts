@@ -135,21 +135,27 @@ export function useNextAuth() {
 
   // 사용자 ID를 토큰에서 가져오는 함수
   const getUserId = (): string | null => {
-    // 토큰에서 사용자 ID 추출
+    // 토큰에서 직접 사용자 ID 추출 (백엔드에서 uid 클레임으로 저장)
     const tokenUserId = getUserIdFromToken();
-    if (tokenUserId) return tokenUserId;
+    if (tokenUserId) {
+      console.log('[getUserId] Token에서 사용자 ID 추출:', tokenUserId);
+      return tokenUserId;
+    }
     
-    // 토큰이 없거나 만료된 경우 기존 방식 사용
-    const userId = storedUserId ?? session?.user?.id;
-    if (!userId) return null;
+    // 토큰이 없거나 만료된 경우 세션에서 이메일 사용하여 해시 생성
+    const email = session?.user?.email || storedUserId;
+    if (!email) return null;
     
-    // 이미 숫자인 경우 그대로 반환
-    if (/^\d+$/.test(userId)) return userId;
-    
-    // 이메일인 경우 해시를 생성하여 숫자로 변환
+    console.log('[getUserId] 세션에서 이메일 사용:', email);
+    return emailToUserId(email);
+  };
+
+  // 이메일을 숫자 ID로 변환하는 함수 (백엔드와 동일한 방식)
+  const emailToUserId = (email: string): string => {
+    // 이메일을 해시하여 숫자 ID로 변환
     let hash = 0;
-    for (let i = 0; i < userId.length; i++) {
-      const char = userId.charCodeAt(i);
+    for (let i = 0; i < email.length; i++) {
+      const char = email.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // 32bit 정수로 변환
     }
@@ -160,12 +166,22 @@ export function useNextAuth() {
   const isTokenAuthenticated = (): boolean => {
     if (!isClient) return false;
     const tokens = getStoredTokens();
-    return !!(tokens?.accessToken && !isTokenExpired());
+    const isExpired = isTokenExpired();
+    console.log('[useNextAuth] Token check:', { 
+      hasToken: !!tokens?.accessToken, 
+      isExpired,
+      tokenValue: tokens?.accessToken?.substring(0, 20) + '...'
+    });
+    return !!(tokens?.accessToken && !isExpired);
   };
+
+  const userId = getUserId();
+  console.log('[useNextAuth] Final user ID:', userId);
+  console.log('[useNextAuth] Session user:', session?.user);
 
   return {
     user: session?.user
-      ? { ...session.user, id: getUserId() }
+      ? { ...session.user, id: userId }
       : null,
     isLoading: status === "loading" || !isInitialized,
     isAuthenticated: status === "authenticated" || isTokenAuthenticated(),

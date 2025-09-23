@@ -1,26 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// 토큰 기반 인증 확인 함수
-function isTokenAuthenticated(request: NextRequest): boolean {
-  try {
-    const accessToken = request.cookies.get('access_token')?.value || 
-                       request.headers.get('authorization')?.replace('Bearer ', '');
-    
-    if (!accessToken) return false;
-    
-    // JWT 토큰 파싱하여 만료 확인
-    const payload = JSON.parse(atob(accessToken.split('.')[1]));
-    const exp = payload.exp * 1000;
-    return Date.now() < exp;
-  } catch {
-    return false;
-  }
-}
-
-export default function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // API 경로는 NextAuth 미들웨어 적용하지 않음
+  // API 경로는 통과
   if (pathname.startsWith('/api/')) {
     return NextResponse.next();
   }
@@ -32,23 +15,12 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  const isLoggedIn = !!request.cookies.get('next-auth.session-token')?.value ||
-                     !!request.cookies.get('__Secure-next-auth.session-token')?.value ||
-                     isTokenAuthenticated(request);
-  
-  const isAuthPage = pathname.startsWith('/auth');
-  const isSignupPage = pathname.startsWith('/signup');
-  
-  // 로그인 상태에서 인증 페이지 접근 시 리다이렉트
-  if (isLoggedIn && (isAuthPage || isSignupPage)) {
-    return NextResponse.redirect(new URL('/books', request.url));
+  // 인증 페이지는 통과
+  if (pathname.startsWith('/auth') || pathname.startsWith('/signup')) {
+    return NextResponse.next();
   }
   
-  // 비로그인 상태에서 보호된 페이지 접근 시 로그인 페이지로
-  if (!isLoggedIn && !(isAuthPage || isSignupPage)) {
-    return NextResponse.redirect(new URL('/auth', request.url));
-  }
-  
+  // 다른 모든 페이지는 통과 (클라이언트에서 인증 처리)
   return NextResponse.next();
 }
 
