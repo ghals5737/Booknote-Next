@@ -63,11 +63,9 @@ export default function RootLayout({
         <TokenCleanupWrapper>
           <NextAuthProvider>
             <SWRProvider>
-              {/* <BookProvider> */}
                 <PageWrapper>
                   {children}
                 </PageWrapper>
-              {/* </BookProvider> */}
             </SWRProvider>
           </NextAuthProvider>
         </TokenCleanupWrapper>

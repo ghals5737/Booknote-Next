@@ -32,6 +32,10 @@ import { useEffect, useState } from "react";
 import { UserBookResponse } from "../../lib/types/book/book";
 
 export function BooksClient() {  
+  // SWR 훅 사용
+  const { books, pagination, isLoading, error, mutateBooks } = useBooks(0, 10);
+  const { deleteBook } = useDeleteBook();
+  const { searchBooks } = useSearchBooks();
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -43,6 +47,8 @@ export function BooksClient() {
   const [selectedBookForAdd, setSelectedBookForAdd] = useState<any>(null);
 
   const { isAuthenticated, isLoading: authLoading } = useNextAuth();
+
+  console.log('[BooksClient] Books:', books);
   
   // 디버깅을 위한 로그 (클라이언트에서만 실행)
   useEffect(() => {
@@ -51,12 +57,10 @@ export function BooksClient() {
       accessToken: localStorage.getItem('access_token'),
       refreshToken: localStorage.getItem('refresh_token')
     });
+   
   }, [isAuthenticated, authLoading]);
 
-  // SWR 훅 사용
-  const { books, pagination, isLoading, error, mutateBooks } = useBooks(0, 10);
-  const { deleteBook } = useDeleteBook();
-  const { searchBooks } = useSearchBooks();
+  
 
   const handleBookClick = (book: UserBookResponse) => {
     console.log('상세보기 버튼 클릭됨:', book);
@@ -431,7 +435,7 @@ export function BooksClient() {
         {/* Books Grid/List */}
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredBooks.map((book) => (
+            {books.map((book) => (
               <Card key={book.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
                 <CardHeader className="pb-3">
                   {book.coverImage && (
@@ -528,7 +532,7 @@ export function BooksClient() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredBooks.map((book) => (
+            {books.map((book) => (
               <Card key={book.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
@@ -612,7 +616,7 @@ export function BooksClient() {
           </div>
         )}
 
-        {filteredBooks.length === 0 && (
+        {books.length === 0 && (
           <div className="text-center py-12">
             <Book className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">검색 결과가 없습니다</h3>

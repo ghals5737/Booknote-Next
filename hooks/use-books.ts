@@ -23,7 +23,9 @@ const fetcher = async (url: string) => {
   try {
     console.log('[SWR Fetcher] Fetching from:', url);
     const response = await apiGet<UserBookResponsePage>(url);
+    console.log("=================================================")
     console.log('[SWR Fetcher] Response:', response);
+    console.log("=================================================")
     return response.data;
   } catch (error) {
     console.error('[SWR Fetcher] Error:', error);

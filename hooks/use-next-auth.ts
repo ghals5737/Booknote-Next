@@ -180,9 +180,7 @@ export function useNextAuth() {
   console.log('[useNextAuth] Session user:', session?.user);
 
   return {
-    user: session?.user
-      ? { ...session.user, id: userId }
-      : null,
+    user: { id: userId, email: storedUserId },
     isLoading: status === "loading" || !isInitialized,
     isAuthenticated: status === "authenticated" || isTokenAuthenticated(),
     login,

@@ -43,7 +43,7 @@ export async function GET(
       }
     }
 
-    const upstream = await fetch(`${PUBLIC_API_BASE_URL}/api/v1/users/${id}/books?page=${page}&size=${size}` , {
+    const upstream = await fetch(`${PUBLIC_API_BASE_URL}/api/v1/user/books?page=${page}&size=${size}` , {
       signal: controller.signal,
     }).finally(() => clearTimeout(timeoutId));
     if (!upstream.ok) {
