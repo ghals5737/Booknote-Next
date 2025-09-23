@@ -138,7 +138,7 @@ export function useNextAuth() {
     // 토큰에서 직접 사용자 ID 추출 (백엔드에서 uid 클레임으로 저장)
     const tokenUserId = getUserIdFromToken();
     if (tokenUserId) {
-      console.log('[getUserId] Token에서 사용자 ID 추출:', tokenUserId);
+      //console.log('[getUserId] Token에서 사용자 ID 추출:', tokenUserId);
       return tokenUserId;
     }
     
@@ -146,7 +146,7 @@ export function useNextAuth() {
     const email = session?.user?.email || storedUserId;
     if (!email) return null;
     
-    console.log('[getUserId] 세션에서 이메일 사용:', email);
+    //console.log('[getUserId] 세션에서 이메일 사용:', email);
     return emailToUserId(email);
   };
 
@@ -167,17 +167,15 @@ export function useNextAuth() {
     if (!isClient) return false;
     const tokens = getStoredTokens();
     const isExpired = isTokenExpired();
-    console.log('[useNextAuth] Token check:', { 
-      hasToken: !!tokens?.accessToken, 
-      isExpired,
-      tokenValue: tokens?.accessToken?.substring(0, 20) + '...'
-    });
+    // console.log('[useNextAuth] Token check:', { 
+    //   hasToken: !!tokens?.accessToken, 
+    //   isExpired,
+    //   tokenValue: tokens?.accessToken?.substring(0, 20) + '...'
+    // });
     return !!(tokens?.accessToken && !isExpired);
   };
 
   const userId = getUserId();
-  console.log('[useNextAuth] Final user ID:', userId);
-  console.log('[useNextAuth] Session user:', session?.user);
 
   return {
     user: { id: userId, email: storedUserId },

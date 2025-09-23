@@ -51,21 +51,31 @@ export function useBooks(page: number = 0, size: number = 10) {
   const { user, isLoading: authLoading, isAuthenticated } = useNextAuth();
   const userId = user?.id;
 
+  // 디버깅 로그 추가
+  console.log('=== useBooks 훅 디버깅 ===');
+  console.log('[useBooks] user:', user);
+  console.log('[useBooks] userId:', userId);
+  console.log('[useBooks] isAuthenticated:', isAuthenticated);
+  console.log('[useBooks] authLoading:', authLoading);
+
   // 인증 상태 확인
   const shouldFetch = isAuthenticated && !!userId;
+  console.log('[useBooks] shouldFetch:', shouldFetch);
   
   // SWR 키 생성 (인증되지 않은 경우 null로 설정하여 요청 방지)
   const key = shouldFetch ? `/api/v1/user/books?page=${page}&size=${size}` : null;
+  console.log('[useBooks] SWR key:', key);
 
   const { data, error, isLoading, mutate: mutateBooks } = useSWR<UserBookResponsePage>(
-    key,
+    key, // key가 null이면 자동으로 요청하지 않음
     fetcher,
     {
       ...defaultSWRConfig,
-      // 인증되지 않은 경우 요청하지 않음
-      isPaused: () => !shouldFetch,
+      // isPaused 제거 - key가 null일 때 자동으로 중단됨
     }
   );
+
+  console.log('[useBooks] SWR result:', { data, error, isLoading });
 
   // 에러 처리 개선
   const handleError = (error: any) => {
@@ -77,7 +87,7 @@ export function useBooks(page: number = 0, size: number = 10) {
     return error;
   };
 
-  return {
+  const result = {
     books: data?.content || [],
     pagination: data ? {
       pageNumber: data.pageable.pageNumber,
@@ -94,6 +104,11 @@ export function useBooks(page: number = 0, size: number = 10) {
     isAuthenticated,
     userId,
   };
+
+  console.log('[useBooks] Final result:', result);
+  console.log('=== useBooks 훅 디버깅 끝 ===');
+  
+  return result;
 }
 
 // 통합된 책 추가 훅 (책 생성 + 사용자 서재에 추가)

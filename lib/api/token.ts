@@ -74,30 +74,30 @@ export const getAuthHeader = (): string | null => {
 // 토큰에서 사용자 ID 추출 (JWT 파싱)
 export const getUserIdFromToken = (): string | null => {
   const tokens = getStoredTokens();
-  console.log('[getUserIdFromToken] Stored tokens:', tokens);
+  //console.log('[getUserIdFromToken] Stored tokens:', tokens);
   
   if (!tokens?.accessToken) {
-    console.log('[getUserIdFromToken] No access token found');
+    //console.log('[getUserIdFromToken] No access token found');
     return null;
   }
   
   try {
     // JWT 토큰 파싱 (Base64 디코딩)
     const tokenParts = tokens.accessToken.split('.');
-    console.log('[getUserIdFromToken] Token parts count:', tokenParts.length);
+   // console.log('[getUserIdFromToken] Token parts count:', tokenParts.length);
     
     if (tokenParts.length !== 3) {
-      console.error('[getUserIdFromToken] Invalid JWT format');
+      //console.error('[getUserIdFromToken] Invalid JWT format');
       return null;
     }
     
     const payload = JSON.parse(atob(tokenParts[1]));
-    console.log('[getUserIdFromToken] JWT payload:', payload);
-    console.log('[getUserIdFromToken] UID from payload:', payload.uid);
+    //console.log('[getUserIdFromToken] JWT payload:', payload);
+    //console.log('[getUserIdFromToken] UID from payload:', payload.uid);
     
     // 백엔드에서 uid 클레임으로 사용자 ID를 저장함
     const userId = payload.uid?.toString() || null;
-    console.log('[getUserIdFromToken] Extracted user ID:', userId);
+    //console.log('[getUserIdFromToken] Extracted user ID:', userId);
     return userId;
   } catch (error) {
     console.error('[getUserIdFromToken] 토큰 파싱 실패:', error);
@@ -130,7 +130,7 @@ export const cleanupDuplicateTokens = (): void => {
     const camelCaseRefreshToken = localStorage.getItem('refreshToken');
     
     if (camelCaseAccessToken && camelCaseRefreshToken) {
-      console.log('중복 토큰 발견 - 통일된 형식으로 마이그레이션 중...');
+      //console.log('중복 토큰 발견 - 통일된 형식으로 마이그레이션 중...');
       
       // 언더스코어 형식으로 저장
       localStorage.setItem('access_token', camelCaseAccessToken);
