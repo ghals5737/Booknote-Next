@@ -51,10 +51,25 @@ export function BooksClient() {
 
   const handleBookClick = (book: UserBookResponse) => {
     console.log('상세보기 버튼 클릭됨:', book);
+    console.log('이동할 경로:', `/books/detail/${book.id}`);
+    
     try {
+      // Next.js 라우터 사용
       router.push(`/books/detail/${book.id}`);
+      console.log('라우터 이동 시도 완료');
+      
+      // 백업 방법: window.location 사용
+      setTimeout(() => {
+        if (window.location.pathname === '/books') {
+          console.log('라우터 이동 실패, window.location 사용');
+          window.location.href = `/books/detail/${book.id}`;
+        }
+      }, 100);
+      
     } catch (error) {
       console.error('네비게이션 오류:', error);
+      // 오류 발생 시 window.location으로 강제 이동
+      window.location.href = `/books/detail/${book.id}`;
     }
   };
 
@@ -125,9 +140,27 @@ export function BooksClient() {
           <div className="flex flex-col items-center gap-3 text-cool">
             <LogIn className="h-12 w-12" />
             <span>로그인 후 내 서재를 이용할 수 있어요</span>
-            <Button onClick={() => router.push('/auth')} className="mt-4">
-              로그인하러 가기
-            </Button>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={() => router.push('/auth')} className="mt-4">
+                로그인하러 가기
+              </Button>
+              <Button 
+                onClick={() => {
+                  // 토큰 확인 및 재로그인 안내
+                  const token = localStorage.getItem('access_token');
+                  if (!token) {
+                    alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
+                    router.push('/auth');
+                  } else {
+                    // 토큰이 있으면 페이지 새로고침
+                    window.location.reload();
+                  }
+                }}
+                variant="outline"
+              >
+                토큰 확인
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -446,8 +479,7 @@ export function BooksClient() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log('버튼 클릭 이벤트 발생:', book.id, book.title);
-                        alert(`상세보기 클릭: ${book.title}`);
+                        console.log('그리드 뷰 버튼 클릭 이벤트 발생:', book.id, book.title);
                         handleBookClick(book);
                       }}
                     >
@@ -531,7 +563,6 @@ export function BooksClient() {
                           e.preventDefault();
                           e.stopPropagation();
                           console.log('리스트 뷰 버튼 클릭 이벤트 발생:', book.id, book.title);
-                          alert(`상세보기 클릭: ${book.title}`);
                           handleBookClick(book);
                         }}
                       >

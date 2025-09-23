@@ -1,5 +1,6 @@
 "use client"
 
+import { apiGet } from '@/lib/api/client'
 import { ReactNode } from 'react'
 import { SWRConfig } from 'swr'
 
@@ -11,7 +12,10 @@ export function SWRProvider({ children }: SWRProviderProps) {
   return (
     <SWRConfig
       value={{
-        fetcher: (url: string) => fetch(url).then((res) => res.json()),
+        fetcher: async (url: string) => {
+          const response = await apiGet(url);
+          return response.data;
+        },
         revalidateOnFocus: false,
         revalidateOnReconnect: true,
         dedupingInterval: 2000,

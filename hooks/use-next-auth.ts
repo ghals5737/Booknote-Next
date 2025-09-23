@@ -1,8 +1,8 @@
 "use client"
 
+import { clearTokens, getStoredTokens, getUserIdFromToken, isTokenExpired, storeTokens } from "@/lib/api/token"
 import { signIn, signOut, useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
-import { getStoredTokens, storeTokens, clearTokens, getUserIdFromToken, isTokenExpired } from "@/lib/api/token"
 
 export function useNextAuth() {
   const { data: session, status } = useSession()
@@ -43,24 +43,12 @@ export function useNextAuth() {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100'}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || '로그인에 실패했습니다.');
-      }
-
-      const result = await response.json();
+      const { apiPost } = await import('@/lib/api/client');
+      const result = await apiPost('/api/v1/auth/login', { email, password });
       const tokens = result.data;
       
       // 토큰 저장
-      storeTokens(tokens);
+      storeTokens(tokens as any);
       
       // NextAuth 세션도 업데이트 (선택사항)
       await signIn("credentials", {
@@ -94,40 +82,15 @@ export function useNextAuth() {
     try {
       console.log('회원가입 요청 시작:', { email, name });
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100'}/api/v1/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name, password }),
-      });
+      const { apiPost } = await import('@/lib/api/client');
+      const result = await apiPost('/api/v1/auth/signup', { email, name, password });
 
-      console.log('회원가입 응답 상태:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('회원가입 오류 응답:', errorData);
-        
-        // 더 구체적인 오류 메시지 제공
-        let errorMessage = '회원가입에 실패했습니다.';
-        if (response.status === 400) {
-          errorMessage = errorData.message || '입력 정보를 확인해주세요.';
-        } else if (response.status === 409) {
-          errorMessage = '이미 존재하는 이메일입니다.';
-        } else if (response.status === 500) {
-          errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-        } else if (response.status === 0) {
-          errorMessage = '서버에 연결할 수 없습니다. 서버가 실행 중인지 확인해주세요.';
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
       console.log('회원가입 성공:', result);
       
       const tokens = result.data;
       
       // 토큰 저장
-      storeTokens(tokens);
+      storeTokens(tokens as any);
 
       // 가입 완료 후 서재 페이지로 이동
       window.location.href = '/books';
@@ -143,12 +106,11 @@ export function useNextAuth() {
       const tokens = getStoredTokens();
       if (tokens?.accessToken) {
         try {
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100'}/api/v1/auth/logout`, {
-            method: 'POST',
+          const { apiPost } = await import('@/lib/api/client');
+          await apiPost('/api/v1/auth/logout', {}, {
             headers: {
               'Authorization': `Bearer ${tokens.accessToken}`,
-              'Content-Type': 'application/json',
-            },
+            }
           });
         } catch (error) {
           console.error('백엔드 로그아웃 요청 실패:', error);

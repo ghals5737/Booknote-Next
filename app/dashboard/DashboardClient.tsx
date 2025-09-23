@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { useNextAuth } from "@/hooks/use-next-auth";
 import {
   AlertCircle,
   Book,
@@ -32,6 +33,7 @@ interface Book {
 
 export function DashboardClient() {
   const router = useRouter()
+  const { user } = useNextAuth()
   const [books] = useState<Book[]>([])
   const [recentNotes, setRecentNotes] = useState<Array<{
     id: number
@@ -52,8 +54,9 @@ export function DashboardClient() {
     revalidateOnFocus: false,
   })
 
-  // 노트 데이터 가져오기
-  const { data: notes, error: notesError, mutate: mutateNotes } = useSWR('/api/v1/notes/users/1', () => Promise.resolve([]), {
+  // 노트 데이터 가져오기 - auth에서 사용자 ID 가져오기
+  const notesKey = user?.id ? `/api/v1/notes/users/${user.id}` : null
+  const { data: notes, error: notesError, mutate: mutateNotes } = useSWR(notesKey, () => Promise.resolve([]), {
     revalidateOnFocus: false,
   })
 

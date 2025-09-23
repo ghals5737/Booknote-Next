@@ -120,8 +120,8 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
     setIsAutoCompleting(true)
     try {
       // 자동완성 API 엔드포인트 호출 (페이지네이션 지원)
-      const response = await fetch(`/api/v1/search/books/autocomplete?query=${encodeURIComponent(query)}&page=${page}&size=10`)
-      const data = await response.json()
+      const { apiGet } = await import('@/lib/api/client');
+      const data = await apiGet(`/api/v1/search/books/autocomplete?query=${encodeURIComponent(query)}&page=${page}&size=10`);
       
       if (data.success && Array.isArray(data.data)) {
         if (resetResults) {
@@ -130,16 +130,16 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
           setAutocompleteResults(prev => {
             // 중복 제거 (ISBN 기준)
             const existingIsbns = new Set(prev.map(book => book.isbn))
-            const newBooks = data.data.filter((book: any) => !existingIsbns.has(book.isbn))
+            const newBooks = (data.data as any[]).filter((book: any) => !existingIsbns.has(book.isbn))
             return [...prev, ...newBooks]
           })
         }
         setShowAutocomplete(true)
         
         // 페이지네이션 정보 업데이트
-        if (data.pagination) {
-          setAutocompletePage(data.pagination.page)
-          setHasMoreAutocomplete(data.pagination.hasMore)
+        if ((data as any).pagination) {
+          setAutocompletePage((data as any).pagination.page)
+          setHasMoreAutocomplete((data as any).pagination.hasMore)
         }
       }
     } catch (error) {

@@ -1,21 +1,47 @@
 import { apiDelete, apiGet, apiPost, apiPut } from '@/lib/api/client';
 import { BookApiResponse, UserBookResponsePage } from '@/lib/types/book/book';
-import useSWR, { mutate } from 'swr';
+import useSWR, { mutate, SWRConfiguration } from 'swr';
 import { useNextAuth } from './use-next-auth';
 
-const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
+// 캐시 무효화 헬퍼 함수
+const invalidateBookCache = async () => {
+  try {
+    // 모든 책 목록 캐시 무효화 (다양한 페이지 크기 고려)
+    await Promise.all([
+      mutate(`/api/v1/user/books?page=0&size=10`),
+      mutate(`/api/v1/user/books?page=0&size=20`),
+      mutate(`/api/v1/user/books?page=0&size=50`),
+    ]);
+    console.log('[Cache] Book cache invalidated successfully');
+  } catch (error) {
+    console.error('[Cache] Error invalidating book cache:', error);
+  }
+};
 
 // SWR fetcher 함수 (API 클라이언트 사용)
 const fetcher = async (url: string) => {
   try {
-    console.log('Fetching books from:', url);
+    console.log('[SWR Fetcher] Fetching from:', url);
     const response = await apiGet<UserBookResponsePage>(url);
-    console.log('Books response:', response);
+    console.log('[SWR Fetcher] Response:', response);
     return response.data;
   } catch (error) {
-    console.error('Books fetch error:', error);
+    console.error('[SWR Fetcher] Error:', error);
     throw error;
   }
+};
+
+// SWR 기본 설정
+const defaultSWRConfig: SWRConfiguration = {
+  revalidateOnFocus: false,
+  revalidateOnReconnect: true,
+  dedupingInterval: 60000, // 1분간 중복 요청 방지
+  errorRetryCount: 3,
+  errorRetryInterval: 5000,
+  shouldRetryOnError: (error) => {
+    // 401, 403 에러는 재시도하지 않음 (인증 문제)
+    return error?.status !== 401 && error?.status !== 403;
+  },
 };
 
 // 책 목록 조회 훅
@@ -23,19 +49,31 @@ export function useBooks(page: number = 0, size: number = 10) {
   const { user, isLoading: authLoading, isAuthenticated } = useNextAuth();
   const userId = user?.id;
 
+  // 인증 상태 확인
   const shouldFetch = isAuthenticated && !!userId;
-  // API 클라이언트가 자동으로 BASE_URL을 추가하므로 상대 경로만 사용
+  
+  // SWR 키 생성 (인증되지 않은 경우 null로 설정하여 요청 방지)
   const key = shouldFetch ? `/api/v1/user/books?page=${page}&size=${size}` : null;
 
   const { data, error, isLoading, mutate: mutateBooks } = useSWR<UserBookResponsePage>(
     key,
     fetcher,
     {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 60000, // 1분간 중복 요청 방지
+      ...defaultSWRConfig,
+      // 인증되지 않은 경우 요청하지 않음
+      isPaused: () => !shouldFetch,
     }
   );
+
+  // 에러 처리 개선
+  const handleError = (error: any) => {
+    if (error?.status === 401) {
+      console.warn('[useBooks] 인증이 필요합니다. 로그인을 확인해주세요.');
+    } else if (error?.status === 403) {
+      console.warn('[useBooks] 접근 권한이 없습니다.');
+    }
+    return error;
+  };
 
   return {
     books: data?.content || [],
@@ -48,14 +86,17 @@ export function useBooks(page: number = 0, size: number = 10) {
       first: data.first,
     } : null,
     isLoading: authLoading || isLoading,
-    error,
+    error: error ? handleError(error) : null,
     mutateBooks,
+    // 인증 상태 추가
+    isAuthenticated,
+    userId,
   };
 }
 
 // 통합된 책 추가 훅 (책 생성 + 사용자 서재에 추가)
 export function useAddBook() {
-  const { user } = useNextAuth();
+  const { user, isAuthenticated } = useNextAuth();
   
   const addBook = async (bookData: {
     title: string;
@@ -69,13 +110,13 @@ export function useAddBook() {
     publisher: string;
     pubdate: string;
   }) => {
+    // 인증 상태 확인
+    if (!isAuthenticated || !user?.id) {
+      throw new Error('로그인이 필요합니다.');
+    }
+
     console.log('[useAddBook] addBook called with user:', user);
     console.log('[useAddBook] bookData:', bookData);
-    
-    if (!user?.id) {
-      console.error('[useAddBook] No user ID found:', user);
-      throw new Error('사용자 정보가 없습니다.');
-    }
 
     try {
       // 1단계: 책 생성 (API 클라이언트 사용)
@@ -99,7 +140,7 @@ export function useAddBook() {
 
       // 책 목록 캐시 무효화하여 새로고침
       console.log('[useAddBook] Step 3: Invalidating cache...');
-      await mutate(`/api/v1/user/books?page=0&size=10`);
+      await invalidateBookCache();
       
       return createResult.data;
     } catch (error) {
@@ -108,17 +149,28 @@ export function useAddBook() {
     }
   };
 
-  return { addBook };
+  return { 
+    addBook,
+    isAuthenticated,
+    userId: user?.id,
+  };
 }
 
 // 사용자별 책 추가 훅 (기존 API 유지)
 export function useAddUserBook() {
+  const { user, isAuthenticated } = useNextAuth();
+  
   // 사용자와 기존 책(bookId)을 연결하는 API 호출
   const addUserBook = async (payload: { userId: number; bookId: number }) => {
+    // 인증 상태 확인
+    if (!isAuthenticated || !user?.id) {
+      throw new Error('로그인이 필요합니다.');
+    }
+
     try {
       const result = await apiPost('/api/v1/user-books', payload);
       // 책 목록 캐시 무효화하여 새로고침
-      await mutate(`/api/v1/user/books?page=0&size=10`);
+      await invalidateBookCache();
       return result.data;
     } catch (error) {
       console.error('Error adding book:', error);
@@ -126,17 +178,27 @@ export function useAddUserBook() {
     }
   };
 
-  return { addUserBook };
+  return { 
+    addUserBook,
+    isAuthenticated,
+    userId: user?.id,
+  };
 }
 
 // 책 삭제 훅
 export function useDeleteBook() {
-  const { user } = useNextAuth();
+  const { user, isAuthenticated } = useNextAuth();
+  
   const deleteBook = async (bookId: number) => {
+    // 인증 상태 확인
+    if (!isAuthenticated || !user?.id) {
+      throw new Error('로그인이 필요합니다.');
+    }
+
     try {
-      await apiDelete(`/api/v1/users/${user?.id}/books/${bookId}`);
+      await apiDelete(`/api/v1/user/books/${bookId}`);
       // 책 목록 캐시 무효화하여 새로고침
-      await mutate(`/api/v1/user/books?page=0&size=10`);
+      await invalidateBookCache();
       
       return true;
     } catch (error) {
@@ -145,12 +207,17 @@ export function useDeleteBook() {
     }
   };
 
-  return { deleteBook };
+  return { 
+    deleteBook,
+    isAuthenticated,
+    userId: user?.id,
+  };
 }
 
 // 책 업데이트 훅
 export function useUpdateBook() {
-  const { user } = useNextAuth();
+  const { user, isAuthenticated } = useNextAuth();
+  
   const updateBook = async (bookId: number, bookData: {
     title?: string;
     author?: string;
@@ -164,11 +231,16 @@ export function useUpdateBook() {
     publisher?: string;
     isbn?: string;
   }) => {
+    // 인증 상태 확인
+    if (!isAuthenticated || !user?.id) {
+      throw new Error('로그인이 필요합니다.');
+    }
+
     try {
-      const result = await apiPut(`/api/v1/users/${user?.id}/books/${bookId}`, bookData);
+      const result = await apiPut(`/api/v1/user/books/${bookId}`, bookData);
       
       // 책 목록 캐시 무효화하여 새로고침
-      await mutate(`/api/v1/user/books?page=0&size=10`);
+      await invalidateBookCache();
       
       return result.data;
     } catch (error) {
@@ -177,12 +249,27 @@ export function useUpdateBook() {
     }
   };
 
-  return { updateBook };
+  return { 
+    updateBook,
+    isAuthenticated,
+    userId: user?.id,
+  };
 }
 
 // 책 검색 훅 (외부 API 사용)
 export function useSearchBooks() {
+  const { isAuthenticated } = useNextAuth();
+  
   const searchBooks = async (query: string) => {
+    // 인증 상태 확인
+    if (!isAuthenticated) {
+      throw new Error('로그인이 필요합니다.');
+    }
+
+    if (!query.trim()) {
+      throw new Error('검색어를 입력해주세요.');
+    }
+
     try {
       // API 클라이언트 사용
       const result = await apiGet(`/api/v1/search/books?query=${encodeURIComponent(query)}`);
@@ -209,5 +296,8 @@ export function useSearchBooks() {
     }
   };
 
-  return { searchBooks };
+  return { 
+    searchBooks,
+    isAuthenticated,
+  };
 } 

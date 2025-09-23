@@ -29,9 +29,13 @@ const refreshToken = async (): Promise<boolean> => {
       const result = await response.json();
       const newTokens = result.data;
       
-      // 새 토큰 저장
+      // 새 토큰 저장 (localStorage와 쿠키 모두)
       localStorage.setItem('access_token', newTokens.accessToken);
       localStorage.setItem('refresh_token', newTokens.refreshToken);
+      
+      // 쿠키에도 저장 (미들웨어에서 확인용)
+      document.cookie = `access_token=${newTokens.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7일
+      document.cookie = `refresh_token=${newTokens.refreshToken}; path=/; max-age=${30 * 24 * 60 * 60}`; // 30일
       
       return true;
     }
@@ -51,9 +55,9 @@ export const apiRequest = async <T>(
   console.log('[apiRequest] Making request to:', url);
   
   // 기본 헤더 설정
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
 
   // 인증이 필요한 요청인 경우 토큰 추가
@@ -112,11 +116,12 @@ export const apiGet = <T>(endpoint: string): Promise<ApiResponse<T>> => {
 };
 
 // POST 요청
-export const apiPost = <T>(endpoint: string, data?: any): Promise<ApiResponse<T>> => {
+export const apiPost = <T>(endpoint: string, data?: any, options?: RequestInit): Promise<ApiResponse<T>> => {
   console.log('[apiPost] Making POST request to:', endpoint, 'with data:', data);
   return apiRequest<T>(endpoint, {
     method: 'POST',
     body: data ? JSON.stringify(data) : undefined,
+    ...options,
   });
 };
 

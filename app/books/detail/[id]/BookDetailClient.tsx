@@ -44,10 +44,10 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
     return res.data as unknown as T;
   };
 
-  // Keys
-  const bookKey = shouldFetch ? `/api/v1/users/${userId}/books/${bookId}` : null;
-  const quotesKey = shouldFetch ? `/api/v1/quotes/users/${userId}/books/${bookId}?page=0&size=100&sort=id,desc` : null;
-  const notesKey = shouldFetch ? `/api/v1/notes/users/${userId}/books/${bookId}?page=0&size=100&sort=id,desc` : null;
+  // Keys - 백엔드 API 스펙에 맞게 수정
+  const bookKey = shouldFetch ? `/api/v1/books/${bookId}` : null;
+  const quotesKey = shouldFetch ? `/api/v1/books/${bookId}/quotes?page=0&size=100&sort=created_at` : null;
+  const notesKey = shouldFetch ? `/api/v1/books/${bookId}/notes?page=0&size=100&sort=created_at` : null;
 
   const { data: bookDetail, isLoading: bookLoading } = useSWR<BookDetailData>(bookKey, fetcher);
   const { data: quotesData, isLoading: quotesLoading, mutate: mutateQuotes } = useSWR<any>(quotesKey, fetcher);
@@ -61,6 +61,8 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
   const [newQuote, setNewQuote] = useState({ content: '', page: '', memo: '' });
   const [editingNote, setEditingNote] = useState<NoteData | null>(null);
   const [viewingNote, setViewingNote] = useState<NoteData | null>(null);
+  const [viewingQuote, setViewingQuote] = useState<QuoteData | null>(null);
+  const [editingQuote, setEditingQuote] = useState<QuoteData | null>(null);
 
 
 
@@ -73,13 +75,11 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
     }
 
     try {
-      const result = await apiPost<NoteData>(`/api/v1/notes`, {
-        bookId: parseInt(bookId),
+      const result = await apiPost<NoteData>(`/api/v1/books/${bookId}/notes`, {
         title: newNote.title,
         content: newNote.content,
-        html: '',
-        isImportant: false,
-        tagName: newNote.tagName || ''
+        tags: newNote.tagName ? [newNote.tagName] : [],
+        isImportant: false
       });
 
       const created = {
@@ -110,12 +110,12 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
     try {
       const payload = {
-        content: newQuote.content,
+        text: newQuote.content,
         page: newQuote.page ? parseInt(newQuote.page) : 0,
-        memo: newQuote.memo || '',
+        thoughts: newQuote.memo || '',
         isImportant: false
       };
-      const res = await apiPost<QuoteData>(`/api/v1/quotes/users/${userId}/books/${bookId}`, payload);
+      const res = await apiPost<QuoteData>(`/api/v1/books/${bookId}/quotes`, payload);
 
       const created = res.data as unknown as QuoteData;
       await mutateQuotes(async (prev: any) => {
@@ -132,7 +132,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const deleteNote = async (noteId: number) => {
     try {
-      await apiDelete(`/api/v1/notes/${noteId}`);
+      await apiDelete(`/api/v1/books/${bookId}/notes/${noteId}`);
       await mutateNotes(async (prev: any) => {
         const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
         return { ...(prev || {}), content: prevList.filter((n: NoteData) => n.id !== noteId) };
@@ -144,7 +144,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const deleteQuote = async (quoteId: number) => {
     try {
-      await apiDelete(`/api/v1/quotes/${quoteId}`);
+      await apiDelete(`/api/v1/books/${bookId}/quotes/${quoteId}`);
       await mutateQuotes(async (prev: any) => {
         const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
         return { ...(prev || {}), content: prevList.filter((q: QuoteData) => q.id !== quoteId) };
@@ -156,10 +156,10 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const updateNote = async (updatedNote: NoteData) => {
     try {
-      const res = await apiPut(`/api/v1/notes/${updatedNote.id}`, {
+      const res = await apiPut(`/api/v1/books/${bookId}/notes/${updatedNote.id}`, {
         title: updatedNote.title,
         content: updatedNote.content,
-        tagName: updatedNote.tagName,
+        tags: updatedNote.tagName ? [updatedNote.tagName] : [],
         isImportant: updatedNote.isImportant
       });
 
@@ -172,6 +172,27 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
       setEditingNote(null);
     } catch (error) {
       console.error('Error updating note:', error);
+    }
+  };
+
+  const updateQuote = async (updatedQuote: QuoteData) => {
+    try {
+      const res = await apiPut(`/api/v1/books/${bookId}/quotes/${updatedQuote.id}`, {
+        text: updatedQuote.content,
+        page: updatedQuote.page,
+        thoughts: updatedQuote.memo,
+        isImportant: updatedQuote.isImportant
+      });
+
+      const saved = res.data as any;
+      await mutateQuotes(async (prev: any) => {
+        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
+        const nextList = prevList.map((q: QuoteData) => q.id === updatedQuote.id ? { ...q, ...saved } : q);
+        return { ...(prev || {}), content: nextList };
+      }, { revalidate: true });
+      setEditingQuote(null);
+    } catch (error) {
+      console.error('Error updating quote:', error);
     }
   };
 
@@ -220,6 +241,75 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
               <Button
                 variant="destructive"
                 onClick={() => deleteNote(viewingNote.id)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                삭제
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // If viewing a specific quote, show quote detail view
+  if (viewingQuote) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => setViewingQuote(null)}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          돌아가기
+        </Button>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl flex items-center gap-2">
+              <Quote className="h-6 w-6" />
+              좋아하는 문장
+            </CardTitle>
+            <CardDescription>
+              {viewingQuote.page > 0 && (
+                <Badge variant="secondary" className="mr-2">{viewingQuote.page}페이지</Badge>
+              )}
+              {viewingQuote.isImportant && (
+                <Badge variant="destructive">
+                  <Star className="h-3 w-3 mr-1" />
+                  중요
+                </Badge>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <blockquote className="border-l-4 border-primary pl-6 italic text-lg text-foreground leading-relaxed">
+                &quot;{viewingQuote.content}&quot;
+              </blockquote>
+              
+              {viewingQuote.memo && (
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-2">메모</h4>
+                  <div className="whitespace-pre-wrap text-foreground">
+                    {viewingQuote.memo}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-6 flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setEditingQuote(viewingQuote)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                수정
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteQuote(viewingQuote.id)}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 삭제
@@ -546,24 +636,49 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
                           </Badge>
                         )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteQuote(quote.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewingQuote(quote)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingQuote(quote)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteQuote(quote.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     
                     <blockquote className="border-l-4 border-primary pl-4 italic text-foreground mb-3">
-                      &quot;{quote.content}&quot;
+                      &quot;{quote.content.length > 100 ? quote.content.substring(0, 100) + '...' : quote.content}&quot;
                     </blockquote>
                     
                     {quote.memo && (
                       <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
-                        <strong>메모:</strong> {quote.memo}
+                        <strong>메모:</strong> {quote.memo.length > 50 ? quote.memo.substring(0, 50) + '...' : quote.memo}
                       </div>
                     )}
+                    
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="mt-2 p-0 h-auto font-normal"
+                      onClick={() => setViewingQuote(quote)}
+                    >
+                      자세히 보기 →
+                    </Button>
                   </CardContent>
                 </Card>
               ))
@@ -610,6 +725,55 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
                   취소
                 </Button>
                 <Button onClick={() => updateNote(editingNote)}>
+                  저장
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Quote Dialog */}
+      {editingQuote && (
+        <Dialog open={!!editingQuote} onOpenChange={() => setEditingQuote(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>좋아하는 문장 수정</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-quote-content">문장</Label>
+                <Textarea
+                  id="edit-quote-content"
+                  value={editingQuote.content}
+                  onChange={(e) => setEditingQuote({ ...editingQuote, content: e.target.value })}
+                  placeholder="인상 깊었던 문장을 입력하세요"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-quote-page">페이지 (선택사항)</Label>
+                <Input
+                  id="edit-quote-page"
+                  type="number"
+                  value={editingQuote.page}
+                  onChange={(e) => setEditingQuote({ ...editingQuote, page: parseInt(e.target.value) || 0 })}
+                  placeholder="페이지 번호"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-quote-memo">메모 (선택사항)</Label>
+                <Textarea
+                  id="edit-quote-memo"
+                  value={editingQuote.memo}
+                  onChange={(e) => setEditingQuote({ ...editingQuote, memo: e.target.value })}
+                  placeholder="이 문장에 대한 생각을 적어보세요"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditingQuote(null)}>
+                  취소
+                </Button>
+                <Button onClick={() => updateQuote(editingQuote)}>
                   저장
                 </Button>
               </div>

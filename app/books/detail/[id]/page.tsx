@@ -1,13 +1,14 @@
 import BookDetailClient from "./BookDetailClient";
 
 interface BookDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function BookDetailPage({ params }: BookDetailPageProps) {
+export default async function BookDetailPage({ params }: BookDetailPageProps) {
+  const { id } = await params;
   return (
-    <BookDetailClient bookId={params.id} />
+    <BookDetailClient bookId={id} />
   );
 }

@@ -32,8 +32,13 @@ export const storeTokens = (tokens: AuthTokens): void => {
   if (typeof window === 'undefined') return;
   
   try {
+    // localStorage에 저장
     localStorage.setItem('access_token', tokens.accessToken);
     localStorage.setItem('refresh_token', tokens.refreshToken);
+    
+    // 쿠키에도 저장 (미들웨어에서 확인용)
+    document.cookie = `access_token=${tokens.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7일
+    document.cookie = `refresh_token=${tokens.refreshToken}; path=/; max-age=${30 * 24 * 60 * 60}`; // 30일
   } catch (error) {
     console.error('토큰 저장 실패:', error);
   }
@@ -43,7 +48,7 @@ export const clearTokens = (): void => {
   if (typeof window === 'undefined') return;
   
   try {
-    // 통일된 토큰 키로 정리
+    // localStorage 정리
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('bn_user_id');
@@ -51,6 +56,10 @@ export const clearTokens = (): void => {
     // 중복 저장된 카멜케이스 토큰들도 정리
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    
+    // 쿠키도 정리
+    document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   } catch (error) {
     console.error('토큰 삭제 실패:', error);
   }

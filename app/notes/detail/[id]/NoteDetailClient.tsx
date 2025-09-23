@@ -60,28 +60,18 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
 
     setIsSaving(true);
     try {
-      const response = await fetch(`${NEXT_PUBLIC_API_URL}/api/v1/notes/${noteId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title: editedNote.title,
-          content: editedNote.content,
-          html: editedNote.html,
-          isImportant: editedNote.isImportant
-        }),
+      const { apiPut } = await import('@/lib/api/client');
+      const result = await apiPut(`/api/v1/notes/${noteId}`, {
+        title: editedNote.title,
+        content: editedNote.content,
+        html: editedNote.html,
+        isImportant: editedNote.isImportant
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        // SWR 캐시 업데이트
-        mutateNote(result.data, false);
-        setIsEditing(false);
-        alert('노트가 성공적으로 수정되었습니다.');
-      } else {
-        throw new Error('노트 수정에 실패했습니다.');
-      }
+      // SWR 캐시 업데이트
+      mutateNote(result.data as NoteResponse, false);
+      setIsEditing(false);
+      alert('노트가 성공적으로 수정되었습니다.');
     } catch (error) {
       console.error('Error updating note:', error);
       alert('노트 수정에 실패했습니다.');
