@@ -46,8 +46,8 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   // Keys - 백엔드 API 스펙에 맞게 수정
   const bookKey = shouldFetch ? `/api/v1/books/${bookId}` : null;
-  const quotesKey = shouldFetch ? `/api/v1/books/${bookId}/quotes?page=0&size=100&sort=created_at` : null;
-  const notesKey = shouldFetch ? `/api/v1/books/${bookId}/notes?page=0&size=100&sort=created_at` : null;
+  const quotesKey = shouldFetch ? `/api/v1/quotes/books/${bookId}?page=0&size=100&sort=created_at` : null;
+  const notesKey = shouldFetch ? `/api/v1/notes/books/${bookId}?page=0&size=100&sort=created_at` : null;
 
   const { data: bookDetail, isLoading: bookLoading } = useSWR<BookDetailData>(bookKey, fetcher);
   const { data: quotesData, isLoading: quotesLoading, mutate: mutateQuotes } = useSWR<any>(quotesKey, fetcher);

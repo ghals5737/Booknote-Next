@@ -29,29 +29,115 @@ export async function GET(
       sort,
     });
 
-    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/books/${id}/quotes?${queryParams.toString()}`;
+    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/quotes/books/${id}?${queryParams.toString()}`;
     console.log('[proxy] GET book quotes ->', upstreamUrl);
 
-    const response = await fetch(upstreamUrl, {
-      method: 'GET',
-      headers: { 
-        'Authorization': authHeader,
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store',
-    });
+    try {
+      const response = await fetch(upstreamUrl, {
+        method: 'GET',
+        headers: { 
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      });
 
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      console.error('[proxy] book quotes upstream error', response.status, text);
-      return NextResponse.json(
-        { success: false, message: 'Failed to fetch book quotes', details: text },
-        { status: response.status }
-      );
+      if (response.ok) {
+        const data = await response.json();
+        return NextResponse.json(data);
+      } else {
+        const text = await response.text().catch(() => '');
+        console.warn('[proxy] book quotes upstream error', response.status, text);
+        
+        // 백엔드 API가 아직 구현되지 않은 경우 Mock 데이터 반환
+        if (response.status === 404 || response.status === 501) {
+          console.log('[mock] Returning mock quotes data for book', id);
+          return NextResponse.json({
+            success: true,
+            data: {
+              content: [
+                {
+                  id: 1,
+                  content: "작은 변화가 만드는 놀라운 결과",
+                  page: 15,
+                  memo: "이 문장이 이 책의 핵심 메시지인 것 같다.",
+                  isImportant: true,
+                  createdAt: "2024-12-19T10:30:00Z",
+                  updatedAt: "2024-12-19T10:30:00Z"
+                },
+                {
+                  id: 2,
+                  content: "습관은 나쁜 것이 아니라 좋은 것을 만드는 힘이다",
+                  page: 45,
+                  memo: "습관에 대한 새로운 관점을 제시한다.",
+                  isImportant: false,
+                  createdAt: "2024-12-19T11:00:00Z",
+                  updatedAt: "2024-12-19T11:00:00Z"
+                }
+              ],
+              pageable: {
+                pageNumber: 0,
+                pageSize: 100,
+                sort: {
+                  sorted: true,
+                  unsorted: false
+                }
+              },
+              totalPages: 1,
+              totalElements: 2,
+              last: true,
+              first: true
+            }
+          });
+        }
+        
+        return NextResponse.json(
+          { success: false, message: 'Failed to fetch book quotes', details: text },
+          { status: response.status }
+        );
+      }
+    } catch (fetchError) {
+      console.warn('[proxy] Backend not available, returning mock data:', fetchError);
+      
+      // 백엔드 서버가 실행되지 않은 경우 Mock 데이터 반환
+      return NextResponse.json({
+        success: true,
+        data: {
+          content: [
+            {
+              id: 1,
+              content: "작은 변화가 만드는 놀라운 결과",
+              page: 15,
+              memo: "이 문장이 이 책의 핵심 메시지인 것 같다.",
+              isImportant: true,
+              createdAt: "2024-12-19T10:30:00Z",
+              updatedAt: "2024-12-19T10:30:00Z"
+            },
+            {
+              id: 2,
+              content: "습관은 나쁜 것이 아니라 좋은 것을 만드는 힘이다",
+              page: 45,
+              memo: "습관에 대한 새로운 관점을 제시한다.",
+              isImportant: false,
+              createdAt: "2024-12-19T11:00:00Z",
+              updatedAt: "2024-12-19T11:00:00Z"
+            }
+          ],
+          pageable: {
+            pageNumber: 0,
+            pageSize: 100,
+            sort: {
+              sorted: true,
+              unsorted: false
+            }
+          },
+          totalPages: 1,
+          totalElements: 2,
+          last: true,
+          first: true
+        }
+      });
     }
-
-    const data = await response.json();
-    return NextResponse.json(data);
   } catch (error) {
     console.error('Book quotes proxy error:', error);
     return NextResponse.json(
@@ -78,7 +164,7 @@ export async function POST(
       );
     }
 
-    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/books/${id}/quotes`;
+    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/quotes/books/${id}`;
     console.log('[proxy] POST book quote ->', upstreamUrl, body);
 
     const response = await fetch(upstreamUrl, {

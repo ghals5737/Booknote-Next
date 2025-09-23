@@ -18,7 +18,7 @@ export async function GET(
       );
     }
 
-    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/books/${id}/notes/${noteId}`;
+    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/notes/${noteId}`;
     console.log('[proxy] GET book note detail ->', upstreamUrl);
 
     const response = await fetch(upstreamUrl, {
@@ -67,7 +67,7 @@ export async function PUT(
       );
     }
 
-    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/books/${id}/notes/${noteId}`;
+    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/notes/${noteId}`;
     console.log('[proxy] PUT book note update ->', upstreamUrl, body);
 
     const response = await fetch(upstreamUrl, {
@@ -116,7 +116,7 @@ export async function DELETE(
       );
     }
 
-    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/books/${id}/notes/${noteId}`;
+    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/notes/${noteId}`;
     console.log('[proxy] DELETE book note ->', upstreamUrl);
 
     const response = await fetch(upstreamUrl, {
