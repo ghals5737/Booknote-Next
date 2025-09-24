@@ -1,9 +1,10 @@
 'use client'
 import { AddBookDialog } from "@/components/book/AddBookDialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNextAuth } from "@/hooks/use-next-auth";
+import { useUserStats } from "@/hooks/use-user-stats";
 import {
   Book,
   Brain,
@@ -15,7 +16,6 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import useSWR from "swr";
 
 interface NavigationProps {
   currentPage: string;
@@ -25,58 +25,15 @@ const Navigation = ({ currentPage }: NavigationProps) => {
   const router = useRouter();
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
   const { user, logout } = useNextAuth();
-
-  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-  const { data: notesCount } = useSWR<number>(
-    user?.id && NEXT_PUBLIC_API_URL ? ["notes-count", user.id] : null,
-    async () => {
-      const res = await fetch(
-        `${NEXT_PUBLIC_API_URL}/api/v1/notes/user?page=0&size=1`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          },
-        }
-      );
-      if (!res.ok) return 0;
-      const json = await res.json();
-      const data = json?.data;
-      if (!data) return 0;
-      if (typeof data.totalElements === "number") return data.totalElements as number;
-      if (Array.isArray(data)) return data.length;
-      return 0;
-    }
-  );
-
-  const { data: booksCount } = useSWR<number>(
-    user?.id && NEXT_PUBLIC_API_URL ? ["books-count", user.id] : null,
-    async () => {
-      const res = await fetch(
-        `${NEXT_PUBLIC_API_URL}/api/v1/user/books?page=0&size=1`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          },
-        }
-      );
-      if (!res.ok) return 0;
-      const json = await res.json();
-      const data = json?.data;
-      if (!data) return 0;
-      if (typeof data.totalElements === "number") return data.totalElements as number;
-      if (Array.isArray(data)) return data.length;
-      return 0;
-    }
-  );
+  const { stats } = useUserStats();
 
   const navItems = useMemo(() => ([
     { id: 'dashboard', label: '대시보드', icon: Home, count: null as number | null, path: '/dashboard' },
-    { id: 'books', label: '내 서재', icon: Book, count: typeof booksCount === 'number' ? booksCount : 0, path: '/books' },
-    { id: 'notes', label: '노트', icon: FileText, count: typeof notesCount === 'number' ? notesCount : 0, path: '/notes' },
+    { id: 'books', label: '내 서재', icon: Book, count: stats?.books?.total || 0, path: '/books' },
+    { id: 'notes', label: '노트', icon: FileText, count: stats?.notes?.total || 0, path: '/notes' },
     { id: 'review', label: '복습', icon: Brain, count: 8, path: '/review' },
     { id: 'statistics', label: '통계', icon: TrendingUp, count: null as number | null, path: '/statistics' },
-  ]), [notesCount, booksCount]);
+  ]), [stats]);
 
   const handleNavigation = (item: typeof navItems[0]) => {
     router.push(`${item.path}`);
@@ -193,17 +150,10 @@ const Navigation = ({ currentPage }: NavigationProps) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
               <Avatar className="size-7">
-                {user.image ? (
-                  <AvatarImage src={user.image as string} alt={user.name || 'user'} />
-                ) : (
-                  <AvatarFallback>{(user.name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
-                )}
+                <AvatarFallback>U</AvatarFallback>
               </Avatar>
               <div className="flex flex-col leading-tight min-w-0">
-                <span className="text-sm font-medium truncate max-w-[9rem]">{user.name || '사용자'}</span>
-                {user.email && (
-                  <span className="text-xs text-muted-foreground truncate max-w-[9rem]">{user.email}</span>
-                )}
+                <span className="text-sm font-medium truncate max-w-[9rem]">사용자</span>
               </div>
             </div>
             <Button 

@@ -1,6 +1,6 @@
 // API 클라이언트 유틸리티
 
-import { getAuthHeader, getStoredTokens } from './token';
+import { clearTokens, getAuthHeader, getStoredTokens } from './token';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
 
@@ -11,8 +11,13 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+// 토큰 갱신 동시성 가드
+let isRefreshing = false;
+
 // 토큰 갱신 함수
 const refreshToken = async (): Promise<boolean> => {
+  if (isRefreshing) return false;
+  isRefreshing = true;
   const tokens = getStoredTokens();
   if (!tokens?.refreshToken) return false;
 
@@ -33,14 +38,13 @@ const refreshToken = async (): Promise<boolean> => {
       localStorage.setItem('access_token', newTokens.accessToken);
       localStorage.setItem('refresh_token', newTokens.refreshToken);
       
-      // 쿠키에도 저장 (미들웨어에서 확인용)
-      document.cookie = `access_token=${newTokens.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7일
-      document.cookie = `refresh_token=${newTokens.refreshToken}; path=/; max-age=${30 * 24 * 60 * 60}`; // 30일
-      
+      isRefreshing = false;
       return true;
     }
   } catch (error) {
     console.error('토큰 갱신 실패:', error);
+  } finally {
+    isRefreshing = false;
   }
 
   return false;
@@ -96,6 +100,14 @@ export const apiRequest = async <T>(
         headers,
       });
       console.log('[apiRequest] Retry response status:', response.status);
+    } else {
+      // 갱신 실패 시 일괄 정리 및 로그인 페이지로 이동
+      try {
+        clearTokens();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth';
+        }
+      } catch (_) {}
     }
   }
 

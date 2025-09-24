@@ -1,5 +1,4 @@
 "use client";
-import { NextAuthProvider } from "@/components/context/NextAuthProvider";
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { SWRProvider } from "@/components/providers/SWRProvider";
 import { cleanupDuplicateTokens } from "@/lib/api/token";
@@ -61,13 +60,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <TokenCleanupWrapper>
-          <NextAuthProvider>
-            <SWRProvider>
-                <PageWrapper>
-                  {children}
-                </PageWrapper>
-            </SWRProvider>
-          </NextAuthProvider>
+          <SWRProvider>
+              <PageWrapper>
+                {children}
+              </PageWrapper>
+          </SWRProvider>
         </TokenCleanupWrapper>
       </body>
     </html>

@@ -1,35 +1,16 @@
 "use client"
 
 import { clearTokens, getStoredTokens, getUserIdFromToken, isTokenExpired, storeTokens } from "@/lib/api/token"
-import { signIn, signOut, useSession } from "next-auth/react"
 import { useEffect, useState } from "react"
 
 export function useNextAuth() {
-  const { data: session, status } = useSession()
   const [isInitialized, setIsInitialized] = useState(false)
-  const [storedUserId, setStoredUserId] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
+    setIsInitialized(true)
   }, [])
-
-  useEffect(() => {
-    if (status !== "loading") {
-      setIsInitialized(true)
-    }
-  }, [status])
-
-  useEffect(() => {
-    if (!isClient) return
-    
-    try {
-      const saved = window.localStorage.getItem('bn_user_id')
-      if (saved) setStoredUserId(saved)
-    } catch (_) {
-      // ignore localStorage errors
-    }
-  }, [isClient, isInitialized])
 
   // 토큰 상태 확인
   useEffect(() => {
@@ -49,32 +30,12 @@ export function useNextAuth() {
       
       // 토큰 저장
       storeTokens(tokens as any);
-      
-      // NextAuth 세션도 업데이트 (선택사항)
-      await signIn("credentials", {
-        redirect: false,
-        email,
-        password,
-      });
 
       // 성공 시 이동
       window.location.href = "/books";
     } catch (error) {
       console.error('로그인 오류:', error);
       throw error;
-    }
-  }
-
-  const loginWithProvider = async (provider: "google" | "github" | "kakao" | "naver") => {
-    try {
-      if (provider === "google") {
-        await signIn("google", { callbackUrl: "/books" })
-      } else {
-        throw new Error(`${provider} 로그인은 아직 지원하지 않습니다.`)
-      }
-    } catch (error) {
-      console.error("로그인 오류:", error)
-      throw error
     }
   }
 
@@ -117,11 +78,9 @@ export function useNextAuth() {
         }
       }
       
-      // 토큰 정리
+      // 토큰 정리 및 로그인 페이지로 이동
       clearTokens();
-      
-      // NextAuth 로그아웃
-      await signOut({ callbackUrl: "/auth" });
+      window.location.href = '/auth';
     } catch (error) {
       console.error("로그아웃 오류:", error);
       throw error;
@@ -133,34 +92,8 @@ export function useNextAuth() {
     throw new Error("비밀번호 재설정은 소셜 로그인 계정에서 직접 진행해주세요.")
   }
 
-  // 사용자 ID를 토큰에서 가져오는 함수
-  const getUserId = (): string | null => {
-    // 토큰에서 직접 사용자 ID 추출 (백엔드에서 uid 클레임으로 저장)
-    const tokenUserId = getUserIdFromToken();
-    if (tokenUserId) {
-      //console.log('[getUserId] Token에서 사용자 ID 추출:', tokenUserId);
-      return tokenUserId;
-    }
-    
-    // 토큰이 없거나 만료된 경우 세션에서 이메일 사용하여 해시 생성
-    const email = session?.user?.email || storedUserId;
-    if (!email) return null;
-    
-    //console.log('[getUserId] 세션에서 이메일 사용:', email);
-    return emailToUserId(email);
-  };
-
-  // 이메일을 숫자 ID로 변환하는 함수 (백엔드와 동일한 방식)
-  const emailToUserId = (email: string): string => {
-    // 이메일을 해시하여 숫자 ID로 변환
-    let hash = 0;
-    for (let i = 0; i < email.length; i++) {
-      const char = email.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // 32bit 정수로 변환
-    }
-    return Math.abs(hash).toString();
-  };
+  // 토큰에서 사용자 ID 추출
+  const userId = getUserIdFromToken();
 
   // 토큰 기반 인증 상태 확인
   const isTokenAuthenticated = (): boolean => {
@@ -175,14 +108,11 @@ export function useNextAuth() {
     return !!(tokens?.accessToken && !isExpired);
   };
 
-  const userId = getUserId();
-
   return {
-    user: { id: userId, email: storedUserId },
-    isLoading: status === "loading" || !isInitialized,
-    isAuthenticated: status === "authenticated" || isTokenAuthenticated(),
+    user: { id: userId },
+    isLoading: !isInitialized,
+    isAuthenticated: isTokenAuthenticated(),
     login,
-    loginWithProvider,
     register,
     logout,
     resetPassword,

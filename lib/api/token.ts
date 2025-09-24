@@ -35,10 +35,6 @@ export const storeTokens = (tokens: AuthTokens): void => {
     // localStorage에 저장
     localStorage.setItem('access_token', tokens.accessToken);
     localStorage.setItem('refresh_token', tokens.refreshToken);
-    
-    // 쿠키에도 저장 (미들웨어에서 확인용)
-    document.cookie = `access_token=${tokens.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7일
-    document.cookie = `refresh_token=${tokens.refreshToken}; path=/; max-age=${30 * 24 * 60 * 60}`; // 30일
   } catch (error) {
     console.error('토큰 저장 실패:', error);
   }
@@ -56,10 +52,6 @@ export const clearTokens = (): void => {
     // 중복 저장된 카멜케이스 토큰들도 정리
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    
-    // 쿠키도 정리
-    document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    document.cookie = 'refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   } catch (error) {
     console.error('토큰 삭제 실패:', error);
   }
@@ -92,12 +84,8 @@ export const getUserIdFromToken = (): string | null => {
     }
     
     const payload = JSON.parse(atob(tokenParts[1]));
-    //console.log('[getUserIdFromToken] JWT payload:', payload);
-    //console.log('[getUserIdFromToken] UID from payload:', payload.uid);
-    
-    // 백엔드에서 uid 클레임으로 사용자 ID를 저장함
-    const userId = payload.uid?.toString() || null;
-    //console.log('[getUserIdFromToken] Extracted user ID:', userId);
+    const preferred = payload.sub ?? payload.userId ?? payload.uid;
+    const userId = preferred != null ? String(preferred) : null;
     return userId;
   } catch (error) {
     console.error('[getUserIdFromToken] 토큰 파싱 실패:', error);
