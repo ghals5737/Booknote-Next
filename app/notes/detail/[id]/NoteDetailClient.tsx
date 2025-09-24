@@ -60,12 +60,15 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
 
     setIsSaving(true);
     try {
-      const { apiPut } = await import('@/lib/api/client');
-      const result = await apiPut(`/api/v1/notes/${noteId}`, {
-        title: editedNote.title,
-        content: editedNote.content,
-        html: editedNote.html,
-        isImportant: editedNote.isImportant
+      const { authenticatedApiRequest } = await import('@/lib/api/auth');
+      const result = await authenticatedApiRequest(`/api/v1/notes/${noteId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          title: editedNote.title,
+          content: editedNote.content,
+          html: editedNote.html,
+          isImportant: editedNote.isImportant
+        })
       });
 
       // SWR 캐시 업데이트

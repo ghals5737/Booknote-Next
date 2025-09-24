@@ -120,8 +120,8 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
     setIsAutoCompleting(true)
     try {
       // 자동완성 API 엔드포인트 호출 (페이지네이션 지원)
-      const { apiGet } = await import('@/lib/api/client');
-      const data = await apiGet(`/api/v1/search/books/autocomplete?query=${encodeURIComponent(query)}&page=${page}&size=10`);
+      const { authenticatedApiRequest } = await import('@/lib/api/auth');
+      const data = await authenticatedApiRequest(`/api/v1/search/books/autocomplete?query=${encodeURIComponent(query)}&page=${page}&size=10`);
       
       if (data.success && Array.isArray(data.data)) {
         if (resetResults) {

@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPost, apiPut } from '@/lib/api/client';
+import { authenticatedApiRequest } from '@/lib/api/auth';
 import { BookApiResponse, UserBookResponsePage } from '@/lib/types/book/book';
 import useSWR, { mutate, SWRConfiguration } from 'swr';
 import { useNextAuth } from './use-next-auth';
@@ -18,11 +18,11 @@ const invalidateBookCache = async () => {
   }
 };
 
-// SWR fetcher 함수 (API 클라이언트 사용)
+// SWR fetcher 함수 (새로운 인증 API 사용)
 const fetcher = async (url: string) => {
   try {
     console.log('[SWR Fetcher] Fetching from:', url);
-    const response = await apiGet<UserBookResponsePage>(url);
+    const response = await authenticatedApiRequest<UserBookResponsePage>(url);
     console.log("=================================================")
     console.log('[SWR Fetcher] Response:', response);
     console.log("=================================================")
@@ -136,9 +136,12 @@ export function useAddBook() {
     console.log('[useAddBook] bookData:', bookData);
 
     try {
-      // 1단계: 책 생성 (API 클라이언트 사용)
+      // 1단계: 책 생성 (새로운 인증 API 사용)
       console.log('[useAddBook] Step 1: Creating book...');
-      const createResult = await apiPost<BookApiResponse['data']>('/api/v1/user-books', bookData);
+      const createResult = await authenticatedApiRequest<BookApiResponse['data']>('/api/v1/user-books', {
+        method: 'POST',
+        body: JSON.stringify(bookData)
+      });
       console.log('[useAddBook] Book created:', createResult);
       
       const bookId = createResult.data.id;
@@ -147,11 +150,14 @@ export function useAddBook() {
         throw new Error('생성된 책의 ID를 가져올 수 없습니다.');
       }
 
-      // 2단계: 사용자 서재에 추가 (API 클라이언트 사용)
+      // 2단계: 사용자 서재에 추가 (새로운 인증 API 사용)
       console.log('[useAddBook] Step 2: Linking user to book...', { userId: user.id, bookId });
-      await apiPost('/api/v1/user-books', {
-        userId: user.id,
-        bookId: bookId
+      await authenticatedApiRequest('/api/v1/user-books', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: user.id,
+          bookId: bookId
+        })
       });
       console.log('[useAddBook] User-book link created successfully');
 
@@ -185,7 +191,10 @@ export function useAddUserBook() {
     }
 
     try {
-      const result = await apiPost('/api/v1/user-books', payload);
+      const result = await authenticatedApiRequest('/api/v1/user-books', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
       // 책 목록 캐시 무효화하여 새로고침
       await invalidateBookCache();
       return result.data;
@@ -213,7 +222,9 @@ export function useDeleteBook() {
     }
 
     try {
-      await apiDelete(`/api/v1/user/books/${bookId}`);
+      await authenticatedApiRequest(`/api/v1/user/books/${bookId}`, {
+        method: 'DELETE'
+      });
       // 책 목록 캐시 무효화하여 새로고침
       await invalidateBookCache();
       
@@ -254,7 +265,10 @@ export function useUpdateBook() {
     }
 
     try {
-      const result = await apiPut(`/api/v1/user/books/${bookId}`, bookData);
+      const result = await authenticatedApiRequest(`/api/v1/user/books/${bookId}`, {
+        method: 'PUT',
+        body: JSON.stringify(bookData)
+      });
       
       // 책 목록 캐시 무효화하여 새로고침
       await invalidateBookCache();
@@ -288,8 +302,8 @@ export function useSearchBooks() {
     }
 
     try {
-      // API 클라이언트 사용
-      const result = await apiGet(`/api/v1/search/books?query=${encodeURIComponent(query)}`);
+      // 새로운 인증 API 사용
+      const result = await authenticatedApiRequest(`/api/v1/search/books?query=${encodeURIComponent(query)}`);
       console.log('[useSearchBooks] 백엔드 응답:', result);
       
       // 백엔드 ApiResponse 형식에 맞게 파싱

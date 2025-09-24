@@ -197,8 +197,18 @@ export const authApi = {
   
   // 로그아웃
   logout: async (): Promise<ApiResponse<string>> => {
-    const response = await authenticatedApiRequest<string>('/api/v1/auth/logout', {
+    const accessToken = tokenManager.getAccessToken();
+    
+    if (!accessToken) {
+      tokenManager.clearTokens();
+      throw new Error('인증 토큰이 없습니다');
+    }
+    
+    const response = await apiRequest<string>('/api/v1/auth/logout', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      }
     });
     
     if (response.success) {

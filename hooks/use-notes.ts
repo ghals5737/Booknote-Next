@@ -1,14 +1,14 @@
-import { apiDelete, apiGet, apiPost } from '@/lib/api/client';
+import { authenticatedApiRequest } from '@/lib/api/auth';
 import { NoteResponse, NoteResponsePage } from '@/lib/types/note/note';
 import useSWR from 'swr';
 import { useNextAuth } from './use-next-auth';
 
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// SWR fetcher 함수 (API 클라이언트 사용)
+// SWR fetcher 함수 (새로운 인증 API 사용)
 const fetcher = async (url: string) => {
   try {
-    const response = await apiGet<NoteResponsePage>(url);
+    const response = await authenticatedApiRequest<NoteResponsePage>(url);
     return response.data;
   } catch (error) {
     throw error;
@@ -18,7 +18,7 @@ const fetcher = async (url: string) => {
 // 개별 노트 조회용 fetcher 함수
 const noteFetcher = async (url: string) => {
   try {
-    const response = await apiGet<NoteResponse>(url);
+    const response = await authenticatedApiRequest<NoteResponse>(url);
     return response.data;
   } catch (error) {
     throw error;
@@ -83,7 +83,10 @@ export function useAddNote() {
     };
 
     try {
-      const response = await apiPost<NoteResponse>('/api/v1/notes', requestData);
+      const response = await authenticatedApiRequest<NoteResponse>('/api/v1/notes', {
+        method: 'POST',
+        body: JSON.stringify(requestData)
+      });
       return response.data;
     } catch (error) {
       throw new Error('노트 추가에 실패했습니다.');
@@ -107,7 +110,10 @@ export function useAddQuote() {
     };
 
     try {
-      const response = await apiPost('/api/v1/quotes', requestData);
+      const response = await authenticatedApiRequest('/api/v1/quotes', {
+        method: 'POST',
+        body: JSON.stringify(requestData)
+      });
       return response.data;
     } catch (error) {
       throw new Error('인용구 추가에 실패했습니다.');
@@ -144,7 +150,10 @@ export function useDeleteNote() {
     };
 
     try {
-      await apiDelete('/api/v1/notes', requestData);
+      await authenticatedApiRequest('/api/v1/notes', {
+        method: 'DELETE',
+        body: JSON.stringify(requestData)
+      });
       return true;
     } catch (error) {
       throw new Error('노트 삭제에 실패했습니다.');

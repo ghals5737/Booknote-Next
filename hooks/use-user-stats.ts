@@ -1,4 +1,4 @@
-import { apiGet } from '@/lib/api/client';
+import { authenticatedApiRequest } from '@/lib/api/auth';
 import useSWR from 'swr';
 import { useNextAuth } from './use-next-auth';
 
@@ -31,7 +31,7 @@ export function useUserStats() {
   const { data, error, isLoading, mutate } = useSWR<UserStats>(
     isAuthenticated && user?.id ? '/api/v1/stats/dashboard' : null,
     async () => {
-      const response = await apiGet<UserStats>('/api/v1/stats/dashboard');
+      const response = await authenticatedApiRequest<UserStats>('/api/v1/stats/dashboard');
       return response.data;
     },
     {

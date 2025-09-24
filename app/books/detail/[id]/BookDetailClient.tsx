@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useNextAuth } from "@/hooks/use-next-auth";
-import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api/client";
+import { authenticatedApiRequest } from "@/lib/api/auth";
 import { BookDetailData, NoteData, QuoteData } from "@/lib/types/book/book";
 import {
   ArrowLeft,
@@ -41,7 +41,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   // SWR fetchers
   const fetcher = async <T,>(endpoint: string) => {
-    const res = await apiGet<T>(endpoint);
+    const res = await authenticatedApiRequest<T>(endpoint);
     return res.data as unknown as T;
   };
 
@@ -76,11 +76,14 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
     }
 
     try {
-      const result = await apiPost<NoteData>(`/api/v1/books/${bookId}/notes`, {
-        title: newNote.title,
-        content: newNote.content,
-        tags: newNote.tagName ? [newNote.tagName] : [],
-        isImportant: false
+      const result = await authenticatedApiRequest<NoteData>(`/api/v1/books/${bookId}/notes`, {
+        method: 'POST',
+        body: JSON.stringify({
+          title: newNote.title,
+          content: newNote.content,
+          tags: newNote.tagName ? [newNote.tagName] : [],
+          isImportant: false
+        })
       });
 
       const created = {
@@ -116,7 +119,10 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         thoughts: newQuote.memo || '',
         isImportant: false
       };
-      const res = await apiPost<QuoteData>(`/api/v1/books/${bookId}/quotes`, payload);
+      const res = await authenticatedApiRequest<QuoteData>(`/api/v1/books/${bookId}/quotes`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
 
       const created = res.data as unknown as QuoteData;
       await mutateQuotes(async (prev: any) => {
@@ -133,7 +139,9 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const deleteNote = async (noteId: number) => {
     try {
-      await apiDelete(`/api/v1/books/${bookId}/notes/${noteId}`);
+      await authenticatedApiRequest(`/api/v1/books/${bookId}/notes/${noteId}`, {
+        method: 'DELETE'
+      });
       await mutateNotes(async (prev: any) => {
         const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
         return { ...(prev || {}), content: prevList.filter((n: NoteData) => n.id !== noteId) };
@@ -145,7 +153,9 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const deleteQuote = async (quoteId: number) => {
     try {
-      await apiDelete(`/api/v1/books/${bookId}/quotes/${quoteId}`);
+      await authenticatedApiRequest(`/api/v1/books/${bookId}/quotes/${quoteId}`, {
+        method: 'DELETE'
+      });
       await mutateQuotes(async (prev: any) => {
         const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
         return { ...(prev || {}), content: prevList.filter((q: QuoteData) => q.id !== quoteId) };
@@ -157,11 +167,14 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const updateNote = async (updatedNote: NoteData) => {
     try {
-      const res = await apiPut(`/api/v1/books/${bookId}/notes/${updatedNote.id}`, {
-        title: updatedNote.title,
-        content: updatedNote.content,
-        tags: updatedNote.tagName ? [updatedNote.tagName] : [],
-        isImportant: updatedNote.isImportant
+      const res = await authenticatedApiRequest(`/api/v1/books/${bookId}/notes/${updatedNote.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          title: updatedNote.title,
+          content: updatedNote.content,
+          tags: updatedNote.tagName ? [updatedNote.tagName] : [],
+          isImportant: updatedNote.isImportant
+        })
       });
 
       const saved = res.data as any;
@@ -178,11 +191,14 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const updateQuote = async (updatedQuote: QuoteData) => {
     try {
-      const res = await apiPut(`/api/v1/books/${bookId}/quotes/${updatedQuote.id}`, {
-        text: updatedQuote.content,
-        page: updatedQuote.page,
-        thoughts: updatedQuote.memo,
-        isImportant: updatedQuote.isImportant
+      const res = await authenticatedApiRequest(`/api/v1/books/${bookId}/quotes/${updatedQuote.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          text: updatedQuote.content,
+          page: updatedQuote.page,
+          thoughts: updatedQuote.memo,
+          isImportant: updatedQuote.isImportant
+        })
       });
 
       const saved = res.data as any;
