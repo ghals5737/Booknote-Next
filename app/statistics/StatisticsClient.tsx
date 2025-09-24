@@ -5,30 +5,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { useNextAuth } from "@/hooks/use-next-auth";
 import {
-    BarChart3,
-    Book,
-    Clock,
-    FileText,
-    Loader2,
-    PieChart as PieChartIcon,
-    Quote,
-    Star,
-    Target,
-    TrendingUp
+  BarChart3,
+  Book,
+  Clock,
+  FileText,
+  Loader2,
+  PieChart as PieChartIcon,
+  Quote,
+  Star,
+  Target,
+  TrendingUp
 } from "lucide-react";
 import {
-    Area,
-    AreaChart,
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from "recharts";
 
 export function StatisticsClient() {
@@ -107,9 +107,10 @@ export function StatisticsClient() {
   if (statsLoading) {
     return (
       <div className="min-h-screen bg-background p-6">
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">독서 통계</h1>
-          <p className="text-muted-foreground">데이터를 불러오는 중...</p>
+          <p className="text-muted-foreground">당신의 독서 여정을 한눈에 확인하세요</p>
         </div>
         <div className="flex items-center justify-center py-20">
           <div className="flex items-center gap-3 text-muted-foreground">
@@ -124,9 +125,10 @@ export function StatisticsClient() {
   if (statsError) {
     return (
       <div className="min-h-screen bg-background p-6">
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">독서 통계</h1>
-          <p className="text-muted-foreground">오류가 발생했습니다</p>
+          <p className="text-muted-foreground">당신의 독서 여정을 한눈에 확인하세요</p>
         </div>
         <div className="flex items-center justify-center py-20">
           <div className="flex flex-col items-center gap-3 text-muted-foreground">
@@ -385,7 +387,7 @@ export function StatisticsClient() {
             
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">총 읽은 페이지</span>
-              <span className="font-semibold">{overallStats.pagesRead.toLocaleString()}</span>
+              <span className="font-semibold">{new Intl.NumberFormat('ko-KR').format(overallStats.pagesRead)}</span>
             </div>
           </CardContent>
         </Card>

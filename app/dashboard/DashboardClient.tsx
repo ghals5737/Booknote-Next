@@ -1,9 +1,9 @@
 'use client'
 
+import { UnifiedSearch } from "@/components/search/UnifiedSearch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { useNextAuth } from "@/hooks/use-next-auth";
@@ -16,7 +16,6 @@ import {
   FileText,
   Loader2,
   RefreshCw,
-  Search,
   Target,
   TrendingUp
 } from "lucide-react";
@@ -84,17 +83,41 @@ export function DashboardClient() {
 
   if (isLoading) {
     return (
-      <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div className="animate-slide-up">
-            <h1 className="text-3xl font-bold text-foreground">대시보드</h1>
-            <p className="text-cool mt-1">데이터를 불러오는 중...</p>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="bg-white border-b border-border sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Book className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                  <h1 className="text-lg sm:text-2xl font-bold text-foreground">Booknote</h1>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="hidden sm:block">
+                  <UnifiedSearch placeholder="노트, 책, 아이디어 검색..." />
+                </div>
+                <Button variant="outline" size="sm" className="hidden sm:flex">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  검토 일정
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="flex items-center gap-3 text-cool">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>데이터를 불러오는 중...</span>
+        </header>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">오늘도 학습을 시작해보세요</h2>
+            <p className="text-base sm:text-lg text-muted-foreground">독서에서 얻은 지식을 체계적으로 관리하고 기억에 남게 만드세요.</p>
+          </div>
+
+          <div className="flex items-center justify-center py-20">
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span>데이터를 불러오는 중...</span>
+            </div>
           </div>
         </div>
       </div>
@@ -103,28 +126,52 @@ export function DashboardClient() {
 
   if (hasError) {
     return (
-      <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div className="animate-slide-up">
-            <h1 className="text-3xl font-bold text-foreground">대시보드</h1>
-            <p className="text-cool mt-1">오류가 발생했습니다</p>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="bg-white border-b border-border sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Book className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                  <h1 className="text-lg sm:text-2xl font-bold text-foreground">Booknote</h1>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="hidden sm:block">
+                  <UnifiedSearch placeholder="노트, 책, 아이디어 검색..." />
+                </div>
+                <Button variant="outline" size="sm" className="hidden sm:flex">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  검토 일정
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="flex flex-col items-center gap-3 text-cool">
-            <AlertCircle className="h-12 w-12 text-red-500" />
-            <span>데이터를 불러오는 중 오류가 발생했습니다</span>
-            <Button 
-              onClick={() => {
-                mutateStats();
-                mutateNotes();
-              }}
-              variant="outline"
-              className="mt-4"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              다시 시도
-            </Button>
+        </header>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">오늘도 학습을 시작해보세요</h2>
+            <p className="text-base sm:text-lg text-muted-foreground">독서에서 얻은 지식을 체계적으로 관리하고 기억에 남게 만드세요.</p>
+          </div>
+
+          <div className="flex items-center justify-center py-20">
+            <div className="flex flex-col items-center gap-3 text-muted-foreground">
+              <AlertCircle className="h-12 w-12 text-red-500" />
+              <span>데이터를 불러오는 중 오류가 발생했습니다</span>
+              <Button 
+                onClick={() => {
+                  mutateStats();
+                  mutateNotes();
+                }}
+                variant="outline"
+                className="mt-4"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                다시 시도
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -145,13 +192,8 @@ export function DashboardClient() {
             </div>
             
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="relative hidden sm:block">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="노트, 책, 아이디어 검색..."
-                  className="w-64 sm:w-80 pl-10"
-                />
+              <div className="hidden sm:block">
+                <UnifiedSearch placeholder="노트, 책, 아이디어 검색..." />
               </div>
               
               <Button variant="outline" size="sm" className="hidden sm:flex">
@@ -354,7 +396,7 @@ export function DashboardClient() {
                             <div className="text-xs text-muted-foreground">{activity.bookTitle}</div>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {new Date(activity.timestamp).toLocaleDateString()}
+                            {new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' }).format(new Date(activity.timestamp))}
                           </div>
                         </div>
                       </div>

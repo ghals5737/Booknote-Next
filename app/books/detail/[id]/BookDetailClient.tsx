@@ -167,7 +167,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const updateNote = async (updatedNote: NoteData) => {
     try {
-      const res = await authenticatedApiRequest(`/api/v1/books/${bookId}/notes/${updatedNote.id}`, {
+      await authenticatedApiRequest(`/api/v1/books/${bookId}/notes/${updatedNote.id}`, {
         method: 'PUT',
         body: JSON.stringify({
           title: updatedNote.title,
@@ -177,10 +177,22 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         })
       });
 
-      const saved = res.data as any;
+      // 서버 응답 형태에 의존하지 않고 로컬 편집 값으로 낙관적 갱신
       await mutateNotes(async (prev: any) => {
         const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
-        const nextList = prevList.map((n: NoteData) => n.id === updatedNote.id ? { ...n, ...saved } : n);
+        const nextList = prevList.map((n: NoteData) =>
+          n.id === updatedNote.id
+            ? {
+                ...n,
+                title: updatedNote.title,
+                content: updatedNote.content,
+                html: updatedNote.html,
+                isImportant: updatedNote.isImportant,
+                tagName: updatedNote.tagName,
+                tagList: updatedNote.tagList,
+              }
+            : n
+        );
         return { ...(prev || {}), content: nextList };
       }, { revalidate: true });
       setEditingNote(null);
@@ -191,7 +203,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const updateQuote = async (updatedQuote: QuoteData) => {
     try {
-      const res = await authenticatedApiRequest(`/api/v1/books/${bookId}/quotes/${updatedQuote.id}`, {
+      await authenticatedApiRequest(`/api/v1/books/${bookId}/quotes/${updatedQuote.id}`, {
         method: 'PUT',
         body: JSON.stringify({
           text: updatedQuote.content,
@@ -201,10 +213,20 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         })
       });
 
-      const saved = res.data as any;
+      // 서버 응답 형태와 무관하게 로컬 편집 값으로 낙관적 갱신
       await mutateQuotes(async (prev: any) => {
         const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
-        const nextList = prevList.map((q: QuoteData) => q.id === updatedQuote.id ? { ...q, ...saved } : q);
+        const nextList = prevList.map((q: QuoteData) =>
+          q.id === updatedQuote.id
+            ? {
+                ...q,
+                content: updatedQuote.content,
+                page: updatedQuote.page,
+                memo: updatedQuote.memo,
+                isImportant: updatedQuote.isImportant,
+              }
+            : q
+        );
         return { ...(prev || {}), content: nextList };
       }, { revalidate: true });
       setEditingQuote(null);
