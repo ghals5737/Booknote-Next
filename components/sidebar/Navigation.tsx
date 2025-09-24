@@ -3,8 +3,8 @@ import { AddBookDialog } from "@/components/book/AddBookDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { useNextAuth } from "@/hooks/use-next-auth";
-import { useUserStats } from "@/hooks/use-user-stats";
 import {
   Book,
   Brain,
@@ -25,7 +25,7 @@ const Navigation = ({ currentPage }: NavigationProps) => {
   const router = useRouter();
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
   const { user, logout } = useNextAuth();
-  const { stats } = useUserStats();
+  const { stats } = useDashboardStats();
 
   const navItems = useMemo(() => ([
     { id: 'dashboard', label: '대시보드', icon: Home, count: null as number | null, path: '/dashboard' },
@@ -107,23 +107,51 @@ const Navigation = ({ currentPage }: NavigationProps) => {
       </div>
 
       {/* Recent Activity */}
-      <div className="p-4 border-t border-border">
-        <h3 className="text-sm font-medium text-foreground mb-3">최근 활동</h3>
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <div className="w-2 h-2 bg-primary rounded-full"></div>
-            <span>원자 습관 노트 수정</span>
-          </div>
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>복습 카드 3개 완료</span>
-          </div>
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-            <span>{`새 책 '클린 코드' 추가`}</span>
+      {stats?.recentActivity && stats.recentActivity.length > 0 && (
+        <div className="p-4 border-t border-border">
+          <h3 className="text-sm font-medium text-foreground mb-3">최근 활동</h3>
+          <div className="space-y-2">
+            {stats.recentActivity.slice(0, 3).map((activity, index) => {
+              const getActivityIcon = (type: string) => {
+                switch (type) {
+                  case 'note_created':
+                    return 'bg-primary';
+                  case 'book_added':
+                    return 'bg-blue-500';
+                  case 'quote_added':
+                    return 'bg-purple-500';
+                  case 'book_finished':
+                    return 'bg-green-500';
+                  default:
+                    return 'bg-gray-500';
+                }
+              };
+
+              const getActivityText = (type: string, bookTitle: string) => {
+                switch (type) {
+                  case 'note_created':
+                    return `${bookTitle} 노트 작성`;
+                  case 'book_added':
+                    return `새 책 '${bookTitle}' 추가`;
+                  case 'quote_added':
+                    return `${bookTitle} 인용구 추가`;
+                  case 'book_finished':
+                    return `${bookTitle} 완독`;
+                  default:
+                    return activity.bookTitle;
+                }
+              };
+
+              return (
+                <div key={index} className="flex items-center space-x-2 text-xs text-muted-foreground">
+                  <div className={`w-2 h-2 ${getActivityIcon(activity.type)} rounded-full`}></div>
+                  <span className="truncate">{getActivityText(activity.type, activity.bookTitle)}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Settings & Auth */}
       <div className="p-4 border-t border-border space-y-2">

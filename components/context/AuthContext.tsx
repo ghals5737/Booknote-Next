@@ -28,28 +28,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isHydrated, setIsHydrated] = useState(false)
 
   // 초기 인증 상태 확인
   useEffect(() => {
+    setIsHydrated(true)
     checkAuthStatus()
   }, [])
 
   const checkAuthStatus = async () => {
     try {
-      // 실제로는 토큰 검증 API 호출
-      const token = localStorage.getItem("auth_token")
-      if (token) {
-        // Mock user data - 실제로는 API에서 사용자 정보 가져오기
-        const mockUser: User = {
-          id: "1",
-          email: "user@example.com",
-          name: "김독서",
-          avatar: "/placeholder.svg?height=40&width=40",
-          provider: "email",
-          createdAt: new Date("2024-01-01"),
-          lastLoginAt: new Date(),
+      // 클라이언트 사이드에서만 localStorage 접근
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem("auth_token")
+        if (token) {
+          // Mock user data - 실제로는 API에서 사용자 정보 가져오기
+          const mockUser: User = {
+            id: "1",
+            email: "user@example.com",
+            name: "김독서",
+            avatar: "/placeholder.svg?height=40&width=40",
+            provider: "email",
+            createdAt: new Date("2024-01-01"),
+            lastLoginAt: new Date(),
+          }
+          setUser(mockUser)
         }
-        setUser(mockUser)
       }
     } catch (error) {
       console.error("Auth check failed:", error)
@@ -74,7 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastLoginAt: new Date(),
       }
 
-      localStorage.setItem("auth_token", "mock_token")
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("auth_token", "mock_token")
+      }
       setUser(mockUser)
     } catch (error) {
       throw new Error("로그인에 실패했습니다.")
@@ -106,7 +112,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastLoginAt: new Date(),
       }
 
-      localStorage.setItem("auth_token", "mock_token")
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("auth_token", "mock_token")
+      }
       setUser(mockUser)
     } catch (error) {
       throw new Error(`${provider} 로그인에 실패했습니다.`)
@@ -131,7 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastLoginAt: new Date(),
       }
 
-      localStorage.setItem("auth_token", "mock_token")
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("auth_token", "mock_token")
+      }
       setUser(mockUser)
     } catch (error) {
       throw new Error("회원가입에 실패했습니다.")
@@ -142,7 +152,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      localStorage.removeItem("auth_token")
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem("auth_token")
+      }
       setUser(null)
     } catch (error) {
       console.error("Logout failed:", error)

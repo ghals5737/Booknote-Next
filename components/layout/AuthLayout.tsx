@@ -1,7 +1,7 @@
 "use client"
 
 import { AuthPage } from "@/components/auth/AuthPage"
-import { AppSidebar } from "@/components/sidebar/AppSideBar"
+import Navigation from "@/components/sidebar/Navigation"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useNextAuth } from "@/hooks/use-next-auth"
 import { AlertCircle, Loader2 } from "lucide-react"
@@ -17,8 +17,10 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
     const timeout = setTimeout(() => {
       if (isLoading && retryCount < 3) {
         setRetryCount(prev => prev + 1)
-        // 페이지 새로고침으로 재시도
-        window.location.reload()
+        // 클라이언트 사이드에서만 페이지 새로고침
+        if (typeof window !== 'undefined') {
+          window.location.reload()
+        }
       } else if (isLoading && retryCount >= 3) {
         setHasError(true)
       }
@@ -37,7 +39,11 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             인증 서비스에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.
           </p>
           <button 
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.location.reload()
+              }
+            }}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
             다시 시도
@@ -67,7 +73,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar />
+        <Navigation />
         <SidebarInset className="flex-1">
           <header className="flex h-16 shrink-0 items-center gap-2 border-b border-secondary glass-effect px-4">
             <SidebarTrigger className="text-foreground hover:bg-secondary rounded-lg transition-all duration-200" />

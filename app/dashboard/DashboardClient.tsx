@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { useNextAuth } from "@/hooks/use-next-auth";
 import {
   AlertCircle,
@@ -44,15 +45,8 @@ export function DashboardClient() {
     progress: number
   }>>([])
 
-  // SWR을 사용하여 실시간 데이터 가져오기
-  const { data: stats, error: statsError, mutate: mutateStats } = useSWR('/api/v1/statistics/dashboard', () => Promise.resolve({
-    monthlyStats: [],
-    categoryStats: [],
-    averageProgress: 0,
-    importantNoteCount: 0
-  }), {
-    revalidateOnFocus: false,
-  })
+  // 통계 데이터 가져오기
+  const { stats, error: statsError, mutateStats, isLoading: statsLoading } = useDashboardStats()
 
   // 노트 데이터 가져오기 - auth에서 사용자 ID 가져오기
   const notesKey = user?.id ? `/api/v1/notes/users/${user.id}` : null
@@ -60,7 +54,7 @@ export function DashboardClient() {
     revalidateOnFocus: false,
   })
 
-  const isLoading = !stats && !notes
+  const isLoading = statsLoading
   const hasError = statsError || notesError
 
   // 최근 노트 설정
@@ -81,10 +75,12 @@ export function DashboardClient() {
     }
   }, [notes])
 
-  const totalBooks = books.length
-  const totalNotes = notes?.length || 0
-  const averageProgress = stats?.averageProgress || 0
-  const importantNoteCount = stats?.importantNoteCount || 0
+  const totalBooks = stats?.books?.total || 0
+  const totalNotes = stats?.notes?.total || 0
+  const readingBooks = stats?.books?.reading || 0
+  const finishedBooks = stats?.books?.finished || 0
+  const importantNoteCount = stats?.notes?.important || 0
+  const thisMonthNotes = stats?.notes?.thisMonth || 0
 
   if (isLoading) {
     return (
@@ -192,8 +188,8 @@ export function DashboardClient() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">읽은 책</p>
-                  <p className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">{totalBooks}</p>
+                  <p className="text-sm text-muted-foreground">읽고 있는 책</p>
+                  <p className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">{readingBooks}</p>
                 </div>
                 <Book className="h-8 w-8 text-primary group-hover:scale-110 transition-transform duration-300" />
               </div>
@@ -204,8 +200,8 @@ export function DashboardClient() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">평균 진행률</p>
-                  <p className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">{Math.round(averageProgress)}%</p>
+                  <p className="text-sm text-muted-foreground">완독한 책</p>
+                  <p className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">{finishedBooks}</p>
                 </div>
                 <Brain className="h-8 w-8 text-primary group-hover:scale-110 transition-transform duration-300" />
               </div>
@@ -329,24 +325,31 @@ export function DashboardClient() {
               </CardContent>
             </Card>
 
-            {/* Monthly Stats */}
-            {stats?.monthlyStats && stats.monthlyStats.length > 0 && (
+            {/* Recent Activity */}
+            {stats?.recentActivity && stats.recentActivity.length > 0 && (
               <Card className="knowledge-card mt-6 group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Calendar className="h-5 w-5 text-primary" />
-                    <span>이번 달 통계</span>
+                    <span>최근 활동</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {stats.monthlyStats.slice(0, 3).map((stat: { month: string; readBookCount: number; noteCount: number }, index: number) => (
+                    {stats.recentActivity.slice(0, 3).map((activity: { type: string; bookTitle: string; timestamp: string }, index: number) => (
                       <div key={index} className="p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-all duration-300">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium text-foreground">{stat.month}</span>
-                          <div className="text-right">
-                            <div className="text-sm font-medium">{stat.readBookCount}권</div>
-                            <div className="text-xs text-muted-foreground">{stat.noteCount}개 노트</div>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-foreground">
+                              {activity.type === 'note_created' && '노트 작성'}
+                              {activity.type === 'book_added' && '책 추가'}
+                              {activity.type === 'quote_added' && '인용구 추가'}
+                              {activity.type === 'book_finished' && '책 완독'}
+                            </div>
+                            <div className="text-xs text-muted-foreground">{activity.bookTitle}</div>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(activity.timestamp).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
