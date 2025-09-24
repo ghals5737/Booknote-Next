@@ -1,10 +1,13 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useSidebar } from '@/components/context/SidebarContext'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { ClientOnly } from '@/components/ui/client-only'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { useNextAuth } from '@/hooks/use-next-auth'
+import { Menu, X } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import Navigation from '../sidebar/Navigation'
 
@@ -16,6 +19,8 @@ export function PageWrapper({ children }: PageWrapperProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { user, isAuthenticated, logout } = useNextAuth()
+  const { isOpen, toggleSidebar, closeSidebar } = useSidebar()
+  const isMobile = useIsMobile()
   
   // 경로에 따른 현재 페이지 ID 매핑
   const getCurrentPage = (path: string): string => {
@@ -46,9 +51,42 @@ export function PageWrapper({ children }: PageWrapperProps) {
 
   return (
     <div className="min-h-screen bg-background flex">
-      <Navigation currentPage={currentPage} />
-      <main className="flex-1 overflow-auto">
-        <div className="w-full flex items-center justify-end gap-2 px-4 py-3 border-b border-border">
+      {/* 모바일 오버레이 */}
+      {isMobile && isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+      
+      {/* 사이드바 */}
+      <div className={`
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isMobile ? 'fixed inset-y-0 left-0 z-50 w-64' : 'relative'}
+        transition-transform duration-300 ease-in-out
+        lg:translate-x-0 lg:static lg:z-auto
+      `}>
+        <Navigation currentPage={currentPage} />
+      </div>
+      
+      {/* 메인 콘텐츠 */}
+      <main className="flex-1 overflow-auto min-w-0">
+        {/* 상단 헤더 */}
+        <div className="w-full flex items-center justify-between gap-2 px-4 py-3 border-b border-border bg-background sticky top-0 z-30">
+          {/* 모바일 메뉴 버튼 */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSidebar}
+            className="lg:hidden"
+          >
+            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+          
+          {/* 데스크톱에서는 빈 공간 */}
+          <div className="hidden lg:block" />
+          
+          {/* 사용자 메뉴 */}
           <ClientOnly fallback={
             <div className="flex items-center gap-2">
               <div className="w-16 h-8 bg-muted animate-pulse rounded"></div>
@@ -65,20 +103,15 @@ export function PageWrapper({ children }: PageWrapperProps) {
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 rounded-full p-1 hover:bg-muted/60">
                     <Avatar className="size-8">
-                      {user?.image ? (
-                        <AvatarImage src={user.image as string} alt={user?.name || 'user'} />
-                      ) : (
-                        <AvatarFallback>{(user?.name || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
-                      )}
+                      <AvatarFallback>{(user?.id || 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <span className="text-sm font-medium text-foreground hidden sm:inline">{user?.name || '사용자'}</span>
+                    <span className="text-sm font-medium text-foreground hidden sm:inline">사용자</span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[12rem]">
                   <DropdownMenuLabel>
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium">{user?.name || '사용자'}</span>
-                      {user?.email && <span className="text-xs text-muted-foreground">{user.email}</span>}
+                      <span className="text-sm font-medium">사용자</span>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -91,7 +124,11 @@ export function PageWrapper({ children }: PageWrapperProps) {
             )}
           </ClientOnly>
         </div>
-        {children}
+        
+        {/* 페이지 콘텐츠 */}
+        <div className="p-4 lg:p-6">
+          {children}
+        </div>
       </main>
     </div>
   )

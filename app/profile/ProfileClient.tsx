@@ -43,6 +43,8 @@ export default function ProfileClient() {
     name: '',
     profileImage: ''
   })
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -94,26 +96,106 @@ export default function ProfileClient() {
       const token = localStorage.getItem('access_token')
       if (!token) return
 
-      const response = await fetch('/api/v1/users/profile', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editForm),
-      })
+      let response: Response
+
+      if (selectedFile) {
+        // 파일이 존재하면 multipart/form-data로 전송
+        const compressed = await compressImage(selectedFile, { maxSize: 1024 * 1024, maxWidth: 512, maxHeight: 512, quality: 0.8 })
+        const formData = new FormData()
+        formData.append('name', editForm.name)
+        formData.append('avatar', compressed)
+
+        response = await fetch('/api/v1/users/profile', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        })
+      } else {
+        // 파일 없으면 JSON 업데이트
+        response = await fetch('/api/v1/users/profile', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(editForm),
+        })
+      }
 
       if (response.ok) {
         const data = await response.json()
         if (data.success) {
           setProfile(data.data.user)
           setIsEditing(false)
+          setSelectedFile(null)
+          setPreviewUrl(null)
           // TODO: 토스트 메시지 표시
         }
       }
     } catch (error) {
       console.error('Profile update error:', error)
     }
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 기본 용량 제한: 5MB 하드 제한 (업로드 전 거르기)
+    const HARD_LIMIT = 5 * 1024 * 1024
+    if (file.size > HARD_LIMIT) {
+      alert('파일이 너무 큽니다. 5MB 이하 이미지를 선택해주세요.')
+      return
+    }
+
+    setSelectedFile(file)
+    setPreviewUrl(URL.createObjectURL(file))
+  }
+
+  async function compressImage(file: File, options: { maxSize: number; maxWidth: number; maxHeight: number; quality: number }): Promise<File> {
+    // 이미지가 이미 충분히 작으면 그대로 사용
+    if (file.size <= options.maxSize) {
+      return file
+    }
+
+    const bitmap = await createImageBitmap(file)
+    const { width, height } = fitSize(bitmap.width, bitmap.height, options.maxWidth, options.maxHeight)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return file
+    ctx.drawImage(bitmap, 0, 0, width, height)
+
+    const blob: Blob = await new Promise((resolve) => canvas.toBlob((b) => resolve(b as Blob), 'image/jpeg', options.quality))
+
+    // 여전히 너무 크다면 품질을 낮춰 한 번 더 시도 (최대 두 번)
+    if (blob.size > options.maxSize) {
+      const blob2: Blob = await new Promise((resolve) => canvas.toBlob((b) => resolve(b as Blob), 'image/jpeg', 0.7))
+      if (blob2.size < blob.size) {
+        return new File([blob2], renameToJpeg(file.name), { type: 'image/jpeg' })
+      }
+    }
+
+    return new File([blob], renameToJpeg(file.name), { type: 'image/jpeg' })
+  }
+
+  function fitSize(srcW: number, srcH: number, maxW: number, maxH: number) {
+    let w = srcW
+    let h = srcH
+    const ratio = Math.min(maxW / w, maxH / h, 1)
+    w = Math.round(w * ratio)
+    h = Math.round(h * ratio)
+    return { width: w, height: h }
+  }
+
+  function renameToJpeg(name: string) {
+    if (name.toLowerCase().endsWith('.jpg') || name.toLowerCase().endsWith('.jpeg')) return name
+    const base = name.replace(/\.[^/.]+$/, '')
+    return `${base}.jpg`
   }
 
   const handlePasswordChange = async () => {
@@ -237,13 +319,25 @@ export default function ProfileClient() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="profileImage">프로필 이미지 URL</Label>
-                        <Input
-                          id="profileImage"
-                          value={editForm.profileImage}
-                          onChange={(e) => setEditForm({ ...editForm, profileImage: e.target.value })}
-                          placeholder="https://example.com/image.jpg"
-                        />
+                        <Label htmlFor="profileImage">프로필 이미지</Label>
+                        <div className="space-y-2">
+                          <Input
+                            id="profileImage"
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                          />
+                          <div className="text-xs text-muted-foreground">최대 5MB, 업로드 시 512x512 이내로 압축됩니다.</div>
+                          {(previewUrl || editForm.profileImage) && (
+                            <div className="mt-2">
+                              <img
+                                src={previewUrl || editForm.profileImage}
+                                alt="미리보기"
+                                className="w-24 h-24 object-cover rounded-full border"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex space-x-2">

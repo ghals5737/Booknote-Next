@@ -60,28 +60,46 @@ export async function PUT(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    const body = await request.json().catch(() => ({}));
-    const { name, profileImage } = body || {};
-
-    // 최소한 하나의 필드는 업데이트해야 함
-    if (!name && !profileImage) {
-      return NextResponse.json(
-        { success: false, message: 'At least one field (name or profileImage) is required' },
-        { status: 400 }
-      );
-    }
-
+    const contentType = request.headers.get('content-type') || '';
     const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/users/profile`;
 
-    const response = await fetch(upstreamUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name, profileImage }),
-      cache: 'no-store',
-    });
+    let response: Response;
+
+    if (contentType.includes('multipart/form-data')) {
+      // 파일 업로드 처리
+      const formData = await request.formData();
+
+      response = await fetch(upstreamUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          // Content-Type은 브라우저/환경이 자동으로 설정하도록 비워둠
+        } as any,
+        body: formData as any,
+        cache: 'no-store',
+      });
+    } else {
+      // JSON 처리
+      const body = await request.json().catch(() => ({}));
+      const { name, profileImage } = body || {};
+
+      if (!name && !profileImage) {
+        return NextResponse.json(
+          { success: false, message: 'At least one field (name or profileImage) is required' },
+          { status: 400 }
+        );
+      }
+
+      response = await fetch(upstreamUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, profileImage }),
+        cache: 'no-store',
+      });
+    }
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

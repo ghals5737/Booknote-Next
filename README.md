@@ -88,6 +88,7 @@
 - `/api/v1/search/books` - 외부 책 검색
 - `/api/v1/notes` - 노트 CRUD
 - `/api/v1/quotes` - 인용구 CRUD
+- `/api/v1/users/profile` - 사용자 프로필 조회/수정 (JSON + multipart/form-data)
 
 ### ⚠️ 부분 연동
 - `/api/v1/stats/dashboard` - 대시보드 통계 (Mock 데이터 사용)
@@ -96,9 +97,80 @@
 ### ❌ 미연동
 - `/api/v1/auth/refresh` - 토큰 갱신
 - `/api/v1/auth/logout` - 로그아웃
-- `/api/v1/user/profile` - 사용자 프로필
 - `/api/v1/statistics/*` - 상세 통계 API
 - `/api/v1/reminders/*` - 리마인더 API
+
+## 👤 사용자 프로필 API 가이드
+
+### 1) 프로필 조회
+
+요청
+```http
+GET /api/v1/users/profile
+Authorization: Bearer <access_token>
+```
+
+성공 응답 (200)
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user_123456789",
+      "email": "user@example.com",
+      "name": "홍길동",
+      "profileImage": "https://example.com/avatar.jpg",
+      "provider": "email",
+      "createdAt": "2024-12-19T10:30:00Z",
+      "lastLoginAt": "2024-12-20T08:12:00Z"
+    },
+    "stats": {
+      "totalBooks": 25,
+      "readingBooks": 3,
+      "finishedBooks": 22,
+      "totalNotes": 150,
+      "totalQuotes": 89,
+      "readingStreak": 7,
+      "totalReadingTime": 120
+    }
+  },
+  "message": "프로필 조회에 성공했습니다.",
+  "timestamp": "2025-09-24T09:30:00Z"
+}
+```
+
+### 2) 프로필 수정
+
+두 가지 방식 모두 지원합니다.
+
+- JSON (이름/이미지 URL)
+```http
+PUT /api/v1/users/profile
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "name": "새 이름",
+  "profileImage": "https://example.com/new-avatar.jpg"
+}
+```
+
+- multipart/form-data (파일 업로드)
+```http
+PUT /api/v1/users/profile
+Authorization: Bearer <access_token>
+Content-Type: multipart/form-data
+
+name: 새 이름
+avatar: <이미지 파일>
+```
+
+권장 업로드 정책
+- 최대 파일 크기: 1MB
+- 권장 리사이즈: 512x512 내로 스케일링
+- 권장 포맷/품질: JPEG, 품질 0.8
+
+클라이언트는 업로드 전 캔버스/웹 API로 리사이즈/압축을 수행한 뒤 전송하는 것을 권장합니다.
 
 ## 기술 스택
 
@@ -181,7 +253,12 @@ NEXTAUTH_SECRET=your-secret-key-here-change-in-production
 GOOGLE_CLIENT_ID=your-google-client-id-here
 GOOGLE_CLIENT_SECRET=your-google-client-secret-here
 BACKEND_URL=http://localhost:9100
+NEXT_PUBLIC_API_BASE_URL=http://localhost:9100
+# (하위 호환) 없을 경우 NEXT_PUBLIC_API_URL이 사용됩니다
 NEXT_PUBLIC_API_URL=http://localhost:9100
+
+# 토큰 키 (로컬 스토리지)
+# access_token / refresh_token 사용 (auth_token은 사용하지 않음)
 ```
 
 ### 2. 의존성 설치
