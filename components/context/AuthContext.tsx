@@ -1,6 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { authApi, authenticatedApiRequest, tokenManager } from "@/lib/api/auth"
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 
 export interface User {
   id: string
@@ -38,21 +39,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuthStatus = async () => {
     try {
-      // 클라이언트 사이드에서만 localStorage 접근
-      if (typeof window !== 'undefined') {
-        const token = localStorage.getItem("auth_token")
-        if (token) {
-          // Mock user data - 실제로는 API에서 사용자 정보 가져오기
-          const mockUser: User = {
-            id: "1",
-            email: "user@example.com",
-            name: "김독서",
-            avatar: "/placeholder.svg?height=40&width=40",
-            provider: "email",
-            createdAt: new Date("2024-01-01"),
-            lastLoginAt: new Date(),
+      if (tokenManager.isAuthenticated()) {
+        try {
+          // lib/api/auth.ts의 authenticatedApiRequest 사용
+          const data = await authenticatedApiRequest<{ user: any }>('/api/v1/users/profile')
+          
+          if (data.success && data.data?.user) {
+            const userData = data.data.user
+            const user: User = {
+              id: userData.id,
+              email: userData.email,
+              name: userData.name,
+              avatar: userData.profileImage,
+              provider: userData.provider,
+              createdAt: new Date(userData.createdAt),
+              lastLoginAt: new Date(userData.lastLoginAt),
+            }
+            setUser(user)
+          } else {
+            // 토큰이 유효하지 않은 경우 제거
+            tokenManager.clearTokens()
           }
-          setUser(mockUser)
+        } catch (apiError) {
+          console.error("Profile API error:", apiError)
+          // API 오류 시 토큰 제거
+          tokenManager.clearTokens()
         }
       }
     } catch (error) {
@@ -65,25 +76,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      // Mock login - 실제로는 API 호출
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const mockUser: User = {
-        id: "1",
-        email,
-        name: "김독서",
-        avatar: "/placeholder.svg?height=40&width=40",
-        provider: "email",
-        createdAt: new Date("2024-01-01"),
-        lastLoginAt: new Date(),
+      // lib/api/auth.ts의 authApi.login 사용
+      const response = await authApi.login({ email, password })
+      
+      if (response.success) {
+        // 로그인 후 프로필 정보 가져오기
+        await checkAuthStatus()
+      } else {
+        throw new Error(response.message || '로그인 실패')
       }
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("auth_token", "mock_token")
-      }
-      setUser(mockUser)
     } catch (error) {
-      throw new Error("로그인에 실패했습니다.")
+      console.error("Login failed:", error)
+      throw error
     } finally {
       setIsLoading(false)
     }
@@ -126,25 +130,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (email: string, password: string, name: string) => {
     setIsLoading(true)
     try {
-      // Mock register - 실제로는 API 호출
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const mockUser: User = {
-        id: "1",
-        email,
-        name,
-        avatar: "/placeholder.svg?height=40&width=40",
-        provider: "email",
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
+      // lib/api/auth.ts의 authApi.signup 사용
+      const response = await authApi.signup({ email, password, name })
+      
+      if (response.success) {
+        // 회원가입 성공 후 자동 로그인
+        await checkAuthStatus()
+      } else {
+        throw new Error(response.message || '회원가입 실패')
       }
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("auth_token", "mock_token")
-      }
-      setUser(mockUser)
     } catch (error) {
-      throw new Error("회원가입에 실패했습니다.")
+      console.error("Register failed:", error)
+      throw error
     } finally {
       setIsLoading(false)
     }
@@ -152,12 +149,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem("auth_token")
-      }
+      // lib/api/auth.ts의 authApi.logout 사용
+      await authApi.logout()
       setUser(null)
     } catch (error) {
       console.error("Logout failed:", error)
+      // 로그아웃 실패해도 토큰은 클리어하고 사용자 상태 초기화
+      tokenManager.clearTokens()
+      setUser(null)
     }
   }
 
@@ -175,7 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isLoading,
-        isAuthenticated: !!user,
+        isAuthenticated: tokenManager.isAuthenticated(),
         login,
         loginWithProvider,
         register,

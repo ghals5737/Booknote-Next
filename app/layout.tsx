@@ -1,4 +1,5 @@
 "use client";
+import { AuthProvider } from "@/components/context/AuthContext";
 import { PageWrapper } from "@/components/layout/PageWrapper";
 import { SWRProvider } from "@/components/providers/SWRProvider";
 import { cleanupDuplicateTokens } from "@/lib/api/token";
@@ -61,9 +62,11 @@ export default function RootLayout({
       >
         <TokenCleanupWrapper>
           <SWRProvider>
+            <AuthProvider>
               <PageWrapper>
                 {children}
               </PageWrapper>
+            </AuthProvider>
           </SWRProvider>
         </TokenCleanupWrapper>
       </body>

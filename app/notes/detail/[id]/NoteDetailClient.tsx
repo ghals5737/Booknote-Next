@@ -36,7 +36,7 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
   const { deleteNote } = useDeleteNote();
   const { note, isLoading, error, mutateNote } = useNote(noteId);
 
-  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
+  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
 
   // 노트가 로드되면 편집용 상태 초기화
   useEffect(() => {

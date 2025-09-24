@@ -1,5 +1,6 @@
 'use client'
 import { AddBookDialog } from "@/components/book/AddBookDialog";
+import { useAuth } from "@/components/context/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,8 @@ import {
   Home,
   Plus,
   Settings,
-  TrendingUp
+  TrendingUp,
+  User
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -24,7 +26,8 @@ interface NavigationProps {
 const Navigation = ({ currentPage }: NavigationProps) => {
   const router = useRouter();
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
-  const { user, logout } = useNextAuth();
+  const { logout } = useNextAuth();
+  const { user } = useAuth();
   const { stats } = useDashboardStats();
 
   const navItems = useMemo(() => ([
@@ -155,6 +158,18 @@ const Navigation = ({ currentPage }: NavigationProps) => {
 
       {/* Settings & Auth */}
       <div className="p-4 border-t border-border space-y-2">
+        {user && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full justify-start text-muted-foreground"
+            onClick={() => router.push('/profile')}
+          >
+            <User className="h-4 w-4 mr-2" />
+            프로필
+          </Button>
+        )}
+        
         <Button 
           variant="ghost" 
           size="sm" 
@@ -181,7 +196,7 @@ const Navigation = ({ currentPage }: NavigationProps) => {
                 <AvatarFallback>U</AvatarFallback>
               </Avatar>
               <div className="flex flex-col leading-tight min-w-0">
-                <span className="text-sm font-medium truncate max-w-[9rem]">사용자</span>
+                <span className="text-sm font-medium truncate max-w-[9rem]">{user.name || '사용자'}</span>
               </div>
             </div>
             <Button 

@@ -1,6 +1,6 @@
 // JWT 인증 관련 API 함수들
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
 
 export interface LoginRequest {
   email: string;

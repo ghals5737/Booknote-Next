@@ -3,7 +3,7 @@ import { NoteResponse, NoteResponsePage } from '@/lib/types/note/note';
 import useSWR from 'swr';
 import { useNextAuth } from './use-next-auth';
 
-const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
+const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL;
 
 // SWR fetcher 함수 (새로운 인증 API 사용)
 const fetcher = async (url: string) => {
