@@ -1,6 +1,7 @@
 "use client";
 
 import { ErrorState } from "@/components/layout/ErrorState";
+import { ErrorHandler } from "@/lib/error-handler";
 import { useEffect } from "react";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
@@ -8,23 +9,32 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 		console.error("Route error:", error);
 	}, [error]);
 
-	let kind: "server" | "network" | "timeout" | "unknown" = "unknown";
-	const message = String(error?.message ?? "");
-	if (message.includes("NetworkError") || message.includes("Failed to fetch")) kind = "network";
-	else if (message.toLowerCase().includes("timeout") || message.toLowerCase().includes("timed out")) kind = "timeout";
-	else if (message.includes("500") || message.toLowerCase().includes("server")) kind = "server";
+	const errorKind = ErrorHandler.getErrorKind(error);
+	const errorMessage = ErrorHandler.extractErrorMessage(error);
+	const errorId = error?.digest || ErrorHandler.generateErrorId();
 
 	return (
 		<ErrorState
-			kind={kind}
+			kind={errorKind}
+			title="페이지 로드 중 오류가 발생했어요"
+			description={errorMessage}
+			errorId={errorId}
 			extra={
-				<div className="p-6 pt-0 text-xs text-muted-foreground break-all">
-					{error?.digest && <div>에러 ID: {error.digest}</div>}
-					{message && <div className="mt-1">메시지: {message}</div>}
-				</div>
+				process.env.NODE_ENV === 'development' && (
+					<div className="p-6 pt-0 text-xs text-muted-foreground break-all">
+						<details className="cursor-pointer">
+							<summary className="font-medium mb-2">개발자 정보</summary>
+							<div className="space-y-1">
+								<div><strong>원본 메시지:</strong> {String(error?.message ?? "")}</div>
+								<div><strong>스택 트레이스:</strong></div>
+								<pre className="mt-1 p-2 bg-muted rounded text-xs overflow-auto max-h-32">
+									{error?.stack}
+								</pre>
+							</div>
+						</details>
+					</div>
+				)
 			}
-			title={undefined}
-			description={undefined}
 			onRetry={() => reset()}
 		/>
 	);

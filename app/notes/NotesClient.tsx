@@ -8,17 +8,16 @@ import { useAddNote, useDeleteNote, useNotes } from "@/hooks/use-notes";
 import { NoteResponse } from "@/lib/types/note/note";
 import {
   AlertCircle,
-  ArrowUpDown,
   Book,
   Calendar,
   FileText,
-  Filter,
   Grid3X3,
   List,
   Loader2,
   Plus,
   RefreshCw,
   Search,
+  Star,
   Tag
 } from "lucide-react";
 import moment from "moment";
@@ -29,6 +28,8 @@ export function NotesClient() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showImportantOnly, setShowImportantOnly] = useState(false);
+  const [sortByImportant, setSortByImportant] = useState(false);
 
   // SWR 훅 사용
   const { notes, pagination, isLoading, error, mutateNotes } = useNotes(0, 10);
@@ -53,11 +54,29 @@ export function NotesClient() {
   };
 
   // 필터링된 노트 목록
-  const filteredNotes = notes.filter(note =>
-    note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    note.tagList.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredNotes = notes.filter(note => {
+    const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.tagList.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesImportant = showImportantOnly ? note.isImportant : true;
+    
+    return matchesSearch && matchesImportant;
+  }).sort((a, b) => {
+    if (sortByImportant) {
+      // 중요 노트를 먼저, 그 다음 날짜순
+      if (a.isImportant !== b.isImportant) {
+        return Number(b.isImportant) - Number(a.isImportant);
+      }
+      const dateA = a.updateDate ? new Date(a.updateDate).getTime() : 0;
+      const dateB = b.updateDate ? new Date(b.updateDate).getTime() : 0;
+      return dateB - dateA;
+    }
+    // 기본 정렬: 날짜순
+    const dateA = a.updateDate ? new Date(a.updateDate).getTime() : 0;
+    const dateB = b.updateDate ? new Date(b.updateDate).getTime() : 0;
+    return dateB - dateA;
+  });
 
   if (isLoading) {
     return (
@@ -127,14 +146,22 @@ export function NotesClient() {
                 />
               </div>
               
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                필터
+              <Button 
+                variant={showImportantOnly ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setShowImportantOnly(!showImportantOnly)}
+              >
+                <Star className="h-4 w-4 mr-2" />
+                중요 노트만
               </Button>
               
-              <Button variant="outline" size="sm">
-                <ArrowUpDown className="h-4 w-4 mr-2" />
-                정렬
+              <Button 
+                variant={sortByImportant ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setSortByImportant(!sortByImportant)}
+              >
+                <Star className="h-4 w-4 mr-2" />
+                중요순 정렬
               </Button>
               
               <div className="flex items-center border border-border rounded-lg">
@@ -181,11 +208,17 @@ export function NotesClient() {
                       <Badge variant="secondary" className="text-xs">
                         {note.tagName}
                       </Badge>
+                      {note.isImportant && (
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                      )}
                     </div>
                     <span className="text-xs text-muted-foreground">{moment(note.updateDate).format('YYYY-MM-DD')}</span>
                   </div>
-                  <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors">
+                  <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors flex items-center gap-2">
                     {note.title}
+                    {note.isImportant && (
+                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -226,9 +259,15 @@ export function NotesClient() {
                           <Badge variant="secondary" className="text-xs">
                             {note.tagName}
                           </Badge>
+                          {note.isImportant && (
+                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          )}
                         </div>
-                        <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                        <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
                           {note.title}
+                          {note.isImportant && (
+                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          )}
                         </h3>
                       </div>
                       

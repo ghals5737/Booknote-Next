@@ -2,7 +2,9 @@
 
 import { AuthProvider } from "@/components/context/AuthContext"
 import { SidebarProvider } from "@/components/context/SidebarContext"
+import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary"
 import { SWRProvider } from "@/components/providers/SWRProvider"
+import { ToastProvider } from "@/components/providers/ToastProvider"
 import { cleanupDuplicateTokens } from "@/lib/api/token"
 import { useEffect } from "react"
 import { PageWrapper } from "./layout/PageWrapper"
@@ -31,18 +33,22 @@ function MetadataSetter() {
 
 export function ClientRoot({ children }: { children: React.ReactNode }) {
   return (
-    <TokenCleanupWrapper>
-      <SWRProvider>
-        <AuthProvider>
-          <SidebarProvider>
-            <MetadataSetter />
-            <PageWrapper>
-              {children}
-            </PageWrapper>
-          </SidebarProvider>
-        </AuthProvider>
-      </SWRProvider>
-    </TokenCleanupWrapper>
+    <ErrorBoundary>
+      <ToastProvider>
+        <TokenCleanupWrapper>
+          <SWRProvider>
+            <AuthProvider>
+              <SidebarProvider>
+                <MetadataSetter />
+                <PageWrapper>
+                  {children}
+                </PageWrapper>
+              </SidebarProvider>
+            </AuthProvider>
+          </SWRProvider>
+        </TokenCleanupWrapper>
+      </ToastProvider>
+    </ErrorBoundary>
   )
 }
 

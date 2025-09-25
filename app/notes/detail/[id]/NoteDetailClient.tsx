@@ -16,6 +16,7 @@ import {
   FileText,
   Loader2,
   Save,
+  Star,
   Tag,
   Trash2,
   X
@@ -78,6 +79,33 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
     } catch (error) {
       console.error('Error updating note:', error);
       alert('노트 수정에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleImportant = async () => {
+    if (!note) return;
+
+    setIsSaving(true);
+    try {
+      const { authenticatedApiRequest } = await import('@/lib/api/auth');
+      const result = await authenticatedApiRequest(`/api/v1/notes/${noteId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          title: note.title,
+          content: note.content,
+          html: note.html,
+          isImportant: !note.isImportant
+        })
+      });
+
+      // SWR 캐시 업데이트
+      mutateNote(result.data as NoteResponse, false);
+      alert(`노트가 ${!note.isImportant ? '중요' : '일반'} 노트로 변경되었습니다.`);
+    } catch (error) {
+      console.error('Error updating note importance:', error);
+      alert('중요표시 변경에 실패했습니다.');
     } finally {
       setIsSaving(false);
     }
@@ -185,6 +213,15 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
               <>
                 <Button
                   variant="outline"
+                  onClick={handleToggleImportant}
+                  disabled={isSaving}
+                  className={`flex items-center gap-2 ${note.isImportant ? 'text-yellow-600 hover:text-yellow-700' : ''}`}
+                >
+                  <Star className={`h-4 w-4 ${note.isImportant ? 'fill-current' : ''}`} />
+                  {note.isImportant ? '중요 해제' : '중요 표시'}
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={() => setIsEditing(true)}
                   className="flex items-center gap-2"
                 >
@@ -230,16 +267,24 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
 
         {/* Note title */}
         {!isEditing ? (
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-3">
             {note.title}
+            {note.isImportant && (
+              <Star className="h-8 w-8 text-yellow-500 fill-yellow-500" />
+            )}
           </h1>
         ) : (
-          <Input
-            value={editedNote?.title || ''}
-            onChange={(e) => setEditedNote({ ...editedNote!, title: e.target.value })}
-            className="text-3xl font-bold mb-2 h-auto text-foreground border-none shadow-none px-0"
-            placeholder="노트 제목을 입력하세요"
-          />
+          <div className="flex items-center gap-3 mb-2">
+            <Input
+              value={editedNote?.title || ''}
+              onChange={(e) => setEditedNote({ ...editedNote!, title: e.target.value })}
+              className="text-3xl font-bold h-auto text-foreground border-none shadow-none px-0 flex-1"
+              placeholder="노트 제목을 입력하세요"
+            />
+            {editedNote?.isImportant && (
+              <Star className="h-8 w-8 text-yellow-500 fill-yellow-500" />
+            )}
+          </div>
         )}
 
         {/* Meta info */}

@@ -39,17 +39,17 @@ const MOCK_DATA = {
   },
   recentActivity: [
     {
-      type: 'note_created',
+      type: 'NOTE_CREATED',
       bookTitle: '아토믹 해빗',
       timestamp: new Date().toISOString()
     },
     {
-      type: 'book_added',
+      type: 'BOOK_ADDED',
       bookTitle: '클린 코드',
       timestamp: new Date(Date.now() - 86400000).toISOString()
     },
     {
-      type: 'quote_added',
+      type: 'QUOTE_ADDED',
       bookTitle: '아토믹 해빗',
       timestamp: new Date(Date.now() - 172800000).toISOString()
     }

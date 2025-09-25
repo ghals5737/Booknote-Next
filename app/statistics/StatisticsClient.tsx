@@ -1,4 +1,5 @@
 'use client'
+import { LoginRequired } from "@/components/auth/LoginRequired";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,10 +33,33 @@ import {
 } from "recharts";
 
 export function StatisticsClient() {
-  const { user, isAuthenticated } = useNextAuth();
-
-  // 통계 데이터 가져오기
+  const { user, isAuthenticated, isLoading: authLoading } = useNextAuth();
+  
+  // 통계 데이터 가져오기 - 모든 훅은 조건문 밖에서 호출해야 함
   const { stats, error: statsError, isLoading: statsLoading, mutateStats } = useDashboardStats();
+
+  // 로그인 상태 확인 중이면 로딩 표시
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">독서 통계</h1>
+          <p className="text-muted-foreground">당신의 독서 여정을 한눈에 확인하세요</p>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>로그인 상태를 확인하는 중...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 로그인하지 않은 사용자에게 안내 화면 표시
+  if (!isAuthenticated) {
+    return <LoginRequired />;
+  }
 
   // 실제 통계 데이터 또는 기본값
   const overallStats = {

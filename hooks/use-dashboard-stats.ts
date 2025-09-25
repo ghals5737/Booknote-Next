@@ -19,7 +19,7 @@ export interface DashboardStats {
     important: number;
   };
   recentActivity: Array<{
-    type: 'note_created' | 'book_added' | 'quote_added' | 'book_finished';
+    type: 'NOTE_CREATED' | 'BOOK_ADDED' | 'QUOTE_ADDED' | 'BOOK_FINISHED';
     bookTitle: string;
     timestamp: string;
   }>;

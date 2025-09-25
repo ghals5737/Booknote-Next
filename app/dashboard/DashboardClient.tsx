@@ -125,6 +125,7 @@ export function DashboardClient() {
   }
 
   if (hasError) {
+    console.error('Dashboard error details:', { statsError, notesError });
     return (
       <div className="min-h-screen bg-background">
         {/* Header */}
@@ -159,18 +160,37 @@ export function DashboardClient() {
           <div className="flex items-center justify-center py-20">
             <div className="flex flex-col items-center gap-3 text-muted-foreground">
               <AlertCircle className="h-12 w-12 text-red-500" />
-              <span>데이터를 불러오는 중 오류가 발생했습니다</span>
-              <Button 
-                onClick={() => {
-                  mutateStats();
-                  mutateNotes();
-                }}
-                variant="outline"
-                className="mt-4"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                다시 시도
-              </Button>
+              <span className="text-lg font-medium">데이터를 불러오는 중 오류가 발생했습니다</span>
+              <p className="text-sm text-center max-w-md">
+                {statsError ? '통계 데이터' : notesError ? '노트 데이터' : '데이터'}를 불러오는 중 문제가 발생했습니다. 
+                잠시 후 다시 시도해주세요.
+              </p>
+              {statsError && (
+                <details className="mt-2 text-xs text-left max-w-md">
+                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                    오류 상세 정보
+                  </summary>
+                  <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-auto">
+                    {JSON.stringify(statsError, null, 2)}
+                  </pre>
+                </details>
+              )}
+              <div className="flex gap-2 mt-4">
+                <Button 
+                  onClick={() => mutateStats()}
+                  variant="outline"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  통계 다시 시도
+                </Button>
+                <Button 
+                  onClick={() => mutateNotes()}
+                  variant="outline"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  노트 다시 시도
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -388,10 +408,10 @@ export function DashboardClient() {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="text-sm font-medium text-foreground">
-                              {activity.type === 'note_created' && '노트 작성'}
-                              {activity.type === 'book_added' && '책 추가'}
-                              {activity.type === 'quote_added' && '인용구 추가'}
-                              {activity.type === 'book_finished' && '책 완독'}
+                              {activity.type === 'NOTE_CREATED' && '노트 작성'}
+                              {activity.type === 'BOOK_ADDED' && '책 추가'}
+                              {activity.type === 'QUOTE_ADDED' && '인용구 추가'}
+                              {activity.type === 'BOOK_FINISHED' && '책 완독'}
                             </div>
                             <div className="text-xs text-muted-foreground">{activity.bookTitle}</div>
                           </div>
