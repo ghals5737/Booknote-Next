@@ -198,6 +198,11 @@ const NoteEditor = () => {
         page: parseInt(quotePage) || 0,
         createdAt: new Date().toISOString().split('T')[0]
       };
+      addQuote({
+        bookId: parseInt(selectedBook),
+        text: newQuote.trim(),
+        page: parseInt(quotePage) || 0,
+      });
       setFavoriteQuotes([...favoriteQuotes, quote]);
       setNewQuote("");
       setQuotePage("");
@@ -483,12 +488,12 @@ const NoteEditor = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {books.map((book) => {
-                          const truncatedTitle = book.title.length > 20 
-                            ? `${book.title.substring(0, 20)}...` 
+                          const truncatedTitle = book.title.length > 18 
+                            ? `${book.title.substring(0, 18)}...` 
                             : book.title;
                           return (
                             <SelectItem key={book.id} value={book.id.toString()}>
-                              {truncatedTitle} - {book.author}
+                              {truncatedTitle}
                             </SelectItem>
                           );
                         })}
