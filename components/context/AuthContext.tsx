@@ -58,12 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(user)
           } else {
             // 토큰이 유효하지 않은 경우 제거
-            tokenManager.clearTokens()
+           // tokenManager.clearTokens()
           }
         } catch (apiError) {
           console.error("Profile API error:", apiError)
           // API 오류 시 토큰 제거
-          tokenManager.clearTokens()
+          //tokenManager.clearTokens()
         }
       }
     } catch (error) {

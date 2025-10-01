@@ -456,12 +456,13 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         <TabsContent value="notes" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">노트</h2>
-            <Dialog open={isAddingNote} onOpenChange={setIsAddingNote}>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              노트 추가
+            </Button>
+            {/* <Dialog open={isAddingNote} onOpenChange={setIsAddingNote}>
               <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  노트 추가
-                </Button>
+                
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -506,7 +507,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
                   </div>
                 </div>
               </DialogContent>
-            </Dialog>
+            </Dialog> */}
           </div>
 
           <div className="grid gap-4">

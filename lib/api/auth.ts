@@ -77,12 +77,24 @@ const apiRequest = async <T>(
 ): Promise<ApiResponse<T>> => {
   const url = `${API_BASE_URL}${endpoint}`;
   
+  // 기본 헤더 설정
+  const defaultHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  // 사용자 헤더와 병합 (사용자 헤더가 우선)
+  const headers = {
+    ...defaultHeaders,
+    ...options.headers,
+  };
+  
+  console.log('[apiRequest] URL:', url);
+  console.log('[apiRequest] Headers:', headers);
+  console.log('[apiRequest] Body:', options.body);
+  
   const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
     ...options,
+    headers,
   });
   
   const data = await response.json();
