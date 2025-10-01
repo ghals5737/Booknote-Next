@@ -81,14 +81,21 @@ export function useAddNote() {
       isImportant: noteData.isImportant || false,
       tagList: noteData.tagList || []
     };
+    console.log('[useAddNote] requestData:', requestData);
+    console.log('[useAddNote] JSON.stringify(requestData):', JSON.stringify(requestData));
 
     try {
       const response = await authenticatedApiRequest<NoteResponse>('/api/v1/notes', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(requestData)
       });
+      console.log('[useAddNote] Success response:', response);
       return response.data;
     } catch (error) {
+      console.error('[useAddNote] Error adding note:', error);
       throw new Error('노트 추가에 실패했습니다.');
     }
   };
