@@ -1,6 +1,7 @@
 "use client";
 
 import { Markdown } from "@/components/note/Markdown";
+import NoteEditor from "@/components/note/NoteEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +65,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
   const [viewingNote, setViewingNote] = useState<NoteData | null>(null);
   const [viewingQuote, setViewingQuote] = useState<QuoteData | null>(null);
   const [editingQuote, setEditingQuote] = useState<QuoteData | null>(null);
+  const [showNoteEditor, setShowNoteEditor] = useState(false);
 
 
 
@@ -234,6 +236,34 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
       console.error('Error updating quote:', error);
     }
   };
+
+  // 노트 에디터 표시
+  if (showNoteEditor) {
+    return (
+      <NoteEditor 
+        preSelectedBookId={bookId}
+        onSave={() => {
+          setShowNoteEditor(false);
+          mutateNotes();
+        }}
+        onCancel={() => setShowNoteEditor(false)}
+      />
+    );
+  }
+
+  // 노트 수정 모드
+  if (editingNote) {
+    return (
+      <NoteEditor 
+        initialNote={editingNote as any}
+        onSave={() => {
+          setEditingNote(null);
+          mutateNotes();
+        }}
+        onCancel={() => setEditingNote(null)}
+      />
+    );
+  }
 
   // If viewing a specific note, show note detail view
   if (viewingNote) {
@@ -456,7 +486,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         <TabsContent value="notes" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold">노트</h2>
-            <Button>
+            <Button onClick={() => setShowNoteEditor(true)}>
               <Plus className="h-4 w-4 mr-2" />
               노트 추가
             </Button>
