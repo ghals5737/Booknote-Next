@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useBooks } from "@/hooks/use-books";
 import { useNextAuth } from "@/hooks/use-next-auth";
 import { useAddNote, useAddQuote } from "@/hooks/use-notes";
+import { NoteResponse } from "@/lib/types/note/note";
 import {
   ArrowLeft,
   Bold,
@@ -33,16 +34,29 @@ import {
   Tag,
   Trash2
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Markdown } from "./Markdown";
 
-const NoteEditor = () => {
+interface NoteEditorProps {
+  initialNote?: NoteResponse;
+  onSave?: () => void;
+  onCancel?: () => void;
+  preSelectedBookId?: string;
+}
+
+const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEditorProps) => {
   const { user } = useNextAuth();
-  const { books, isLoading: booksLoading, error: booksError } = useBooks(0, 100); // 사용자 서재에서 책 목록 가져오기
-  const [title, setTitle] = useState("새로운 노트");
-  const [selectedBook, setSelectedBook] = useState("");
+  const router = useRouter();
+  const { books, isLoading: booksLoading, error: booksError } = useBooks(0, 100);
+  
+  // 수정 모드인지 확인
+  const isEditMode = !!initialNote;
+  
+  const [title, setTitle] = useState(initialNote?.title || "새로운 노트");
+  const [selectedBook, setSelectedBook] = useState(preSelectedBookId || initialNote?.bookId?.toString() || "");
   const [currentPage, setCurrentPage] = useState("");
-  const [content, setContent] = useState(`# 마크다운 편집기
+  const [content, setContent] = useState(initialNote?.content || `# 마크다운 편집기
 
 이곳에서 **마크다운**으로 노트를 작성할 수 있습니다.
 
@@ -62,10 +76,20 @@ const NoteEditor = () => {
 
 이 노트는 다른 노트들과 연결되어 지식 네트워크를 형성합니다.`);
   
-  const [tags, setTags] = useState(["학습", "마크다운", "지식관리"]);
+  const [tags, setTags] = useState(initialNote?.tagList || ["학습", "마크다운", "지식관리"]);
   const [newTag, setNewTag] = useState("");
   const [showPreview, setShowPreview] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  // 초기 노트 데이터로 상태 업데이트
+  useEffect(() => {
+    if (initialNote) {
+      setTitle(initialNote.title);
+      setSelectedBook(initialNote.bookId?.toString() || "");
+      setContent(initialNote.content);
+      setTags(initialNote.tagList || []);
+    }
+  }, [initialNote]);
   
   // 좋아하는 문장 관리
   const [favoriteQuotes, setFavoriteQuotes] = useState([
@@ -109,43 +133,74 @@ const NoteEditor = () => {
 
     setIsSaving(true);
     try {
-      const result = await addNote({
-        bookId: parseInt(selectedBook),
-        title: title,
-        content: content,
-        html: content,
-        isImportant: false,
-        tagList: tags,
-      });
+      if (isEditMode && initialNote) {
+        // 수정 모드
+        const { authenticatedApiRequest } = await import('@/lib/api/auth');
+        await authenticatedApiRequest(`/api/v1/notes/${initialNote.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            title: title,
+            content: content,
+            html: content,
+            isImportant: initialNote.isImportant,
+            tagList: tags,
+          })
+        });
+        alert('노트가 성공적으로 수정되었습니다.');
+        onSave?.();
+      } else {
+        // 생성 모드
+        const result = await addNote({
+          bookId: parseInt(selectedBook),
+          title: title,
+          content: content,
+          html: content,
+          isImportant: false,
+          tagList: tags,
+        });
 
-      if (result) {
-        // 좋아하는 문장들을 인용구로 저장
-        if (favoriteQuotes.length > 0) {
-          try {
-            await Promise.all(
-              favoriteQuotes.map((q) =>
-                addQuote({
-                  bookId: parseInt(selectedBook),
-                  text: q.text,
-                  page: q.page,
-                })
-              )
-            );
-          } catch (e) {
-            console.error('일부 인용구 저장 실패:', e);
+        if (result) {
+          // 좋아하는 문장들을 인용구로 저장
+          if (favoriteQuotes.length > 0) {
+            try {
+              await Promise.all(
+                favoriteQuotes.map((q) =>
+                  addQuote({
+                    bookId: parseInt(selectedBook),
+                    text: q.text,
+                    page: q.page,
+                  })
+                )
+              );
+            } catch (e) {
+              console.error('일부 인용구 저장 실패:', e);
+            }
+          }
+          alert('노트가 성공적으로 저장되었습니다.');
+          if (!onSave) {
+            // 생성 모드에서만 초기화
+            setTitle("새로운 노트");
+            setContent("");
+            setSelectedBook("");
+            setFavoriteQuotes([]);
+          } else {
+            onSave();
           }
         }
-        alert('노트가 성공적으로 저장되었습니다.');
-        setTitle("새로운 노트");
-        setContent("");
-        setSelectedBook("");
-        setFavoriteQuotes([]);
       }
     } catch (error) {
       console.error('Error saving note:', error);
-      alert('노트 저장에 실패했습니다.');
+      alert(`노트 ${isEditMode ? '수정' : '저장'}에 실패했습니다.`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    } else {
+      router.back();
     }
   };
 
@@ -220,9 +275,9 @@ const NoteEditor = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={handleCancel}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                뒤로
+                {isEditMode ? '취소' : '뒤로'}
               </Button>
               <Input
                 value={title}
@@ -239,7 +294,7 @@ const NoteEditor = () => {
               </Button>
               <Button size="sm" onClick={saveNote} disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
-                {isSaving ? '저장 중...' : '저장'}
+                {isSaving ? (isEditMode ? '수정 중...' : '저장 중...') : (isEditMode ? '수정' : '저장')}
               </Button>
             </div>
           </div>
@@ -524,6 +579,31 @@ const NoteEditor = () => {
               </CardContent>
             </Card>
 
+            {/* Linked Notes */}
+            <Card className="knowledge-card">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-base">
+                  <Link className="h-4 w-4 text-primary" />
+                  <span>연결된 노트</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="p-2 bg-muted/30 rounded-lg">
+                    <p className="text-sm font-medium">원자 습관</p>
+                    <p className="text-xs text-muted-foreground">작은 변화의 힘</p>
+                  </div>
+                  <div className="p-2 bg-muted/30 rounded-lg">
+                    <p className="text-sm font-medium">학습 방법론</p>
+                    <p className="text-xs text-muted-foreground">효과적인 학습 전략</p>
+                  </div>
+                  <Button variant="outline" size="sm" className="w-full">
+                    노트 연결 추가
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Tags */}
             <Card className="knowledge-card">
               <CardHeader>
@@ -566,33 +646,7 @@ const NoteEditor = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
-
-
-            {/* Linked Notes */}
-            <Card className="knowledge-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2 text-base">
-                  <Link className="h-4 w-4 text-primary" />
-                  <span>연결된 노트</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="p-2 bg-muted/30 rounded-lg">
-                    <p className="text-sm font-medium">원자 습관</p>
-                    <p className="text-xs text-muted-foreground">작은 변화의 힘</p>
-                  </div>
-                  <div className="p-2 bg-muted/30 rounded-lg">
-                    <p className="text-sm font-medium">학습 방법론</p>
-                    <p className="text-xs text-muted-foreground">효과적인 학습 전략</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full">
-                    노트 연결 추가
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            </Card>            
 
             {/* Quick Actions */}
             <Card className="knowledge-card">

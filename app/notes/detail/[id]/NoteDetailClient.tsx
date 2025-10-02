@@ -1,5 +1,6 @@
 'use client'
 
+import NoteEditor from "@/components/note/NoteEditor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -193,6 +194,11 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
   }
 
   const processedContent = `<p class="mb-4 text-foreground leading-relaxed">${renderMarkdownPreview(note.content)}</p>`;
+
+  // 수정 모드일 때 NoteEditor 사용
+  if (isEditing) {
+    return <NoteEditor initialNote={note} onSave={() => setIsEditing(false)} onCancel={() => setIsEditing(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">
