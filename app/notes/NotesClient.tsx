@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useBooks } from "@/hooks/use-books";
 import { useAddNote, useDeleteNote, useNotes } from "@/hooks/use-notes";
 import { NoteResponse } from "@/lib/types/note/note";
 import {
@@ -30,15 +32,21 @@ export function NotesClient() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showImportantOnly, setShowImportantOnly] = useState(false);
   const [sortByImportant, setSortByImportant] = useState(false);
+  const [selectedBookId, setSelectedBookId] = useState<string>('all');
 
   // SWR 훅 사용
   const { notes, pagination, isLoading, error, mutateNotes } = useNotes(0, 10);
+  const { books, isLoading: booksLoading, error: booksError } = useBooks(0, 20);
   const { addNote } = useAddNote();
   const { deleteNote } = useDeleteNote();
 
   const handleNoteClick = (note: NoteResponse) => {
     console.log(note);
     router.push(`/notes/detail/${note.id}`);
+  };
+
+  const handleBookClick = (bookId: number) => {
+    router.push(`/books/detail/${bookId}`);
   };
 
   const handleDeleteNote = async (noteId: number, noteTitle: string) => {
@@ -132,6 +140,11 @@ export function NotesClient() {
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold text-foreground">내 노트</h1>
               <Badge variant="secondary">{filteredNotes.length}개</Badge>
+              {books && books.length > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  {books.length}권의 책
+                </Badge>
+              )}
             </div>
             
             <div className="flex items-center space-x-4">
@@ -163,6 +176,23 @@ export function NotesClient() {
                 <Star className="h-4 w-4 mr-2" />
                 중요순 정렬
               </Button>
+
+              {/* 책 선택 드롭다운 */}
+              {books && books.length > 0 && (
+                <Select value={selectedBookId} onValueChange={setSelectedBookId}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="책 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 책</SelectItem>
+                    {books.map((book) => (
+                      <SelectItem key={book.id} value={book.id.toString()}>
+                        {book.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               
               <div className="flex items-center border border-border rounded-lg">
                 <Button
@@ -195,6 +225,11 @@ export function NotesClient() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* 노트 목록 섹션 */}
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold text-foreground mb-4">내 노트</h2>
+        </div>
+        
         {viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredNotes.map((note) => (

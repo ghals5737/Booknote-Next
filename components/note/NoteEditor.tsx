@@ -579,6 +579,25 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
               </CardContent>
             </Card>
 
+              {/* Note List */}
+              <Card className="knowledge-card">
+              <CardHeader>
+                <CardTitle className="text-base">노트 목록</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Palette className="h-4 w-4 mr-2" />
+                    하이라이트 추가
+                  </Button>
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Hash className="h-4 w-4 mr-2" />
+                    플래시카드 생성
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Linked Notes */}
             <Card className="knowledge-card">
               <CardHeader>
@@ -648,24 +667,7 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
               </CardContent>
             </Card>            
 
-            {/* Quick Actions */}
-            <Card className="knowledge-card">
-              <CardHeader>
-                <CardTitle className="text-base">빠른 작업</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Button variant="outline" size="sm" className="w-full justify-start">
-                    <Palette className="h-4 w-4 mr-2" />
-                    하이라이트 추가
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start">
-                    <Hash className="h-4 w-4 mr-2" />
-                    플래시카드 생성
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          
           </div>
         </div>
       </div>
