@@ -1,19 +1,24 @@
 'use client'
 
+import { QuoteManager } from "@/components/quote/QuoteManager";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBooks } from "@/hooks/use-books";
-import { useAddNote, useDeleteNote, useNotes } from "@/hooks/use-notes";
+import { useAddNote, useDeleteNote, useNotes, useQuotes } from "@/hooks/use-notes";
 import { NoteResponse } from "@/lib/types/note/note";
+import { formatDateYMD } from "@/lib/utils";
 import {
   AlertCircle,
   Book,
   Calendar,
   FileText,
   Grid3X3,
+  Hash,
+  Heart,
   List,
   Loader2,
   Plus,
@@ -22,7 +27,6 @@ import {
   Star,
   Tag
 } from "lucide-react";
-import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -36,6 +40,7 @@ export function NotesClient() {
 
   // SWR 훅 사용
   const { notes, pagination, isLoading, error, mutateNotes } = useNotes(0, 10);
+  const { quotes, paginationQuotes, isLoading: quotesLoading, error: quotesError, mutateQuotes } = useQuotes(0, 50);
   const { books, isLoading: booksLoading, error: booksError } = useBooks(0, 20);
   const { addNote } = useAddNote();
   const { deleteNote } = useDeleteNote();
@@ -225,72 +230,40 @@ export function NotesClient() {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* 노트 목록 섹션 */}
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold text-foreground mb-4">내 노트</h2>
-        </div>
-        
-        {viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredNotes.map((note) => (
-              <Card key={note.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300"
-              onClick={() => handleNoteClick(note)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-2">
-                     <Book className="h-4 w-4 mr-1" />
-                      <Badge variant="secondary" className="text-xs">
-                        {note.tagName}
-                      </Badge>
-                      {note.isImportant && (
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground">{moment(note.updateDate).format('YYYY-MM-DD')}</span>
-                  </div>
-                  <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors flex items-center gap-2">
-                    {note.title}
-                    {note.isImportant && (
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                    {note.content}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {note.tagList.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        <Tag className="h-3 w-3 mr-1" />
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">                    
-                  <span className="flex items-center">                        
-                  </span>
-                    <span className="truncate ml-2">{note.bookTitle}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredNotes.map((note) => (
-              <Card key={note.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300"
-              onClick={() => handleNoteClick(note)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
+        <Tabs defaultValue="notes" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="notes" className="flex items-center space-x-2">
+              <Hash className="h-4 w-4" />
+              <span>노트</span>
+              <Badge variant="secondary" className="ml-2">
+                {filteredNotes.length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="quotes" className="flex items-center space-x-2">
+              <Heart className="h-4 w-4" />
+              <span>인용구</span>
+              <Badge variant="secondary" className="ml-2">
+                {quotes.length}개
+              </Badge>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="notes">
+            {/* 노트 목록 섹션 */}
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold text-foreground mb-4">내 노트</h2>
+            </div>
+            
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredNotes.map((note) => (
+                  <Card key={note.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300"
+                  onClick={() => handleNoteClick(note)}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-2">
-                          {/* {getTypeIcon(note.type)} */}
+                         <Book className="h-4 w-4 mr-1" />
                           <Badge variant="secondary" className="text-xs">
                             {note.tagName}
                           </Badge>
@@ -298,61 +271,123 @@ export function NotesClient() {
                             <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                           )}
                         </div>
-                        <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
-                          {note.title}
-                          {note.isImportant && (
-                            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                          )}
-                        </h3>
+                        <span className="text-xs text-muted-foreground">{formatDateYMD(note.updateDate)}</span>
                       </div>
-                      
-                      <p className="text-muted-foreground mb-3 line-clamp-2">
+                      <CardTitle className="text-lg leading-tight group-hover:text-primary transition-colors flex items-center gap-2">
+                        {note.title}
+                        {note.isImportant && (
+                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
                         {note.content}
                       </p>
                       
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <span className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {moment(note.updateDate).format('YYYY-MM-DD')}
-                        </span>
-                        <span className="flex items-center">                        
-                        </span>
-                        <span className="truncate">{note.bookTitle}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="ml-4">
-                      <div className="flex flex-wrap gap-1 justify-end">
-                        {note.tagList.slice(0, 3).map((tag) => (
+                      <div className="flex flex-wrap gap-1 mb-4">
+                        {note.tagList.map((tag) => (
                           <Badge key={tag} variant="outline" className="text-xs">
-                            #{tag}
+                            <Tag className="h-3 w-3 mr-1" />
+                            {tag}
                           </Badge>
                         ))}
-                        {note.tagList.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{note.tagList.length - 3}
-                          </Badge>
-                        )}
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                      
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">                    
+                      <span className="flex items-center">                        
+                      </span>
+                        <span className="truncate ml-2">{note.bookTitle}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredNotes.map((note) => (
+                  <Card key={note.id} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300"
+                  onClick={() => handleNoteClick(note)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <div className="flex items-center space-x-2">
+                              {/* {getTypeIcon(note.type)} */}
+                              <Badge variant="secondary" className="text-xs">
+                                {note.tagName}
+                              </Badge>
+                              {note.isImportant && (
+                                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                              )}
+                            </div>
+                            <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
+                              {note.title}
+                              {note.isImportant && (
+                                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                              )}
+                            </h3>
+                          </div>
+                          
+                          <p className="text-muted-foreground mb-3 line-clamp-2">
+                            {note.content}
+                          </p>
+                          
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                            <span className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-1" />
+                              {formatDateYMD(note.updateDate)}
+                            </span>
+                            <span className="flex items-center">                        
+                            </span>
+                            <span className="truncate">{note.bookTitle}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="ml-4">
+                          <div className="flex flex-wrap gap-1 justify-end">
+                            {note.tagList.slice(0, 3).map((tag) => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                #{tag}
+                              </Badge>
+                            ))}
+                            {note.tagList.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{note.tagList.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
-        {filteredNotes.length === 0 && (
-          <div className="text-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">검색 결과가 없습니다</h3>
-            <p className="text-muted-foreground mb-4">다른 키워드로 검색해보세요</p>
-            <Button onClick={() => router.push('/notes/create')}>
-              <Plus className="h-4 w-4 mr-2" />
-              새 노트 작성
-            </Button>
-          </div>
-        )}
+            {filteredNotes.length === 0 && (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">검색 결과가 없습니다</h3>
+                <p className="text-muted-foreground mb-4">다른 키워드로 검색해보세요</p>
+                <Button onClick={() => router.push('/notes/create')}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  새 노트 작성
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="quotes">
+            <QuoteManager 
+              quotes={quotes}
+              quotesLoading={quotesLoading}
+              quotesError={quotesError}
+              mutateQuotes={mutateQuotes}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Floating Action Button */}
