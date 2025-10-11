@@ -11,16 +11,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDeleteNote, useNote } from "@/hooks/use-notes";
 import { NoteResponse } from "@/lib/types/note/note";
 import {
-  ArrowLeft,
-  Calendar,
-  Edit,
-  FileText,
-  Loader2,
-  Save,
-  Star,
-  Tag,
-  Trash2,
-  X
+    ArrowLeft,
+    Calendar,
+    Edit,
+    FileText,
+    Loader2,
+    Save,
+    Star,
+    Tag,
+    Trash2,
+    X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -68,7 +68,7 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
         body: JSON.stringify({
           title: editedNote.title,
           content: editedNote.content,
-          html: editedNote.html,
+          html: editedNote.html || editedNote.content,
           isImportant: editedNote.isImportant
         })
       });

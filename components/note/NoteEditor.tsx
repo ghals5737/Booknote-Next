@@ -120,7 +120,6 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
             content: content,
             html: content,
             isImportant: initialNote.isImportant,
-            tagList: tags,
           })
         });
         alert('노트가 성공적으로 수정되었습니다.');
@@ -133,7 +132,6 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
           content: content,
           html: content,
           isImportant: false,
-          tagList: tags,
         });
 
         if (result) {

@@ -82,15 +82,13 @@ export function useAddNote() {
     content: string;
     html?: string;
     isImportant?: boolean;
-    tagList?: string[];
   }) => {
     const requestData = {
       bookId: noteData.bookId,
       title: noteData.title,
       content: noteData.content,
-      html: noteData.html || '',
+      html: noteData.html || noteData.content,
       isImportant: noteData.isImportant || false,
-      tagList: noteData.tagList || []
     };
     console.log('[useAddNote] requestData:', requestData);
     console.log('[useAddNote] JSON.stringify(requestData):', JSON.stringify(requestData));

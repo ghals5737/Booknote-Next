@@ -4,7 +4,6 @@ import { UnifiedSearch } from "@/components/search/UnifiedSearch";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { useNextAuth } from "@/hooks/use-next-auth";
 import {
@@ -16,12 +15,10 @@ import {
   FileText,
   Loader2,
   RefreshCw,
-  Target,
   TrendingUp
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import useSWR from "swr";
+import { useState } from "react";
 
 
 interface Book {
@@ -35,51 +32,24 @@ export function DashboardClient() {
   const router = useRouter()
   const { user } = useNextAuth()
   const [books] = useState<Book[]>([])
-  const [recentNotes, setRecentNotes] = useState<Array<{
-    id: number
-    title: string
-    type: string
-    lastModified: string
-    tags: string[]
-    progress: number
-  }>>([])
 
-  // 통계 데이터 가져오기
-  const { stats, error: statsError, mutateStats, isLoading: statsLoading } = useDashboardStats()
-
-  // 노트 데이터 가져오기 - auth에서 사용자 ID 가져오기
-  const notesKey = user?.id ? `/api/v1/notes/users/${user.id}` : null
-  const { data: notes, error: notesError, mutate: mutateNotes } = useSWR(notesKey, () => Promise.resolve([]), {
-    revalidateOnFocus: false,
+  // 통계 데이터 가져오기 (최근 노트 5개 포함)
+  const { stats, error: statsError, mutateStats, isLoading: statsLoading } = useDashboardStats({
+    includeRecent: true,
+    recentSize: 5
   })
 
   const isLoading = statsLoading
-  const hasError = statsError || notesError
+  const hasError = statsError
 
-  // 최근 노트 설정
-  useEffect(() => {
-    if (notes && notes.length > 0) {
-      setRecentNotes(notes.slice(0, 3).map((note: {
-        id: number
-        title: string
-        tagList?: string[]
-      }) => ({
-        id: note.id,
-        title: note.title,
-        type: "note",
-        lastModified: "방금 전",
-        tags: note.tagList || [],
-        progress: 100
-      })))
-    }
-  }, [notes])
+  // 백엔드에서 가져온 최근 노트 데이터
+  const recentNotes = stats?.recentNotes || []
 
   const totalBooks = stats?.books?.total || 0
   const totalNotes = stats?.notes?.total || 0
   const readingBooks = stats?.books?.reading || 0
   const finishedBooks = stats?.books?.finished || 0
   const importantNoteCount = stats?.notes?.important || 0
-  const thisMonthNotes = stats?.notes?.thisMonth || 0
 
   if (isLoading) {
     return (
@@ -125,7 +95,7 @@ export function DashboardClient() {
   }
 
   if (hasError) {
-    console.error('Dashboard error details:', { statsError, notesError });
+    console.error('Dashboard error details:', { statsError });
     return (
       <div className="min-h-screen bg-background">
         {/* Header */}
@@ -162,7 +132,7 @@ export function DashboardClient() {
               <AlertCircle className="h-12 w-12 text-red-500" />
               <span className="text-lg font-medium">데이터를 불러오는 중 오류가 발생했습니다</span>
               <p className="text-sm text-center max-w-md">
-                {statsError ? '통계 데이터' : notesError ? '노트 데이터' : '데이터'}를 불러오는 중 문제가 발생했습니다. 
+                대시보드 데이터를 불러오는 중 문제가 발생했습니다. 
                 잠시 후 다시 시도해주세요.
               </p>
               {statsError && (
@@ -181,14 +151,7 @@ export function DashboardClient() {
                   variant="outline"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  통계 다시 시도
-                </Button>
-                <Button 
-                  onClick={() => mutateNotes()}
-                  variant="outline"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  노트 다시 시도
+                  다시 시도
                 </Button>
               </div>
             </div>
@@ -301,42 +264,62 @@ export function DashboardClient() {
               <CardContent>
                 <div className="space-y-4">
                   {recentNotes.length > 0 ? (
-                    recentNotes.map((note) => (
-                      <div key={note.id} className="flex items-center justify-between p-3 sm:p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-all duration-300 cursor-pointer group/note">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 sm:space-x-3 mb-2">
-                            <h3 className="font-medium text-sm sm:text-base text-foreground group-hover/note:text-primary transition-colors truncate">{note.title}</h3>
-                            <Badge variant="secondary" className="text-xs hidden sm:inline-flex">
-                              {note.type === 'book' ? '도서' : note.type === 'article' ? '기사' : '노트'}
-                            </Badge>
-                          </div>
-                          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-xs sm:text-sm text-muted-foreground">
-                            <span>{note.lastModified}</span>
-                            <div className="flex space-x-1">
-                              {note.tags.slice(0, 2).map((tag: string) => (
-                                <Badge key={tag} variant="outline" className="text-xs">
-                                  #{tag}
-                                </Badge>
-                              ))}
-                              {note.tags.length > 2 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{note.tags.length - 2}
+                    recentNotes.map((note) => {
+                      // 날짜 포맷팅
+                      const formatDate = (dateString: string) => {
+                        const date = new Date(dateString);
+                        const now = new Date();
+                        const diffMs = now.getTime() - date.getTime();
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const diffHours = Math.floor(diffMs / 3600000);
+                        const diffDays = Math.floor(diffMs / 86400000);
+
+                        if (diffMins < 1) return '방금 전';
+                        if (diffMins < 60) return `${diffMins}분 전`;
+                        if (diffHours < 24) return `${diffHours}시간 전`;
+                        if (diffDays < 7) return `${diffDays}일 전`;
+                        
+                        return new Intl.DateTimeFormat('ko-KR', { 
+                          year: 'numeric', 
+                          month: '2-digit', 
+                          day: '2-digit' 
+                        }).format(date);
+                      };
+
+                      return (
+                        <div 
+                          key={note.id} 
+                          className="flex items-center justify-between p-3 sm:p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-all duration-300 cursor-pointer group/note"
+                          onClick={() => router.push(`/notes/detail/${note.id}`)}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 sm:space-x-3 mb-2">
+                              <h3 className="font-medium text-sm sm:text-base text-foreground group-hover/note:text-primary transition-colors truncate">
+                                {note.title}
+                              </h3>
+                              {note.isImportant && (
+                                <Badge variant="secondary" className="text-xs hidden sm:inline-flex">
+                                  중요
                                 </Badge>
                               )}
                             </div>
-                          </div>
-                          {note.progress < 100 && (
-                            <div className="mt-2">
-                              <Progress value={note.progress} className="h-2" />
-                              <span className="text-xs text-muted-foreground mt-1 block">
-                                진행률: {note.progress}%
-                              </span>
+                            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3 text-xs sm:text-sm text-muted-foreground">
+                              <span>{formatDate(note.createdAt)}</span>
+                              {note.bookTitle && (
+                                <span className="truncate">
+                                  📖 {note.bookTitle}
+                                </span>
+                              )}
                             </div>
-                          )}
+                          </div>
+                          <Bookmark 
+                            className={`h-5 w-5 ml-4 group-hover/note:text-primary transition-colors ${
+                              note.isImportant ? 'text-primary fill-primary' : 'text-muted-foreground'
+                            }`} 
+                          />
                         </div>
-                        <Bookmark className="h-5 w-5 text-muted-foreground ml-4 group-hover/note:text-primary transition-colors" />
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="text-center py-6 sm:py-8 text-muted-foreground">
                       <FileText className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 opacity-50" />
@@ -358,73 +341,7 @@ export function DashboardClient() {
 
           {/* Quick Actions */}
           <div>
-            <Card className="knowledge-card group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
-              <CardHeader>
-                <CardTitle>빠른 작업</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <Button 
-                    className="w-full justify-start hover:bg-primary/10 hover:text-primary transition-all duration-300" 
-                    variant="ghost"
-                    onClick={() => router.push('/books')}
-                  >
-                    <Book className="h-4 w-4 mr-2" />
-                    책 추가
-                  </Button>
-                  <Button 
-                    className="w-full justify-start hover:bg-primary/10 hover:text-primary transition-all duration-300" 
-                    variant="ghost"
-                    onClick={() => router.push('/notes')}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    노트 관리
-                  </Button>
-                  <Button 
-                    className="w-full justify-start hover:bg-primary/10 hover:text-primary transition-all duration-300" 
-                    variant="ghost"
-                    onClick={() => router.push('/review')}
-                  >
-                    <Target className="h-4 w-4 mr-2" />
-                    복습 시작
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Activity */}
-            {stats?.recentActivity && stats.recentActivity.length > 0 && (
-              <Card className="knowledge-card mt-6 group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    <span>최근 활동</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {stats.recentActivity.slice(0, 3).map((activity: { type: string; bookTitle: string; timestamp: string }, index: number) => (
-                      <div key={index} className="p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-all duration-300">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-foreground">
-                              {activity.type === 'NOTE_CREATED' && '노트 작성'}
-                              {activity.type === 'BOOK_ADDED' && '책 추가'}
-                              {activity.type === 'QUOTE_ADDED' && '인용구 추가'}
-                              {activity.type === 'BOOK_FINISHED' && '책 완독'}
-                            </div>
-                            <div className="text-xs text-muted-foreground">{activity.bookTitle}</div>
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' }).format(new Date(activity.timestamp))}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* 빠른 작업 및 최근 활동 섹션은 향후 백엔드 API 지원 시 추가 예정 */}
           </div>
         </div>
       </div>
