@@ -1,5 +1,6 @@
 import { authenticatedApiRequest } from '@/lib/api/auth';
 import { NoteResponse, NoteResponsePage } from '@/lib/types/note/note';
+import { QuoteResponse, QuoteResponsePage } from '@/lib/types/quote/quote';
 import useSWR from 'swr';
 import { useNextAuth } from './use-next-auth';
 
@@ -19,6 +20,16 @@ const fetcher = async (url: string) => {
 const noteFetcher = async (url: string) => {
   try {
     const response = await authenticatedApiRequest<NoteResponse>(url);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// 인용구 조회용 fetcher 함수
+const quotesFetcher = async (url: string) => {
+  try {
+    const response = await authenticatedApiRequest<QuoteResponse[]>(url);
     return response.data;
   } catch (error) {
     throw error;
@@ -71,15 +82,13 @@ export function useAddNote() {
     content: string;
     html?: string;
     isImportant?: boolean;
-    tagList?: string[];
   }) => {
     const requestData = {
       bookId: noteData.bookId,
       title: noteData.title,
       content: noteData.content,
-      html: noteData.html || '',
+      html: noteData.html || noteData.content,
       isImportant: noteData.isImportant || false,
-      tagList: noteData.tagList || []
     };
     console.log('[useAddNote] requestData:', requestData);
     console.log('[useAddNote] JSON.stringify(requestData):', JSON.stringify(requestData));
@@ -168,4 +177,44 @@ export function useDeleteNote() {
   };
 
   return { deleteNote };
+}
+
+// 인용구 목록 조회 훅
+export function useQuotes(page: number, size: number) {
+  const { user } = useNextAuth();
+
+  const key = user?.id 
+    ? `/api/v1/quotes/user?page=${page}&size=${size}`
+    : null;
+
+  const { data, error, isLoading, mutate } = useSWR<QuoteResponse[] | QuoteResponsePage>(
+    key,
+    quotesFetcher
+  );
+
+
+  const quotes: QuoteResponse[] = Array.isArray(data)
+    ? data
+    : (data?.content || []);
+
+  const paginationQuotes = !Array.isArray(data) && data
+    ? {
+        totalElements: data.totalElements,
+        totalPages: data.totalPages,
+        size: data.size,
+        number: data.number,
+        first: data.first,
+        last: data.last,
+        numberOfElements: data.numberOfElements,
+        empty: data.empty
+      }
+    : null;
+
+  return {
+    quotes,
+    paginationQuotes,
+    isLoading,
+    error,
+    mutateQuotes: mutate
+  };
 }

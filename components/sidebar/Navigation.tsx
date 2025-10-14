@@ -10,7 +10,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useNextAuth } from "@/hooks/use-next-auth";
 import {
   Book,
-  Brain,
   FileText,
   Home,
   Plus,
@@ -38,7 +37,7 @@ const Navigation = ({ currentPage }: NavigationProps) => {
     { id: 'dashboard', label: '대시보드', icon: Home, count: null as number | null, path: '/dashboard' },
     { id: 'books', label: '내 서재', icon: Book, count: stats?.books?.total || 0, path: '/books' },
     { id: 'notes', label: '노트', icon: FileText, count: stats?.notes?.total || 0, path: '/notes' },
-    { id: 'review', label: '복습', icon: Brain, count: 8, path: '/review' },
+    // { id: 'review', label: '복습', icon: Brain, count: 8, path: '/review' },
     { id: 'statistics', label: '통계', icon: TrendingUp, count: null as number | null, path: '/statistics' },
   ]), [stats]);
 

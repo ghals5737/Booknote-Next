@@ -5,34 +5,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useBooks } from "@/hooks/use-books";
 import { useNextAuth } from "@/hooks/use-next-auth";
-import { useAddNote, useAddQuote } from "@/hooks/use-notes";
+import { useAddNote } from "@/hooks/use-notes";
 import { NoteResponse } from "@/lib/types/note/note";
 import {
   ArrowLeft,
   Bold,
   BookOpen,
-  Calendar,
   Code,
   Eye,
   EyeOff,
   Hash,
-  Heart,
   Image,
   Italic,
   Link,
   List,
   ListOrdered,
-  Palette,
   Plus,
   Quote,
   Save,
   Share,
-  Tag,
-  Trash2
+  Tag
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -91,29 +86,11 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
     }
   }, [initialNote]);
   
-  // 좋아하는 문장 관리
-  const [favoriteQuotes, setFavoriteQuotes] = useState([
-    {
-      id: 1,
-      text: "습관은 복리와 같다. 매일 1%씩 개선하면 1년 후 37배 더 나아진다.",
-      page: 45,
-      createdAt: "2024-01-15"
-    },
-    {
-      id: 2,
-      text: "작은 변화들이 쌓여서 놀라운 결과를 만든다.",
-      page: 67,
-      createdAt: "2024-01-16"
-    }
-  ]);
-  const [newQuote, setNewQuote] = useState("");
-  const [quotePage, setQuotePage] = useState("");
 
   // 하드코딩된 책 목록 제거 - useBooks 훅에서 가져옴
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { addNote } = useAddNote();
-  const { addQuote } = useAddQuote();
 
   const saveNote = async () => {
     if (!title.trim() || !content.trim()) {
@@ -143,7 +120,6 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
             content: content,
             html: content,
             isImportant: initialNote.isImportant,
-            tagList: tags,
           })
         });
         alert('노트가 성공적으로 수정되었습니다.');
@@ -156,33 +132,15 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
           content: content,
           html: content,
           isImportant: false,
-          tagList: tags,
         });
 
         if (result) {
-          // 좋아하는 문장들을 인용구로 저장
-          if (favoriteQuotes.length > 0) {
-            try {
-              await Promise.all(
-                favoriteQuotes.map((q) =>
-                  addQuote({
-                    bookId: parseInt(selectedBook),
-                    text: q.text,
-                    page: q.page,
-                  })
-                )
-              );
-            } catch (e) {
-              console.error('일부 인용구 저장 실패:', e);
-            }
-          }
           alert('노트가 성공적으로 저장되었습니다.');
           if (!onSave) {
             // 생성 모드에서만 초기화
             setTitle("새로운 노트");
             setContent("");
             setSelectedBook("");
-            setFavoriteQuotes([]);
           } else {
             onSave();
           }
@@ -245,28 +203,6 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const addFavoriteQuote = () => {
-    if (newQuote.trim()) {
-      const quote = {
-        id: favoriteQuotes.length + 1,
-        text: newQuote.trim(),
-        page: parseInt(quotePage) || 0,
-        createdAt: new Date().toISOString().split('T')[0]
-      };
-      addQuote({
-        bookId: parseInt(selectedBook),
-        text: newQuote.trim(),
-        page: parseInt(quotePage) || 0,
-      });
-      setFavoriteQuotes([...favoriteQuotes, quote]);
-      setNewQuote("");
-      setQuotePage("");
-    }
-  };
-
-  const removeQuote = (quoteId: number) => {
-    setFavoriteQuotes(favoriteQuotes.filter(quote => quote.id !== quoteId));
-  };
  
   return (
     <div className="min-h-screen bg-background">
@@ -305,19 +241,6 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Editor */}
           <div className="lg:col-span-3">
-            <Tabs defaultValue="notes" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="notes" className="flex items-center space-x-2">
-                  <Hash className="h-4 w-4" />
-                  <span>노트</span>
-                </TabsTrigger>
-                <TabsTrigger value="quotes" className="flex items-center space-x-2">
-                  <Heart className="h-4 w-4" />
-                  <span>좋아하는 문장</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="notes">
                 <Card className="knowledge-card">
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -431,86 +354,6 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
                 </div>
               </CardContent>
             </Card>
-              </TabsContent>
-
-              <TabsContent value="quotes">
-                <Card className="knowledge-card">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Heart className="h-5 w-5 text-primary" />
-                      <span>좋아하는 문장</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* 새 문장 추가 */}
-                      <div className="p-4 bg-muted/20 rounded-lg space-y-3">
-                        <Textarea
-                          value={newQuote}
-                          onChange={(e) => setNewQuote(e.target.value)}
-                          placeholder="마음에 드는 문장을 입력하세요..."
-                          rows={3}
-                        />
-                        <div className="flex space-x-2">
-                          <Input
-                            type="number"
-                            value={quotePage}
-                            onChange={(e) => setQuotePage(e.target.value)}
-                            placeholder="페이지"
-                            className="w-20"
-                          />
-                          <Button onClick={addFavoriteQuote}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            추가
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* 저장된 문장들 */}
-                      <div className="space-y-3">
-                        {favoriteQuotes.map((quote) => (
-                          <Card key={quote.id} className="bg-gradient-warm">
-                            <CardContent className="p-4">
-                              <blockquote className="text-foreground mb-2 leading-relaxed">
-                                {`"${quote.text}"`}
-                              </blockquote>
-                              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                <div className="flex items-center space-x-4">
-                                  <span className="flex items-center">
-                                    <BookOpen className="h-3 w-3 mr-1" />
-                                    {quote.page}페이지
-                                  </span>
-                                  <span className="flex items-center">
-                                    <Calendar className="h-3 w-3 mr-1" />
-                                    {new Date(quote.createdAt).toLocaleDateString('ko-KR')}
-                                  </span>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeQuote(quote.id)}
-                                  className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-
-                      {favoriteQuotes.length === 0 && (
-                        <div className="text-center py-8">
-                          <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="text-lg font-medium text-foreground mb-2">아직 저장한 문장이 없습니다</h3>
-                          <p className="text-muted-foreground">마음에 드는 문장을 저장해보세요</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
           </div>
 
           {/* Sidebar */}
@@ -578,6 +421,25 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
                 </div>
               </CardContent>
             </Card>
+
+              {/* Note List */}
+              {/* <Card className="knowledge-card">
+              <CardHeader>
+                <CardTitle className="text-base">노트 목록</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Palette className="h-4 w-4 mr-2" />
+                    하이라이트 추가
+                  </Button>
+                  <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Hash className="h-4 w-4 mr-2" />
+                    플래시카드 생성
+                  </Button>
+                </div>
+              </CardContent>
+            </Card> */}
 
             {/* Linked Notes */}
             <Card className="knowledge-card">
@@ -648,24 +510,7 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
               </CardContent>
             </Card>            
 
-            {/* Quick Actions */}
-            <Card className="knowledge-card">
-              <CardHeader>
-                <CardTitle className="text-base">빠른 작업</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Button variant="outline" size="sm" className="w-full justify-start">
-                    <Palette className="h-4 w-4 mr-2" />
-                    하이라이트 추가
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full justify-start">
-                    <Hash className="h-4 w-4 mr-2" />
-                    플래시카드 생성
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          
           </div>
         </div>
       </div>
