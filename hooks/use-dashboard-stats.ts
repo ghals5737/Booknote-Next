@@ -30,6 +30,25 @@ async function refreshAccessToken(refreshToken: string): Promise<{ accessToken: 
 
 // API 응답을 컴포넌트에서 사용하기 쉬운 형태로 변환
 function transformDashboardData(response: DashboardInfoResponse): DashboardStats {
+  // Mock 최근 활동 데이터 생성
+  const mockRecentActivity = [
+    {
+      type: 'note_created' as const,
+      bookTitle: '아토믹 해빗',
+      timestamp: new Date().toISOString()
+    },
+    {
+      type: 'book_added' as const,
+      bookTitle: '클린 코드',
+      timestamp: new Date(Date.now() - 86400000).toISOString()
+    },
+    {
+      type: 'quote_added' as const,
+      bookTitle: '아토믹 해빗',
+      timestamp: new Date(Date.now() - 172800000).toISOString()
+    }
+  ];
+
   return {
     books: {
       total: response.bookCount,
@@ -41,6 +60,7 @@ function transformDashboardData(response: DashboardInfoResponse): DashboardStats
       important: response.bookmarkedNoteCount,
     },
     recentNotes: response.recentNotes,
+    recentActivity: mockRecentActivity,
   };
 }
 

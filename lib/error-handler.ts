@@ -16,28 +16,42 @@ export interface ApiErrorResponse {
   timestamp: string;
 }
 
+// 일반적인 에러 객체 타입
+export interface ErrorLike {
+  name?: string;
+  message?: string;
+  status?: number;
+  statusCode?: number;
+  code?: string;
+  error?: {
+    message?: string;
+    details?: Array<{ field: string; message: string }>;
+  };
+}
+
 export class ErrorHandler {
-  static getErrorKind(error: any): 'server' | 'network' | 'timeout' | 'auth' | 'not-found' | 'validation' | 'unknown' {
-    if (!error) return 'unknown';
+  static getErrorKind(error: unknown): 'server' | 'network' | 'timeout' | 'auth' | 'not-found' | 'validation' | 'unknown' {
+    if (!error || typeof error !== 'object') return 'unknown';
+    
+    const err = error as ErrorLike;
     
     // 네트워크 에러
-    if (error.name === 'NetworkError' || 
-        error.message?.includes('Failed to fetch') ||
-        error.message?.includes('Network request failed')) {
+    if (err.name === 'NetworkError' || 
+        err.message?.includes('Failed to fetch') ||
+        err.message?.includes('Network request failed')) {
       return 'network';
     }
     
     // 타임아웃 에러
-    if (error.name === 'TimeoutError' ||
-        error.message?.toLowerCase().includes('timeout') ||
-        error.message?.toLowerCase().includes('timed out')) {
+    if (err.name === 'TimeoutError' ||
+        err.message?.toLowerCase().includes('timeout') ||
+        err.message?.toLowerCase().includes('timed out')) {
       return 'timeout';
     }
     
     // HTTP 상태 코드 기반 분류
-    if (error.status || error.statusCode) {
-      const status = error.status || error.statusCode;
-      
+    const status = err.status || err.statusCode;
+    if (status && typeof status === 'number') {
       if (status === 401) return 'auth';
       if (status === 403) return 'auth';
       if (status === 404) return 'not-found';
@@ -47,8 +61,8 @@ export class ErrorHandler {
     }
     
     // API 응답 에러 코드 기반 분류
-    if (error.code) {
-      switch (error.code) {
+    if (err.code) {
+      switch (err.code) {
         case 'UNAUTHORIZED':
         case 'FORBIDDEN':
           return 'auth';
@@ -66,22 +80,24 @@ export class ErrorHandler {
     return 'unknown';
   }
   
-  static extractErrorMessage(error: any): string {
-    if (!error) return '알 수 없는 오류가 발생했습니다.';
+  static extractErrorMessage(error: unknown): string {
+    if (!error || typeof error !== 'object') return '알 수 없는 오류가 발생했습니다.';
+    
+    const err = error as ErrorLike;
     
     // API 응답 에러 메시지
-    if (error.error?.message) {
-      return error.error.message;
+    if (err.error?.message) {
+      return err.error.message;
     }
     
     // 일반 에러 메시지
-    if (error.message) {
-      return error.message;
+    if (err.message) {
+      return err.message;
     }
     
     // 상태 코드 기반 메시지
-    if (error.status || error.statusCode) {
-      const status = error.status || error.statusCode;
+    const status = err.status || err.statusCode;
+    if (status && typeof status === 'number') {
       switch (status) {
         case 400:
           return '잘못된 요청입니다.';
@@ -105,18 +121,21 @@ export class ErrorHandler {
     return '알 수 없는 오류가 발생했습니다.';
   }
   
-  static extractErrorDetails(error: any): Array<{ field: string; message: string }> | undefined {
-    if (error.error?.details && Array.isArray(error.error.details)) {
-      return error.error.details;
+  static extractErrorDetails(error: unknown): Array<{ field: string; message: string }> | undefined {
+    if (!error || typeof error !== 'object') return undefined;
+    
+    const err = error as ErrorLike;
+    if (err.error?.details && Array.isArray(err.error.details)) {
+      return err.error.details;
     }
     return undefined;
   }
   
   static generateErrorId(): string {
-    return `ERR_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `ERR_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
   
-  static shouldRetry(error: any): boolean {
+  static shouldRetry(error: unknown): boolean {
     const kind = this.getErrorKind(error);
     return kind === 'network' || kind === 'timeout' || kind === 'server';
   }
@@ -130,7 +149,7 @@ export class ErrorHandler {
 export function useErrorHandler() {
   const { toast } = useToastContext();
   
-  const handleError = (error: any, context?: string) => {
+  const handleError = (error: unknown, context?: string) => {
     const kind = ErrorHandler.getErrorKind(error);
     const message = ErrorHandler.extractErrorMessage(error);
     const details = ErrorHandler.extractErrorDetails(error);

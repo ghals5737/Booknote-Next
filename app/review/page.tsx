@@ -312,7 +312,7 @@ const ReviewPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {reviewCards.map((card, index) => (
+                  {reviewCards.map((card) => (
                     <div key={card.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="flex-1">
                         <h3 className="font-medium text-foreground mb-1">{card.question}</h3>

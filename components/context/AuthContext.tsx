@@ -1,7 +1,7 @@
 "use client"
 
 import { authApi, authenticatedApiRequest, tokenManager } from "@/lib/api/auth"
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 
 export interface User {
   id: string
@@ -21,19 +21,17 @@ interface AuthContextType {
   loginWithProvider: (provider: "google" | "github" | "kakao" | "naver") => Promise<void>
   register: (email: string, password: string, name: string) => Promise<void>
   logout: () => Promise<void>
-  resetPassword: (email: string) => Promise<void>
+  resetPassword: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [isHydrated, setIsHydrated] = useState(false)
 
   // 초기 인증 상태 확인
   useEffect(() => {
-    setIsHydrated(true)
     checkAuthStatus()
   }, [])
 
@@ -42,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (tokenManager.isAuthenticated()) {
         try {
           // lib/api/auth.ts의 authenticatedApiRequest 사용
-          const data = await authenticatedApiRequest<{ user: any }>('/api/v1/users/profile')
+          const data = await authenticatedApiRequest<{ user: User }>('/api/v1/users/profile')
           
           if (data.success && data.data?.user) {
             const userData = data.data.user
@@ -50,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               id: userData.id,
               email: userData.email,
               name: userData.name,
-              avatar: userData.profileImage,
+              avatar: (userData as unknown as Record<string, unknown>).avatar as string || (userData as unknown as Record<string, unknown>).profileImage as string,
               provider: userData.provider,
               createdAt: new Date(userData.createdAt),
               lastLoginAt: new Date(userData.lastLoginAt),
@@ -73,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true)
     try {
       // lib/api/auth.ts의 authApi.login 사용
@@ -91,9 +89,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
-  const loginWithProvider = async (provider: "google" | "github" | "kakao" | "naver") => {
+  const loginWithProvider = useCallback(async (provider: "google" | "github" | "kakao" | "naver") => {
     setIsLoading(true)
     try {
       // Mock SSO login - 실제로는 OAuth 플로우
@@ -120,14 +118,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("auth_token", "mock_token")
       }
       setUser(mockUser)
-    } catch (error) {
+    } catch {
       throw new Error(`${provider} 로그인에 실패했습니다.`)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = useCallback(async (email: string, password: string, name: string) => {
     setIsLoading(true)
     try {
       // lib/api/auth.ts의 authApi.signup 사용
@@ -145,9 +143,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       // lib/api/auth.ts의 authApi.logout 사용
       await authApi.logout()
@@ -158,30 +156,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       tokenManager.clearTokens()
       setUser(null)
     }
-  }
+  }, [])
 
-  const resetPassword = async (email: string) => {
+  const resetPassword = useCallback(async () => {
     try {
       // Mock password reset - 실제로는 API 호출
       await new Promise((resolve) => setTimeout(resolve, 1000))
-    } catch (error) {
+    } catch {
       throw new Error("비밀번호 재설정에 실패했습니다.")
     }
-  }
+  }, [])
+
+  const contextValue = useMemo(() => ({
+    user,
+    isLoading,
+    isAuthenticated: tokenManager.isAuthenticated(),
+    login,
+    loginWithProvider,
+    register,
+    logout,
+    resetPassword,
+  }), [user, isLoading, login, loginWithProvider, register, logout, resetPassword]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: tokenManager.isAuthenticated(),
-        login,
-        loginWithProvider,
-        register,
-        logout,
-        resetPassword,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )

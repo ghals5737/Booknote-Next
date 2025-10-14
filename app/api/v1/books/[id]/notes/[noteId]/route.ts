@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string; noteId: string }> }
 ) {
   try {
-    const { id, noteId } = await params;
+    const { noteId } = await params;
     
     // Authorization 헤더 확인
     const authHeader = request.headers.get('authorization');
@@ -55,7 +55,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; noteId: string }> }
 ) {
   try {
-    const { id, noteId } = await params;
+    const {  noteId } = await params;
     const body = await request.json().catch(() => ({}));
     
     // Authorization 헤더 확인
@@ -105,7 +105,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; noteId: string }> }
 ) {
   try {
-    const { id, noteId } = await params;
+    const { noteId } = await params;
     
     // Authorization 헤더 확인
     const authHeader = request.headers.get('authorization');

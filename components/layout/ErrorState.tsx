@@ -91,6 +91,7 @@ export function ErrorState({
 					description: "다시 시도했지만 문제가 지속됩니다.",
 					variant: "destructive"
 				});
+				console.error("재시도 실패:", error);
 			} finally {
 				setIsRetrying(false);
 			}

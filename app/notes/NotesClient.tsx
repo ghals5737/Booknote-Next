@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBooks } from "@/hooks/use-books";
-import { useAddNote, useDeleteNote, useNotes, useQuotes } from "@/hooks/use-notes";
+import { useNotes, useQuotes } from "@/hooks/use-notes";
 import { NoteResponse } from "@/lib/types/note/note";
 import { formatDateYMD } from "@/lib/utils";
 import {
@@ -39,32 +39,17 @@ export function NotesClient() {
   const [selectedBookId, setSelectedBookId] = useState<string>('all');
 
   // SWR 훅 사용
-  const { notes, pagination, isLoading, error, mutateNotes } = useNotes(0, 10);
-  const { quotes, paginationQuotes, isLoading: quotesLoading, error: quotesError, mutateQuotes } = useQuotes(0, 50);
-  const { books, isLoading: booksLoading, error: booksError } = useBooks(0, 20);
-  const { addNote } = useAddNote();
-  const { deleteNote } = useDeleteNote();
+  const { notes, isLoading, error, mutateNotes } = useNotes(0, 10);
+  const { quotes, isLoading: quotesLoading, error: quotesError, mutateQuotes } = useQuotes(0, 50);
+  const { books } = useBooks(0, 20);
 
   const handleNoteClick = (note: NoteResponse) => {
     console.log(note);
     router.push(`/notes/detail/${note.id}`);
   };
 
-  const handleBookClick = (bookId: number) => {
-    router.push(`/books/detail/${bookId}`);
-  };
-
-  const handleDeleteNote = async (noteId: number, noteTitle: string) => {
-    if (confirm(`"${noteTitle}" 노트를 삭제하시겠습니까?`)) {
-      try {
-        await deleteNote(noteId);
-        mutateNotes();
-      } catch (error) {
-        console.error('노트 삭제 실패:', error);
-        alert('노트 삭제에 실패했습니다.');
-      }
-    }
-  };
+  // handleBookClick과 handleDeleteNote는 현재 사용되지 않음
+  // 필요시 다시 활성화 가능
 
   // 필터링된 노트 목록
   const filteredNotes = notes.filter(note => {
@@ -263,7 +248,7 @@ export function NotesClient() {
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-2">
-                         <Book className="h-4 w-4 mr-1" />
+                          <Book className="h-4 w-4 mr-1" />
                           <Badge variant="secondary" className="text-xs">
                             {note.tagName}
                           </Badge>
@@ -314,7 +299,6 @@ export function NotesClient() {
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <div className="flex items-center space-x-2">
-                              {/* {getTypeIcon(note.type)} */}
                               <Badge variant="secondary" className="text-xs">
                                 {note.tagName}
                               </Badge>

@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useNextAuth } from "@/hooks/use-next-auth";
 import { authenticatedApiRequest } from "@/lib/api/auth";
 import { BookDetailData, NoteData, QuoteData } from "@/lib/types/book/book";
+import { NoteResponse, NoteResponsePage } from "@/lib/types/note/note";
+import { QuoteResponsePage } from "@/lib/types/quote/quote";
 import {
   ArrowLeft,
   Building,
@@ -52,14 +54,12 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
   const notesKey = shouldFetch ? `/api/v1/notes/books/${bookId}?page=0&size=100&sort=created_at` : null;
 
   const { data: bookDetail, isLoading: bookLoading } = useSWR<BookDetailData>(bookKey, fetcher);
-  const { data: quotesData, isLoading: quotesLoading, mutate: mutateQuotes } = useSWR<any>(quotesKey, fetcher);
-  const { data: notesData, isLoading: notesLoading, mutate: mutateNotes } = useSWR<any>(notesKey, fetcher);
+  const { data: quotesData, isLoading: quotesLoading, mutate: mutateQuotes } = useSWR<QuoteResponsePage>(quotesKey, fetcher);
+  const { data: notesData, isLoading: notesLoading, mutate: mutateNotes } = useSWR<NoteResponsePage>(notesKey, fetcher);
 
-  const currentQuotes: QuoteData[] = Array.isArray(quotesData?.content) ? quotesData.content : (quotesData ?? []);
-  const currentNotes: NoteData[] = Array.isArray(notesData?.content) ? notesData.content : (notesData ?? []);
-  const [isAddingNote, setIsAddingNote] = useState(false);
+  const currentQuotes: QuoteData[] = Array.isArray(quotesData?.content) ? quotesData.content : (quotesData as unknown as QuoteData[] ?? []);
+  const currentNotes: NoteData[] = Array.isArray(notesData?.content) ? notesData.content : (notesData as unknown as NoteData[] ?? []);
   const [isAddingQuote, setIsAddingQuote] = useState(false);
-  const [newNote, setNewNote] = useState({ title: '', content: '', tagName: '' });
   const [newQuote, setNewQuote] = useState({ content: '', page: '', memo: '' });
   const [editingNote, setEditingNote] = useState<NoteData | null>(null);
   const [viewingNote, setViewingNote] = useState<NoteData | null>(null);
@@ -69,47 +69,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
 
 
-  const addNote = async () => {
-    if (!newNote.title.trim() || !newNote.content.trim()) return;
-    
-    if (!user?.id) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-
-    try {
-      const result = await authenticatedApiRequest<NoteData>(`/api/v1/books/${bookId}/notes`, {
-        method: 'POST',
-        body: JSON.stringify({
-          title: newNote.title,
-          content: newNote.content,
-          tags: newNote.tagName ? [newNote.tagName] : [],
-          isImportant: false
-        })
-      });
-
-      const created = {
-        id: (result.data as any).id,
-        bookId: (result.data as any).bookId,
-        title: (result.data as any).title,
-        content: (result.data as any).content,
-        html: (result.data as any).html,
-        isImportant: (result.data as any).isImportant,
-        tagName: newNote.tagName || '',
-        tagList: [] as string[]
-      } as NoteData;
-
-      await mutateNotes(async (prev: any) => {
-        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
-        return { ...(prev || {}), content: [created, ...prevList] };
-      }, { revalidate: true });
-
-      setNewNote({ title: '', content: '', tagName: '' });
-      setIsAddingNote(false);
-    } catch (error) {
-      console.error('Error adding note:', error);
-    }
-  };
+  // addNote 함수는 더 이상 사용하지 않음 (NoteEditor 사용)
 
   const addQuote = async () => {
     if (!newQuote.content.trim()) return;
@@ -126,10 +86,10 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         body: JSON.stringify(payload)
       });
 
-      const created = res.data as unknown as QuoteData;
-      await mutateQuotes(async (prev: any) => {
-        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
-        return { ...(prev || {}), content: [created, ...prevList] };
+      const created = res.data as QuoteData;
+      await mutateQuotes(async (prev: QuoteResponsePage | undefined) => {
+        const prevList = Array.isArray(prev?.content) ? prev.content : (prev as unknown as QuoteData[] ?? []);
+        return { ...(prev || {}), content: [created, ...prevList] } as QuoteResponsePage;
       }, { revalidate: true });
 
       setNewQuote({ content: '', page: '', memo: '' });
@@ -144,9 +104,9 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
       await authenticatedApiRequest(`/api/v1/books/${bookId}/notes/${noteId}`, {
         method: 'DELETE'
       });
-      await mutateNotes(async (prev: any) => {
-        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
-        return { ...(prev || {}), content: prevList.filter((n: NoteData) => n.id !== noteId) };
+      await mutateNotes(async (prev: NoteResponsePage | undefined) => {
+        const prevList = Array.isArray(prev?.content) ? prev.content : (prev as unknown as NoteData[] ?? []);
+        return { ...(prev || {}), content: prevList.filter((n: NoteData) => n.id !== noteId) } as NoteResponsePage;
       }, { revalidate: true });
     } catch (error) {
       console.error('Error deleting note:', error);
@@ -158,50 +118,16 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
       await authenticatedApiRequest(`/api/v1/books/${bookId}/quotes/${quoteId}`, {
         method: 'DELETE'
       });
-      await mutateQuotes(async (prev: any) => {
-        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
-        return { ...(prev || {}), content: prevList.filter((q: QuoteData) => q.id !== quoteId) };
+      await mutateQuotes(async (prev: QuoteResponsePage | undefined) => {
+        const prevList = Array.isArray(prev?.content) ? prev.content : (prev as unknown as QuoteData[] ?? []);
+        return { ...(prev || {}), content: prevList.filter((q: QuoteData) => q.id !== quoteId) } as QuoteResponsePage;
       }, { revalidate: true });
     } catch (error) {
       console.error('Error deleting quote:', error);
     }
   };
 
-  const updateNote = async (updatedNote: NoteData) => {
-    try {
-      await authenticatedApiRequest(`/api/v1/books/${bookId}/notes/${updatedNote.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          title: updatedNote.title,
-          content: updatedNote.content,
-          tags: updatedNote.tagName ? [updatedNote.tagName] : [],
-          isImportant: updatedNote.isImportant
-        })
-      });
-
-      // 서버 응답 형태에 의존하지 않고 로컬 편집 값으로 낙관적 갱신
-      await mutateNotes(async (prev: any) => {
-        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
-        const nextList = prevList.map((n: NoteData) =>
-          n.id === updatedNote.id
-            ? {
-                ...n,
-                title: updatedNote.title,
-                content: updatedNote.content,
-                html: updatedNote.html,
-                isImportant: updatedNote.isImportant,
-                tagName: updatedNote.tagName,
-                tagList: updatedNote.tagList,
-              }
-            : n
-        );
-        return { ...(prev || {}), content: nextList };
-      }, { revalidate: true });
-      setEditingNote(null);
-    } catch (error) {
-      console.error('Error updating note:', error);
-    }
-  };
+  // updateNote 함수는 더 이상 사용하지 않음 (NoteEditor에서 처리)
 
   const updateQuote = async (updatedQuote: QuoteData) => {
     try {
@@ -216,8 +142,8 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
       });
 
       // 서버 응답 형태와 무관하게 로컬 편집 값으로 낙관적 갱신
-      await mutateQuotes(async (prev: any) => {
-        const prevList = Array.isArray(prev?.content) ? prev.content : (prev ?? []);
+      await mutateQuotes(async (prev: QuoteResponsePage | undefined) => {
+        const prevList = Array.isArray(prev?.content) ? prev.content : (prev as unknown as QuoteData[] ?? []);
         const nextList = prevList.map((q: QuoteData) =>
           q.id === updatedQuote.id
             ? {
@@ -229,7 +155,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
               }
             : q
         );
-        return { ...(prev || {}), content: nextList };
+        return { ...(prev || {}), content: nextList } as QuoteResponsePage;
       }, { revalidate: true });
       setEditingQuote(null);
     } catch (error) {
@@ -255,7 +181,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
   if (editingNote) {
     return (
       <NoteEditor 
-        initialNote={editingNote as any}
+        initialNote={editingNote as NoteResponse}
         onSave={() => {
           setEditingNote(null);
           mutateNotes();
@@ -755,51 +681,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         </TabsContent>
       </Tabs>
 
-      {/* Edit Note Dialog */}
-      {editingNote && (
-        <Dialog open={!!editingNote} onOpenChange={() => setEditingNote(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>노트 수정</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="edit-note-title">제목</Label>
-                <Input
-                  id="edit-note-title"
-                  value={editingNote.title}
-                  onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-note-content">내용</Label>
-                <Textarea
-                  id="edit-note-content"
-                  value={editingNote.content}
-                  onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
-                  className="min-h-[300px]"
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-note-tag">태그</Label>
-                <Input
-                  id="edit-note-tag"
-                  value={editingNote.tagName}
-                  onChange={(e) => setEditingNote({ ...editingNote, tagName: e.target.value })}
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setEditingNote(null)}>
-                  취소
-                </Button>
-                <Button onClick={() => updateNote(editingNote)}>
-                  저장
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* Edit Note Dialog - 이제 NoteEditor를 사용하므로 제거됨 */}
 
       {/* Edit Quote Dialog */}
       {editingQuote && (

@@ -12,20 +12,12 @@ import { useAddBook, useSearchBooks } from "@/hooks/use-books"
 import { ArrowLeft, BookOpen, Calendar, Loader2, Plus, Search } from "lucide-react"
 import type React from "react"
 import { useEffect, useState } from "react"
+import { BookResponse } from "../../lib/types/book/book"
 
 interface AddBookDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  selectedBook?: BookSearchResult | null
-}
-
-interface BookSearchResult {
-  title: string
-  author: string
-  publisher: string
-  isbn: string
-  description: string
-  cover: string
+  selectedBook?: BookResponse | null
 }
 
 export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialogProps) {
@@ -45,14 +37,14 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
 
   // Search states
   const [searchQuery, setSearchQuery] = useState("")
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<BookResponse[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
   const [mode, setMode] = useState<"search" | "manual">("search")
   const [isSubmitting, setIsSubmitting] = useState(false)
   
   // Autocomplete states
-  const [autocompleteResults, setAutocompleteResults] = useState<any[]>([])
+  const [autocompleteResults, setAutocompleteResults] = useState<BookResponse[]>([])
   const [showAutocomplete, setShowAutocomplete] = useState(false)
   const [isAutoCompleting, setIsAutoCompleting] = useState(false)
   
@@ -92,7 +84,7 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
       setPublisher(selectedBook.publisher || "");
       setIsbn(selectedBook.isbn || "");
       setDescription(selectedBook.description || "");
-      setCover(selectedBook.cover || "");
+      setCover(selectedBook.imgUrl || "");
       setMode("manual"); // 수동 입력 모드로 전환
     }
   }, [selectedBook]);
@@ -130,17 +122,17 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
           setAutocompleteResults(prev => {
             // 중복 제거 (ISBN 기준)
             const existingIsbns = new Set(prev.map(book => book.isbn))
-            const newBooks = (data.data as any[]).filter((book: any) => !existingIsbns.has(book.isbn))
+            const newBooks = (data.data as BookResponse[]).filter((book: BookResponse) => !existingIsbns.has(book.isbn))
             return [...prev, ...newBooks]
           })
         }
         setShowAutocomplete(true)
-        
+
         // 페이지네이션 정보 업데이트
-        if ((data as any).pagination) {
-          setAutocompletePage((data as any).pagination.page)
-          setHasMoreAutocomplete((data as any).pagination.hasMore)
-        }
+        // if ((data as BookResponse).pagination) {
+        //   setAutocompletePage((data as BookResponse).pagination.page)
+        //   setHasMoreAutocomplete((data as BookResponse).pagination.hasMore)
+        // }
       }
     } catch (error) {
       console.error("Autocomplete search failed:", error)
@@ -158,7 +150,7 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
       console.log('[AddBookDialog] handleSearch start, query=', searchQuery)
       const results = await searchBooks(searchQuery)
       console.log('[AddBookDialog] handleSearch results length=', Array.isArray(results) ? results.length : 'n/a')
-      setSearchResults(results)
+      setSearchResults(results as BookResponse[])
       setShowSearchResults(true)
       setShowAutocomplete(false) // 전체 검색 시 자동완성 숨김
     } catch (error) {
@@ -170,25 +162,25 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
   }
 
 
-  const handleSelectBook = (book: BookSearchResult) => {
+  const handleSelectBook = (book: BookResponse) => {
     setTitle(book.title)
     setAuthor(book.author)
     setPublisher(book.publisher)
     setIsbn(book.isbn)
     setDescription(book.description)
-    setCover(book.cover)
+    setCover(book.imgUrl)
     setShowSearchResults(false)
     setShowAutocomplete(false)
     setMode("manual")
   }
 
-  const handleSelectAutocompleteBook = (book: any) => {
+  const handleSelectAutocompleteBook = (book: BookResponse) => {
     setTitle(book.title || "")
     setAuthor(book.author || "")
     setPublisher(book.publisher || "")
     setIsbn(book.isbn || "")
     setDescription(book.description || "")
-    setCover(book.image || "")
+    setCover(book.imgUrl || "")
     setSearchQuery(book.title || "")
     setShowAutocomplete(false)
     setMode("manual")
@@ -376,9 +368,9 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
                                 className="p-3 hover:bg-muted cursor-pointer border-b border-secondary/50 last:border-b-0 flex items-center gap-3"
                                 onClick={() => handleSelectAutocompleteBook(book)}
                               >
-                                {book.image && (
+                                {book.imgUrl && (
                                   <img
-                                    src={book.image}
+                                    src={book.imgUrl}
                                     alt={book.title}
                                     className="w-8 h-10 object-cover rounded"
                                     onError={(e) => {
@@ -424,7 +416,7 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
                 <div className="text-center py-8">
                   <BookOpen className="h-12 w-12 text-accent mx-auto mb-4" />
                   <p className="text-cool">책 제목을 검색하여 정보를 자동으로 가져오세요</p>
-                  <p className="text-sm text-cool/70 mt-1">또는 '직접 입력' 탭에서 수동으로 입력할 수 있습니다</p>
+                  <p className="text-sm text-cool/70 mt-1">또는 &apos;직접 입력&apos; 탭에서 수동으로 입력할 수 있습니다</p>
                 </div>
               </div>
             )}
@@ -686,13 +678,13 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
                     <Card
                       key={index}
                       className="cursor-pointer card-hover border-secondary bg-card rounded-lg"
-                      onClick={() => handleSelectBook(book)}
+                      onClick={() => handleSelectBook(book as BookResponse)}
                     >
                       <CardContent className="p-4">
                         <div className="flex gap-4">
                           <div className="w-16 h-20 rounded bg-muted flex-shrink-0 overflow-hidden">
                             <img
-                              src={book.cover || "/placeholder.svg"}
+                              src={book.imgUrl || "/placeholder.svg"}
                               alt={book.title}
                               className="w-full h-full object-cover"
                             />

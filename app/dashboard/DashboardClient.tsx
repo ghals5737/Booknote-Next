@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
-import { useNextAuth } from "@/hooks/use-next-auth";
 import {
   AlertCircle,
   Book,
@@ -18,7 +17,6 @@ import {
   TrendingUp
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 
 interface Book {
@@ -30,8 +28,8 @@ interface Book {
 
 export function DashboardClient() {
   const router = useRouter()
-  const { user } = useNextAuth()
-  const [books] = useState<Book[]>([])
+  // const { user } = useNextAuth()
+  // const [books] = useState<Book[]>([])
 
   // 통계 데이터 가져오기 (최근 노트 5개 포함)
   const { stats, error: statsError, mutateStats, isLoading: statsLoading } = useDashboardStats({
@@ -45,7 +43,7 @@ export function DashboardClient() {
   // 백엔드에서 가져온 최근 노트 데이터
   const recentNotes = stats?.recentNotes || []
 
-  const totalBooks = stats?.books?.total || 0
+  //const totalBooks = stats?.books?.total || 0
   const totalNotes = stats?.notes?.total || 0
   const readingBooks = stats?.books?.reading || 0
   const finishedBooks = stats?.books?.finished || 0

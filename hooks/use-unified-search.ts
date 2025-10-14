@@ -1,8 +1,8 @@
 import {
-    SearchFilters,
-    SearchResult,
-    SearchSuggestionsResponse,
-    UnifiedSearchResponse
+  SearchFilters,
+  SearchResult,
+  SearchSuggestionsResponse,
+  UnifiedSearchResponse
 } from '@/lib/types/search/search';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useSWR from 'swr';
@@ -35,7 +35,7 @@ export function useUnifiedSearch() {
     size: 10
   });
   const [isOpen, setIsOpen] = useState(false);
-  const debounceTimer = useRef<NodeJS.Timeout>();
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // 검색 키 생성
   const searchKey = user?.id && query.trim() 

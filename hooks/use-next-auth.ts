@@ -6,11 +6,9 @@ import { useEffect, useState } from "react"
 
 export function useNextAuth() {
   const [isInitialized, setIsInitialized] = useState(false)
-  const [isClient, setIsClient] = useState(false)
   const { login: authLogin, logout: authLogout, signup: authSignup, isAuthenticated } = useAuth()
 
   useEffect(() => {
-    setIsClient(true)
     setIsInitialized(true)
   }, [])
 
@@ -68,6 +66,23 @@ export function useNextAuth() {
     }
   }
 
+  const loginWithProvider = async (provider: "google" | "github" | "kakao" | "naver") => {
+    try {
+      // Mock SSO login - 실제로는 OAuth 플로우
+      console.log(`${provider} 로그인 시작`);
+      
+      // 실제 구현에서는 OAuth 리다이렉트 또는 팝업을 사용
+      // 현재는 Mock 구현
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      // 성공 시 메인 페이지로 이동
+      window.location.href = "/books";
+    } catch (error) {
+      console.error(`${provider} 로그인 오류:`, error);
+      throw new Error(`${provider} 로그인에 실패했습니다.`);
+    }
+  }
+
   const resetPassword = async (_email: string) => {
     // 별도 비밀번호 재설정 API 없음
     throw new Error("비밀번호 재설정은 소셜 로그인 계정에서 직접 진행해주세요.")
@@ -78,6 +93,7 @@ export function useNextAuth() {
     isLoading: !isInitialized,
     isAuthenticated,
     login,
+    loginWithProvider,
     register,
     logout,
     resetPassword,

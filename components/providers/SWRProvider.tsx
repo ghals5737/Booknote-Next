@@ -6,7 +6,7 @@ import { ReactNode } from 'react'
 import { SWRConfig } from 'swr'
 
 interface SWRProviderProps {
-  children: ReactNode
+  readonly children: ReactNode
 }
 
 export function SWRProvider({ children }: SWRProviderProps) {
@@ -17,7 +17,7 @@ export function SWRProvider({ children }: SWRProviderProps) {
           try {
             const response = await authenticatedApiRequest(url);
             return response.data;
-          } catch (error: any) {
+          } catch (error: unknown) {
             // 에러 정보를 풍부하게 만들어서 전달
             const enhancedError = {
               ...(error || {}),
@@ -42,7 +42,7 @@ export function SWRProvider({ children }: SWRProviderProps) {
             console.error(`SWR Error for ${key}:`, error);
           }
         },
-        onErrorRetry: (error: any, key: any, config: any, revalidate: any, { retryCount }: any) => {
+        onErrorRetry: (error: Error, key: string, config: unknown, revalidate: (options?: { retryCount?: number }) => void, { retryCount }: { retryCount: number }) => {
           // 재시도 가능한 에러인지 확인
           if (!ErrorHandler.shouldRetry(error)) {
             return;

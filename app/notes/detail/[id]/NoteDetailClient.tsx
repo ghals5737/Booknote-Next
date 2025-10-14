@@ -11,16 +11,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDeleteNote, useNote } from "@/hooks/use-notes";
 import { NoteResponse } from "@/lib/types/note/note";
 import {
-    ArrowLeft,
-    Calendar,
-    Edit,
-    FileText,
-    Loader2,
-    Save,
-    Star,
-    Tag,
-    Trash2,
-    X
+  ArrowLeft,
+  Calendar,
+  Edit,
+  FileText,
+  Loader2,
+  Save,
+  Star,
+  Tag,
+  Trash2,
+  X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -38,7 +38,7 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
   const { deleteNote } = useDeleteNote();
   const { note, isLoading, error, mutateNote } = useNote(noteId);
 
-  const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
+  // NEXT_PUBLIC_API_URL은 현재 사용되지 않음 (authenticatedApiRequest에서 처리)
 
   // 노트가 로드되면 편집용 상태 초기화
   useEffect(() => {
@@ -312,8 +312,8 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
           <div className="flex items-center gap-2 mb-6">
             <Tag className="h-4 w-4 text-muted-foreground" />
             <div className="flex flex-wrap gap-2">
-              {note.tagList.map((tag, index) => (
-                <Badge key={index} variant="secondary" className="text-xs">
+              {note.tagList.map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
                   {tag}
                 </Badge>
               ))}
@@ -363,7 +363,7 @@ export function NoteDetailClient({ noteId }: NoteDetailClientProps) {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-muted-foreground">
-              '{note.title}' 노트를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              &apos;{note.title}&apos; 노트를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
             </p>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
