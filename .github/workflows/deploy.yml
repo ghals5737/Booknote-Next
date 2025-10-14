@@ -19,6 +19,13 @@ jobs:
     - name: Login to Docker registry
       run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login https://registry.booknote.site -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
 
+    - name: Create .env file
+      run: |
+        echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" > .env
+        echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env
+        echo "NEXT_PUBLIC_TOKEN=${{ secrets.NEXT_PUBLIC_TOKEN }}" >> .env
+        echo "NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" >> .env
+
     - name: Build Docker image
       run: docker buildx build . -t registry.booknote.site/booknote-front:latest --push
      
