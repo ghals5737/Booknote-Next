@@ -25,7 +25,7 @@ interface QuoteManagerProps {
   onQuoteAdded?: () => void;
   quotes: QuoteResponse[];
   quotesLoading: boolean;
-  quotesError: any;
+  quotesError: unknown;
   mutateQuotes: () => void;
 }
 
@@ -219,7 +219,7 @@ export const QuoteManager = ({
                 <Card key={quote.id} className="bg-gradient-warm">
                   <CardContent className="p-4">
                     <blockquote className="text-foreground mb-3 leading-relaxed text-base">
-                      "{quote.content}"
+                      &quot;{quote.content}&quot;
                     </blockquote>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <div className="flex items-center space-x-4">

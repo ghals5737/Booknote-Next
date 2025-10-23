@@ -1,21 +1,10 @@
-import { authOptions } from '@/auth';
-import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function GET(request: NextRequest) {
   try {
-    // 세션에서 사용자 정보 가져오기
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: '인증이 필요합니다.' },
-        { status: 401 }
-      );
-    }
-
+    const userId = request.headers.get('x-user-id');
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '0');
     const size = parseInt(searchParams.get('size') || '10');
@@ -30,9 +19,7 @@ export async function GET(request: NextRequest) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
 
-    console.log(`[API] 사용자 ${session.user.id}의 책 목록 조회 요청`);
-
-    const upstream = await fetch(`${PUBLIC_API_BASE_URL}/api/v1/users/${session.user.id}/books?page=${page}&size=${size}`, {
+    const upstream = await fetch(`${PUBLIC_API_BASE_URL}/api/v1/users/${userId}/books?page=${page}&size=${size}`, {
       signal: controller.signal,
       cache: 'no-store',
     }).finally(() => clearTimeout(timeoutId));

@@ -35,6 +35,7 @@ export default function AuthExample() {
       }
     } catch (error) {
       setMessage('네트워크 오류가 발생했습니다');
+      console.error('오류가 발생했습니다', error);
     } finally {
       setLoading(false);
     }
@@ -54,6 +55,7 @@ export default function AuthExample() {
       }
     } catch (error) {
       setMessage('로그아웃 중 오류가 발생했습니다');
+      console.error('오류가 발생했습니다', error);
     } finally {
       setLoading(false);
     }

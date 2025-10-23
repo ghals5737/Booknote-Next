@@ -35,7 +35,7 @@ export async function GET(
         const users = usersJson?.data ?? usersJson ?? [];
         const emailToFind = decodeURIComponent(id);
         const match = Array.isArray(users)
-          ? users.find((u: any) => (u?.email || '').toLowerCase() === emailToFind.toLowerCase())
+          ? users.find((u: unknown) => (u as { email?: string }).email?.toLowerCase() === emailToFind.toLowerCase())
           : null;
         if (match?.id) {
           id = String(match.id);

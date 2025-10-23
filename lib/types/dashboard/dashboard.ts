@@ -22,6 +22,13 @@ export interface RecentNoteItem {
     recentSize?: number;
   }
   
+  // 최근 활동 아이템 타입
+  export interface RecentActivityItem {
+    type: 'note_created' | 'book_added' | 'quote_added' | 'book_finished';
+    bookTitle: string;
+    timestamp: string;
+  }
+
   // 기존 컴포넌트와의 호환성을 위한 변환된 타입
   export interface DashboardStats {
     books: {
@@ -34,5 +41,6 @@ export interface RecentNoteItem {
       important: number;
     };
     recentNotes: RecentNoteItem[];
+    recentActivity?: RecentActivityItem[];
   }
   

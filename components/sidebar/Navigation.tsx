@@ -125,7 +125,7 @@ const Navigation = ({ currentPage }: NavigationProps) => {
         <div className="p-3 sm:p-4 border-t border-border flex-shrink-0">
           <h3 className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">최근 활동</h3>
           <div className="space-y-2">
-            {stats.recentActivity.slice(0, 3).map((activity, index) => {
+            {stats.recentActivity.slice(0, 3).map((activity) => {
               const getActivityIcon = (type: string) => {
                 switch (type) {
                   case 'note_created':
@@ -157,7 +157,7 @@ const Navigation = ({ currentPage }: NavigationProps) => {
               };
 
               return (
-                <div key={index} className="flex items-center space-x-2 text-xs text-muted-foreground">
+                <div key={`${activity.type}-${activity.bookTitle}-${activity.timestamp}`} className="flex items-center space-x-2 text-xs text-muted-foreground">
                   <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 ${getActivityIcon(activity.type)} rounded-full flex-shrink-0`}></div>
                   <span className="truncate">{getActivityText(activity.type, activity.bookTitle)}</span>
                 </div>

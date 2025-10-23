@@ -4,12 +4,13 @@ const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get('query') || '';
-    const type = searchParams.get('type') || 'all'; // all, books, notes, quotes
-    const page = parseInt(searchParams.get('page') || '1');
-    const size = parseInt(searchParams.get('size') || '10');
-    const userId = searchParams.get('userId');
+    const url = new URL(request.url);
+    const urlSearchParams = url.searchParams;
+    const query = urlSearchParams.get('query') || '';
+    const type = urlSearchParams.get('type') || 'all'; // all, books, notes, quotes
+    const page = parseInt(urlSearchParams.get('page') || '1');
+    const size = parseInt(urlSearchParams.get('size') || '10');
+    const userId = urlSearchParams.get('userId');
 
     if (!query.trim() || query.length < 2) {
       return NextResponse.json({ 

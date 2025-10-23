@@ -33,7 +33,7 @@ import {
 } from "recharts";
 
 export function StatisticsClient() {
-  const { user, isAuthenticated, isLoading: authLoading } = useNextAuth();
+  const { isAuthenticated, isLoading: authLoading } = useNextAuth();
   
   // 통계 데이터 가져오기 - 모든 훅은 조건문 밖에서 호출해야 함
   const { stats, error: statsError, isLoading: statsLoading, mutateStats } = useDashboardStats();
@@ -67,10 +67,10 @@ export function StatisticsClient() {
     completedBooks: stats?.books?.finished || 0,
     currentlyReading: stats?.books?.reading || 0,
     totalNotes: stats?.notes?.total || 0,
-    totalQuotes: stats?.quotes?.total || 0,
+    totalQuotes: 0,
     importantNotes: stats?.notes?.important || 0,
-    importantQuotes: stats?.quotes?.important || 0,
-    thisMonthNotes: stats?.notes?.thisMonth || 0,
+    importantQuotes:  0,
+    thisMonthNotes:  0,
     averageRating: 4.2, // 임시값
     readingStreak: 15, // 임시값
     pagesRead: 3247 // 임시값
@@ -112,19 +112,19 @@ export function StatisticsClient() {
     { title: "미드나잇 라이브러리", author: "매트 헤이그", rating: 4.2, notes: 12, quotes: 10 }
   ];
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
-          <p className="text-sm font-medium">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {entry.dataKey === 'books' ? '읽은 책' : entry.dataKey === 'pages' ? '페이지' : entry.name}: {entry.value}
-            </p>
-          ))}
-        </div>
-      );
-    }
+  const CustomTooltip = () => {
+    // if (active && payload && payload.length) {
+    //   return (
+    //     <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
+    //       <p className="text-sm font-medium">{label}</p>
+    //       {payload.map((entry: unknown, index: number) => (
+    //         <p key={index} className="text-sm" style={{ color: (entry as { color: string }).color }}>
+    //           {entry.dataKey === 'books' ? '읽은 책' : entry.dataKey === 'pages' ? '페이지' : (entry as { name: string }).name}: {(entry as { value: string }).value}
+    //         </p>
+    //       ))}
+    //     </div>
+    //   );
+    // }
     return null;
   };
 

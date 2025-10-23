@@ -2,12 +2,14 @@ import { Suspense } from 'react';
 import { NoteDetailClient } from './NoteDetailClient';
 
 interface NoteDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function NoteDetailPage({ params }: NoteDetailPageProps) {
+export default async function NoteDetailPage({ params }: NoteDetailPageProps) {
+  const { id } = await params;
+  
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background p-6">
@@ -19,7 +21,7 @@ export default function NoteDetailPage({ params }: NoteDetailPageProps) {
         </div>
       </div>
     }>
-      <NoteDetailClient noteId={params.id} />
+      <NoteDetailClient noteId={id} />
     </Suspense>
   );
 }

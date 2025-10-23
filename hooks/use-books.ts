@@ -1,5 +1,5 @@
 import { authenticatedApiRequest } from '@/lib/api/auth';
-import { BookApiResponse, UserBookResponsePage } from '@/lib/types/book/book';
+import { BookApiResponse, BookResponse, UserBookResponsePage } from '@/lib/types/book/book';
 import useSWR, { mutate, SWRConfiguration } from 'swr';
 import { useNextAuth } from './use-next-auth';
 
@@ -311,13 +311,13 @@ export function useSearchBooks() {
       console.log('[useSearchBooks] 파싱된 책 목록:', books);
 
       // 결과를 다이얼로그에서 기대하는 형태로 정규화
-      const normalized = (books as any[]).map((item) => ({
+      const normalized = (books as BookResponse[]).map((item) => ({
         title: item.title ?? '',
         author: item.author ?? '',
         publisher: item.publisher ?? '',
         isbn: item.isbn ?? '',
         description: item.description ?? '',
-        cover: item.image ?? item.cover ?? '',
+        imgUrl: item.imgUrl ?? '',
       }));
 
       return normalized;

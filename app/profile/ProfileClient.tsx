@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useNextAuth } from '@/hooks/use-next-auth'
 import { useEffect, useState } from 'react'
 
 interface UserProfile {
@@ -33,7 +32,7 @@ interface UserStats {
 }
 
 export default function ProfileClient() {
-  const { logout } = useNextAuth()
+  //const { logout } = useNextAuth()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [stats, setStats] = useState<UserStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)

@@ -74,8 +74,8 @@ export async function PUT(request: NextRequest) {
         headers: {
           'Authorization': `Bearer ${token}`,
           // Content-Type은 브라우저/환경이 자동으로 설정하도록 비워둠
-        } as any,
-        body: formData as any,
+        } as HeadersInit,
+        body: formData as FormData,
         cache: 'no-store',
       });
     } else {

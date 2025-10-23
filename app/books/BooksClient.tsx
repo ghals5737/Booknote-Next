@@ -55,11 +55,11 @@ export function BooksClient({ initialData }: BooksClientProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [externalSearchResults, setExternalSearchResults] = useState<any[]>([]);
+  const [selectedCategory] = useState<string>('all');
+  const [externalSearchResults, setExternalSearchResults] = useState<BookResponse[]>([]);
   const [isExternalSearching, setIsExternalSearching] = useState(false);
   const [showExternalResults, setShowExternalResults] = useState(false);
-  const [selectedBookForAdd, setSelectedBookForAdd] = useState<any>(null);
+  const [selectedBookForAdd, setSelectedBookForAdd] = useState<BookResponse | null>(null);
 
   const { isAuthenticated, isLoading: authLoading } = useNextAuth();
 
@@ -175,17 +175,17 @@ export function BooksClient({ initialData }: BooksClientProps) {
       console.log('[BooksClient] 외부 검색 결과:', results?.length || 0, '개');
       
       // 백엔드 응답을 우리 형식으로 변환
-      const books = (results || []).map((item: any) => ({
+      const books = (results || []).map((item) => ({
         title: item.title || '제목 없음',
         author: item.author || '저자 없음',
         publisher: item.publisher || '출판사 없음',
         isbn: item.isbn || 'ISBN 없음',
         description: item.description || '설명 없음',
-        cover: item.image || '/placeholder.svg'
+        imgUrl: item.imgUrl || '/placeholder.svg'
       }));
       
       console.log('[BooksClient] 변환된 책 목록:', books);
-      setExternalSearchResults(books);
+      setExternalSearchResults(books as BookResponse[]);
       setShowExternalResults(true);
     } catch (error) {
       console.error('외부 검색 실패:', error);
@@ -204,7 +204,7 @@ export function BooksClient({ initialData }: BooksClientProps) {
   });
 
   // 카테고리 목록
-  const categories = ['all', ...Array.from(new Set(books.map(book => book.category)))];
+  //const categories = ['all', ...Array.from(new Set(books.map(book => book.category)))];
 
   // 인증 상태 확인 및 처리
   if (!authLoading && !isAuthenticated) {
@@ -457,10 +457,10 @@ export function BooksClient({ initialData }: BooksClientProps) {
                 {externalSearchResults.map((book, index) => (
                   <Card key={index} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
                     <CardHeader className="pb-3">
-                      {book.cover && (
+                      {book.imgUrl && (
                         <div className="mb-3 overflow-hidden rounded-lg">
                           <img 
-                            src={book.cover} 
+                            src={book.imgUrl} 
                             alt={book.title}
                             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                           />

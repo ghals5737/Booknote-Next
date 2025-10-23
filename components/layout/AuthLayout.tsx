@@ -73,7 +73,9 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full bg-background">
-        <Navigation />
+        <Navigation 
+          currentPage="dashboard"
+        />
         <SidebarInset className="flex-1">
           <header className="flex h-16 shrink-0 items-center gap-2 border-b border-secondary glass-effect px-4">
             <SidebarTrigger className="text-foreground hover:bg-secondary rounded-lg transition-all duration-200" />
