@@ -18,9 +18,10 @@ interface AddBookDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   selectedBook?: BookResponse | null
+  onBookAdded?: () => void
 }
 
-export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialogProps) {
+export function AddBookDialog({ open, onOpenChange, selectedBook, onBookAdded }: AddBookDialogProps) {
   const [title, setTitle] = useState("")
   const [author, setAuthor] = useState("")
   const [category, setCategory] = useState("기타")
@@ -223,6 +224,11 @@ export function AddBookDialog({ open, onOpenChange, selectedBook }: AddBookDialo
       // Reset form
       resetForm()
       onOpenChange(false)
+      
+      // 책 추가 성공 콜백 호출
+      if (onBookAdded) {
+        onBookAdded()
+      }
     } catch (error) {
       console.error('책 추가 실패:', error)
       alert('책 추가에 실패했습니다. 다시 시도해주세요.')

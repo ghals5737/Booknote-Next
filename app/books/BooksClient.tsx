@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { useBooks, useSearchBooks } from "@/hooks/use-books";
+import { useDeleteBook, useSearchBooks } from "@/hooks/use-books";
 import { useNextAuth } from "@/hooks/use-next-auth";
 import {
   AlertCircle,
@@ -29,12 +29,27 @@ import {
 import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BookResponse, UserBookResponse } from "../../lib/types/book/book";
+import { UserBookResponse, UserBookResponsePage } from "../../lib/types/book/book";
 
-export function BooksClient() {  
-  // SWR 훅 사용
-  const { books,  isLoading, error, mutateBooks } = useBooks(0, 10);
-  //const { deleteBook } = useDeleteBook();
+interface BooksClientProps {
+  initialData?: UserBookResponsePage | null;
+}
+
+export function BooksClient({ initialData }: BooksClientProps) {  
+  // SWR 훅 제거하고 props로 받은 데이터 사용
+  const [books, setBooks] = useState<UserBookResponse[]>(initialData?.content || []);
+  const [pagination, setPagination] = useState(initialData ? {
+    pageNumber: initialData.pageable.pageNumber,
+    pageSize: initialData.pageable.pageSize,
+    totalPages: initialData.totalPages,
+    totalElements: initialData.totalElements,
+    last: initialData.last,
+    first: initialData.first,
+  } : null);
+  const [isLoading, setIsLoading] = useState(!initialData);
+  const [error, setError] = useState<Error | null>(null);
+  
+  const { deleteBook } = useDeleteBook();
   const { searchBooks } = useSearchBooks();
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -49,6 +64,50 @@ export function BooksClient() {
   const { isAuthenticated, isLoading: authLoading } = useNextAuth();
 
   console.log('[BooksClient] Books:', books);
+  
+  // initialData가 없을 때 클라이언트에서 데이터 로드
+  useEffect(() => {
+    if (!initialData && !isLoading && !error) {
+      loadBooksData();
+    }
+  }, [initialData]);
+
+  // 클라이언트에서 책 데이터 로드
+  const loadBooksData = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9100';
+      const response = await fetch(`${baseUrl}/api/v1/user/books?page=0&size=10`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setBooks(data.content || []);
+      setPagination({
+        pageNumber: data.pageable.pageNumber,
+        pageSize: data.pageable.pageSize,
+        totalPages: data.totalPages,
+        totalElements: data.totalElements,
+        last: data.last,
+        first: data.first,
+      });
+    } catch (error) {
+      console.error('책 목록 로드 실패:', error);
+      setError(error as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // 디버깅을 위한 로그 (클라이언트에서만 실행)
   useEffect(() => {
@@ -86,16 +145,23 @@ export function BooksClient() {
     }
   };
 
-  // const handleDeleteBook = async (bookId: number, bookTitle: string) => {
-  //   if (confirm(`"${bookTitle}" 책을 삭제하시겠습니까?`)) {
-  //     try {
-  //       await deleteBook(bookId);
-  //     } catch (error) {
-  //       console.error('책 삭제 실패:', error);
-  //       alert('책 삭제에 실패했습니다.');
-  //     }
-  //   }
-  // };
+  // 데이터 새로고침 함수
+  const refreshBooks = async () => {
+    await loadBooksData();
+  };
+
+  const handleDeleteBook = async (bookId: number, bookTitle: string) => {
+    if (confirm(`"${bookTitle}" 책을 삭제하시겠습니까?`)) {
+      try {
+        await deleteBook(bookId);
+        // 삭제 후 목록에서 제거
+        setBooks(prevBooks => prevBooks.filter(book => book.id !== bookId));
+      } catch (error) {
+        console.error('책 삭제 실패:', error);
+        alert('책 삭제에 실패했습니다.');
+      }
+    }
+  };
 
   const handleExternalSearch = async () => {
     if (!searchTerm.trim()) return;
@@ -242,7 +308,7 @@ export function BooksClient() {
             </div>
             <div className="flex gap-2 mt-4">
               <Button 
-                onClick={() => mutateBooks()}
+                onClick={refreshBooks}
                 variant="outline"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
@@ -257,7 +323,7 @@ export function BooksClient() {
                       alert('로그인이 필요합니다. 로그인 페이지로 이동합니다.');
                       router.push('/auth');
                     } else {
-                      mutateBooks();
+                      refreshBooks();
                     }
                   }
                 }}
@@ -353,6 +419,10 @@ export function BooksClient() {
                   }
                 }} 
                 selectedBook={selectedBookForAdd}
+                onBookAdded={() => {
+                  // 책 추가 후 목록 새로고침
+                  refreshBooks();
+                }}
               />
             </div>
           </div>
