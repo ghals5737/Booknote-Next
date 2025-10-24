@@ -1,17 +1,16 @@
 "use client"
 
-import { AuthProvider } from "@/components/context/AuthContext"
 import { SidebarProvider } from "@/components/context/SidebarContext"
 import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary"
 import { SWRProvider } from "@/components/providers/SWRProvider"
 import { ToastProvider } from "@/components/providers/ToastProvider"
-import { cleanupDuplicateTokens } from "@/lib/api/token"
+import { SessionProvider } from "next-auth/react"
 import { useEffect } from "react"
 import { PageWrapper } from "./layout/PageWrapper"
 
-function TokenCleanupWrapper({ children }: { children: React.ReactNode }) {
+function TokenCleanupWrapper({ children }: { readonly children: React.ReactNode }) {
   useEffect(() => {
-    cleanupDuplicateTokens();
+    // NextAuth.js는 자체적으로 세션을 관리하므로 토큰 정리 불필요
   }, []);
   return <>{children}</>;
 }
@@ -31,20 +30,20 @@ function MetadataSetter() {
   return null;
 }
 
-export function ClientRoot({ children }: { children: React.ReactNode }) {
+export function ClientRoot({ children }: { readonly children: React.ReactNode }) {
   return (
     <ErrorBoundary>
       <ToastProvider>
         <TokenCleanupWrapper>
           <SWRProvider>
-            <AuthProvider>
+            <SessionProvider>
               <SidebarProvider>
                 <MetadataSetter />
                 <PageWrapper>
                   {children}
                 </PageWrapper>
               </SidebarProvider>
-            </AuthProvider>
+            </SessionProvider>
           </SWRProvider>
         </TokenCleanupWrapper>
       </ToastProvider>

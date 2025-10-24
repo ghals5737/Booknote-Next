@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { useAddBook, useSearchBooks } from "@/hooks/use-books"
 import { ArrowLeft, BookOpen, Calendar, Loader2, Plus, Search } from "lucide-react"
 import type React from "react"
 import { useEffect, useState } from "react"
@@ -73,8 +72,6 @@ export function AddBookDialog({ open, onOpenChange, selectedBook, onBookAdded }:
     );
   }
 
-  const { addBook } = useAddBook()
-  const { searchBooks } = useSearchBooks()
   const categories = ["자기계발", "개발", "역사", "소설", "에세이", "경제", "과학", "철학", "기타"]
 
   // 선택된 책 정보로 폼 자동 채우기
@@ -107,37 +104,18 @@ export function AddBookDialog({ open, onOpenChange, selectedBook, onBookAdded }:
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const handleAutocompleteSearch = async (query: string, page: number = 1, resetResults: boolean = false) => {
+  const handleAutocompleteSearch = async (query: string, page: number = 1) => {
     if (!query.trim() || query.length < 2) return
 
     setIsAutoCompleting(true)
     try {
-      // 자동완성 API 엔드포인트 호출 (페이지네이션 지원)
-      const { authenticatedApiRequest } = await import('@/lib/api/auth');
-      const data = await authenticatedApiRequest(`/api/v1/search/books/autocomplete?query=${encodeURIComponent(query)}&page=${page}&size=10`);
+      const response = await fetch(`/api/v1/search/books/autocomplete?query=${encodeURIComponent(query)}&page=${page}&size=10`);
       
-      if (data.success && Array.isArray(data.data)) {
-        if (resetResults) {
-          setAutocompleteResults(data.data)
-        } else {
-          setAutocompleteResults(prev => {
-            // 중복 제거 (ISBN 기준)
-            const existingIsbns = new Set(prev.map(book => book.isbn))
-            const newBooks = (data.data as BookResponse[]).filter((book: BookResponse) => !existingIsbns.has(book.isbn))
-            return [...prev, ...newBooks]
-          })
-        }
-        setShowAutocomplete(true)
-
-        // 페이지네이션 정보 업데이트
-        // if ((data as BookResponse).pagination) {
-        //   setAutocompletePage((data as BookResponse).pagination.page)
-        //   setHasMoreAutocomplete((data as BookResponse).pagination.hasMore)
-        // }
-      }
+      const data = await response.json();
+      setAutocompleteResults(data.data as BookResponse[])
+      setShowAutocomplete(true)
     } catch (error) {
       console.error("Autocomplete search failed:", error)
-      // 자동완성 실패 시 조용히 처리 (사용자에게 알리지 않음)
     } finally {
       setIsAutoCompleting(false)
     }
@@ -198,15 +176,8 @@ export function AddBookDialog({ open, onOpenChange, selectedBook, onBookAdded }:
     }
 
     setIsSubmitting(true)
-    try {
-      console.log('[AddBookDialog] Starting book creation process...')
-      console.log('[AddBookDialog] form data:', { title, author, category, description, isbn, publisher })
-      
-      // Calculate progress from pages if provided
+    try {      
       const calculatedProgress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : progress
-
-      // useAddBook 훅이 책 생성과 사용자-책 연결을 모두 처리합니다
-      console.log('[AddBookDialog] calling addBook...')
       const created = await addBook({
         title: title.trim(),
         author: author.trim(),
@@ -219,13 +190,8 @@ export function AddBookDialog({ open, onOpenChange, selectedBook, onBookAdded }:
         publisher: publisher.trim(),
         pubdate: pubdate || new Date().toISOString().split('T')[0],
       })
-      console.log('[AddBookDialog] addBook ok, created id=', created?.id)
-
-      // Reset form
       resetForm()
       onOpenChange(false)
-      
-      // 책 추가 성공 콜백 호출
       if (onBookAdded) {
         onBookAdded()
       }

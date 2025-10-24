@@ -7,8 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useBooks } from "@/hooks/use-books";
-import { useNextAuth } from "@/hooks/use-next-auth";
-import { useAddNote } from "@/hooks/use-notes";
 import { NoteResponse } from "@/lib/types/note/note";
 import {
   ArrowLeft,
@@ -40,8 +38,7 @@ interface NoteEditorProps {
   preSelectedBookId?: string;
 }
 
-const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEditorProps) => {
-  const { user } = useNextAuth();
+const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEditorProps) => {  
   const router = useRouter();
   const { books, isLoading: booksLoading, error: booksError } = useBooks(0, 100);
   
@@ -57,14 +54,14 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
 
 ## 주요 기능
 
-- *기울임체*와 **굵은 글씨**
-- [링크](https://example.com)
+- *기울임체*와 **굵은 글씨**  
+- [링크](https://example.com)  
 - \`인라인 코드\`
 
 > 인용구는 이렇게 작성합니다.
 
 ### 연결된 노트
-- [[원자 습관]] - 작은 변화의 힘
+- [[원자 습관]] - 작은 변화의 힘  
 - [[학습 방법론]] - 효과적인 학습 전략
 
 ---
@@ -90,7 +87,6 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
   // 하드코딩된 책 목록 제거 - useBooks 훅에서 가져옴
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { addNote } = useAddNote();
 
   const saveNote = async () => {
     if (!title.trim() || !content.trim()) {
@@ -103,17 +99,10 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
       return;
     }
 
-    if (!user?.id) {
-      alert('로그인이 필요합니다.');
-      return;
-    }
-
     setIsSaving(true);
     try {
       if (isEditMode && initialNote) {
-        // 수정 모드
-        const { authenticatedApiRequest } = await import('@/lib/api/auth');
-        await authenticatedApiRequest(`/api/v1/notes/${initialNote.id}`, {
+        await fetch(`/api/v1/notes/${initialNote.id}`, {
           method: 'PUT',
           body: JSON.stringify({
             title: title,
@@ -126,24 +115,22 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
         onSave?.();
       } else {
         // 생성 모드
-        const result = await addNote({
-          bookId: parseInt(selectedBook),
-          title: title,
-          content: content,
-          html: content,
-          isImportant: false,
+        const response = await fetch('/api/v1/notes', {
+          method: 'POST',
+          body: JSON.stringify({
+            bookId: parseInt(selectedBook),
+            title: title,
+            content: content,
+            html: content,
+            isImportant: false,
+          })
         });
-
-        if (result) {
+        const result = await response.json();
+        if (result.success) {
           alert('노트가 성공적으로 저장되었습니다.');
-          if (!onSave) {
-            // 생성 모드에서만 초기화
-            setTitle("새로운 노트");
-            setContent("");
-            setSelectedBook("");
-          } else {
-            onSave();
-          }
+          onSave?.();
+        } else {
+          alert('노트 저장에 실패했습니다.');
         }
       }
     } catch (error) {
@@ -186,6 +173,76 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
       );
     }, 0);
   };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key !== 'Enter') return;
+    if ((e.nativeEvent as any).isComposing) return; // IME 조합 중이면 기본 처리
+  
+    const textarea = e.currentTarget;
+    const value = textarea.value;            // ⬅️ state 말고 실제 값 사용
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+  
+    // 현재 줄 계산
+    const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+    const currentLine = value.slice(lineStart, start);
+  
+    // 1) 리스트 자동완성
+    const listMatch = currentLine.match(/^(\s*)([-*+]|(\d+)\.)\s/);
+    if (listMatch) {
+      e.preventDefault();
+  
+      const indent = listMatch[1] ?? '';
+      const bullet = listMatch[2] ?? '';
+      const num = listMatch[3]; // 캡처된 숫자(없으면 undefined)
+  
+      const nextMarker = num ? `${parseInt(num, 10) + 1}.` : bullet;
+      const insert = `\n${indent}${nextMarker} `;
+  
+      // 새 내용(항상 value 기준으로 생성)
+      const newValue = value.slice(0, start) + insert + value.slice(end);
+  
+      // 상태 업데이트(함수형)
+      setContent(() => newValue);
+  
+      // 커서 이동(렌더 후)
+      const newCursorPos = start + insert.length;
+      requestAnimationFrame(() => {
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      });
+      return;
+    }
+  
+    // 2) 코드펜스 자동 닫기
+    if (currentLine.trim().startsWith('```')) {
+      e.preventDefault();
+  
+      const insert = `\n\`\`\`\n`;
+      const newValue = value.slice(0, start) + insert + value.slice(end);
+  
+      setContent(() => newValue);
+  
+      const newCursorPos = start + 1; // ``` 뒤 줄 시작
+      requestAnimationFrame(() => {
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      });
+      return;
+    }
+  
+    // 3) 일반 줄바꿈
+    e.preventDefault();
+  
+    const insert = `\n`;
+    const newValue = value.slice(0, start) + insert + value.slice(end);
+  
+    setContent(() => newValue);
+  
+    const newCursorPos = start + insert.length;
+    requestAnimationFrame(() => {
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    });
+  };
+  
 
   const addTag = () => {
     const trimmedTag = newTag.trim();
@@ -327,6 +384,15 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
                   >
                     <BookOpen className="h-4 w-4" />
                   </Button>
+                  <Separator orientation="vertical" className="h-6" />
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => insertMarkdown("\n")}
+                    title="줄바꿈"
+                  >
+                    ↵
+                  </Button>
                 </div>
               </CardHeader>
               
@@ -338,7 +404,8 @@ const NoteEditor = ({ initialNote, onSave, onCancel, preSelectedBookId }: NoteEd
                       ref={textareaRef}
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
-                      placeholder="마크다운으로 노트를 작성하세요..."
+                      onKeyDown={handleKeyDown}
+                      placeholder="마크다운으로 노트를 작성하세요... (Enter로 줄바꿈)"
                       className="min-h-[600px] font-mono text-sm leading-relaxed resize-none border-0 shadow-none p-4 bg-muted/20"
                     />
                   </div>

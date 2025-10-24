@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { useDeleteBook, useSearchBooks } from "@/hooks/use-books";
-import { useNextAuth } from "@/hooks/use-next-auth";
+import { useSearchBooks } from "@/hooks/use-books";
+import { useNextAuth } from "@/hooks/use-nextauth";
 import {
   AlertCircle,
   Book,
@@ -29,10 +29,10 @@ import {
 import moment from "moment";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { UserBookResponse, UserBookResponsePage } from "../../lib/types/book/book";
+import { BookResponse, UserBookResponse, UserBookResponsePage } from "../../lib/types/book/book";
 
 interface BooksClientProps {
-  initialData?: UserBookResponsePage | null;
+  initialData?: UserBookResponsePage;
 }
 
 export function BooksClient({ initialData }: BooksClientProps) {  
@@ -49,30 +49,25 @@ export function BooksClient({ initialData }: BooksClientProps) {
   const [isLoading, setIsLoading] = useState(!initialData);
   const [error, setError] = useState<Error | null>(null);
   
-  const { deleteBook } = useDeleteBook();
   const { searchBooks } = useSearchBooks();
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory] = useState<string>('all');
-  const [externalSearchResults, setExternalSearchResults] = useState<BookResponse[]>([]);
+  const [externalSearchResults, setExternalSearchResults] = useState<UserBookResponse[]>([]);
   const [isExternalSearching, setIsExternalSearching] = useState(false);
   const [showExternalResults, setShowExternalResults] = useState(false);
-  const [selectedBookForAdd, setSelectedBookForAdd] = useState<BookResponse | null>(null);
+  const [selectedBookForAdd, setSelectedBookForAdd] = useState<UserBookResponse | null>(null);
 
   const { isAuthenticated, isLoading: authLoading } = useNextAuth();
 
-  console.log('[BooksClient] Books:', books);
-  
-  // initialData가 없을 때 클라이언트에서 데이터 로드
   useEffect(() => {
     if (!initialData && !isLoading && !error) {
       loadBooksData();
     }
   }, [initialData]);
 
-  // 클라이언트에서 책 데이터 로드
   const loadBooksData = async () => {
     setIsLoading(true);
     setError(null);
@@ -109,28 +104,10 @@ export function BooksClient({ initialData }: BooksClientProps) {
     }
   };
   
-  // 디버깅을 위한 로그 (클라이언트에서만 실행)
-  useEffect(() => {
-    console.log('[BooksClient] Auth state:', { isAuthenticated, authLoading });
-    console.log('[BooksClient] LocalStorage tokens:', {
-      accessToken: localStorage.getItem('access_token'),
-      refreshToken: localStorage.getItem('refresh_token')
-    });
-   
-  }, [isAuthenticated, authLoading]);
 
-  
-
-  const handleBookClick = (book: UserBookResponse) => {
-    console.log('상세보기 버튼 클릭됨:', book);
-    console.log('이동할 경로:', `/books/detail/${book.id}`);
-    
+  const handleBookClick = (book: UserBookResponse) => {    
     try {
-      // Next.js 라우터 사용
-      router.push(`/books/detail/${book.id}`);
-      console.log('라우터 이동 시도 완료');
       
-      // 백업 방법: window.location 사용
       setTimeout(() => {
         if (window.location.pathname === '/books') {
           console.log('라우터 이동 실패, window.location 사용');
@@ -140,27 +117,11 @@ export function BooksClient({ initialData }: BooksClientProps) {
       
     } catch (error) {
       console.error('네비게이션 오류:', error);
-      // 오류 발생 시 window.location으로 강제 이동
       window.location.href = `/books/detail/${book.id}`;
     }
   };
-
-  // 데이터 새로고침 함수
   const refreshBooks = async () => {
     await loadBooksData();
-  };
-
-  const handleDeleteBook = async (bookId: number, bookTitle: string) => {
-    if (confirm(`"${bookTitle}" 책을 삭제하시겠습니까?`)) {
-      try {
-        await deleteBook(bookId);
-        // 삭제 후 목록에서 제거
-        setBooks(prevBooks => prevBooks.filter(book => book.id !== bookId));
-      } catch (error) {
-        console.error('책 삭제 실패:', error);
-        alert('책 삭제에 실패했습니다.');
-      }
-    }
   };
 
   const handleExternalSearch = async () => {
@@ -168,24 +129,9 @@ export function BooksClient({ initialData }: BooksClientProps) {
     
     setIsExternalSearching(true);
     try {
-      console.log('[BooksClient] 외부 검색 시작:', searchTerm);
-      
-      // 백엔드 API 사용 (네이버 검색 API)
       const results = await searchBooks(searchTerm);
-      console.log('[BooksClient] 외부 검색 결과:', results?.length || 0, '개');
       
-      // 백엔드 응답을 우리 형식으로 변환
-      const books = (results || []).map((item) => ({
-        title: item.title || '제목 없음',
-        author: item.author || '저자 없음',
-        publisher: item.publisher || '출판사 없음',
-        isbn: item.isbn || 'ISBN 없음',
-        description: item.description || '설명 없음',
-        imgUrl: item.imgUrl || '/placeholder.svg'
-      }));
-      
-      console.log('[BooksClient] 변환된 책 목록:', books);
-      setExternalSearchResults(books as BookResponse[]);
+      setExternalSearchResults(results as unknown as UserBookResponse[]);
       setShowExternalResults(true);
     } catch (error) {
       console.error('외부 검색 실패:', error);
@@ -194,25 +140,16 @@ export function BooksClient({ initialData }: BooksClientProps) {
       setIsExternalSearching(false);
     }
   };
-
-  // 필터링된 책 목록
   const filteredBooks = books.filter(book => {
     const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          book.author.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
-
-  // 카테고리 목록
-  //const categories = ['all', ...Array.from(new Set(books.map(book => book.category)))];
-
-  // 인증 상태 확인 및 처리
   if (!authLoading && !isAuthenticated) {
-    // 토큰이 있는지 확인 (클라이언트에서만)
     const hasToken = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     
     if (hasToken) {
-      // 토큰이 있지만 인증이 안된 경우 - 토큰이 만료되었을 수 있음
       return (
         <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
           <div className="flex items-center justify-between">
@@ -231,7 +168,6 @@ export function BooksClient({ initialData }: BooksClientProps) {
                 </Button>
                 <Button 
                   onClick={() => {
-                    // 토큰 삭제 후 새로고침 (클라이언트에서만)
                     if (typeof window !== 'undefined') {
                       localStorage.removeItem('access_token');
                       localStorage.removeItem('refresh_token');
@@ -248,7 +184,6 @@ export function BooksClient({ initialData }: BooksClientProps) {
         </div>
       );
     } else {
-      // 토큰이 없는 경우
       return (
         <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
           <div className="flex items-center justify-between">
@@ -316,7 +251,6 @@ export function BooksClient({ initialData }: BooksClientProps) {
               </Button>
               <Button 
                 onClick={() => {
-                  // 토큰 확인 및 재로그인 안내 (클라이언트에서만)
                   if (typeof window !== 'undefined') {
                     const token = localStorage.getItem('access_token');
                     if (!token) {
@@ -418,9 +352,8 @@ export function BooksClient({ initialData }: BooksClientProps) {
                     setSelectedBookForAdd(null);
                   }
                 }} 
-                selectedBook={selectedBookForAdd}
+                selectedBook={selectedBookForAdd as BookResponse | null}
                 onBookAdded={() => {
-                  // 책 추가 후 목록 새로고침
                   refreshBooks();
                 }}
               />
@@ -457,10 +390,10 @@ export function BooksClient({ initialData }: BooksClientProps) {
                 {externalSearchResults.map((book, index) => (
                   <Card key={index} className="knowledge-card cursor-pointer group hover:shadow-[var(--shadow-knowledge)] transition-all duration-300">
                     <CardHeader className="pb-3">
-                      {book.imgUrl && (
+                      {book.coverImage && (
                         <div className="mb-3 overflow-hidden rounded-lg">
                           <img 
-                            src={book.imgUrl} 
+                            src={book.coverImage} 
                             alt={book.title}
                             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                           />

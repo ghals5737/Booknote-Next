@@ -1,8 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { useNextAuth } from "@/hooks/use-next-auth"
 import { Loader2 } from "lucide-react"
+import { signIn } from "next-auth/react"
 import { useState } from "react"
 
 const ssoProviders = [
@@ -17,13 +17,12 @@ const ssoProviders = [
 ]
 
 export function SSOButtons() {
-  const { loginWithProvider, isLoading } = useNextAuth()
   const [loadingProvider, setLoadingProvider] = useState<string | null>(null)
 
   const handleSSOLogin = async (provider: "google") => {
     setLoadingProvider(provider)
     try {
-      await loginWithProvider(provider)
+      await signIn(provider, { callbackUrl: "/books" })
     } catch (error) {
       console.error(`${provider} login failed:`, error)
     } finally {
@@ -48,7 +47,7 @@ export function SSOButtons() {
             key={provider.id}
             variant="outline"
             onClick={() => handleSSOLogin(provider.id)}
-            disabled={isLoading || loadingProvider !== null}
+            disabled={loadingProvider !== null}
             className={`
               ${provider.bgColor} ${provider.textColor} ${provider.borderColor}
               transition-all duration-200 hover:scale-105 disabled:hover:scale-100

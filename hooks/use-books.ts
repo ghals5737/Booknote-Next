@@ -1,7 +1,7 @@
-import { authenticatedApiRequest } from '@/lib/api/auth';
+import { authenticatedApiRequest } from '@/lib/api/nextauth-api';
 import { BookApiResponse, BookResponse, UserBookResponsePage } from '@/lib/types/book/book';
 import useSWR, { mutate, SWRConfiguration } from 'swr';
-import { useNextAuth } from './use-next-auth';
+import { useNextAuth } from './use-nextauth';
 
 // 캐시 무효화 헬퍼 함수
 const invalidateBookCache = async () => {
@@ -49,7 +49,7 @@ const defaultSWRConfig: SWRConfiguration = {
 // 책 목록 조회 훅
 export function useBooks(page: number = 0, size: number = 10) {
   const { user, isLoading: authLoading, isAuthenticated } = useNextAuth();
-  const userId = user?.id;
+  const userId = (user as any)?.id;
 
   // 디버깅 로그 추가
   console.log('=== useBooks 훅 디버깅 ===');
@@ -128,7 +128,7 @@ export function useAddBook() {
     pubdate: string;
   }) => {
     // 인증 상태 확인
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated || !(user as any)?.id) {
       throw new Error('로그인이 필요합니다.');
     }
 
@@ -151,11 +151,11 @@ export function useAddBook() {
       }
 
       // 2단계: 사용자 서재에 추가 (새로운 인증 API 사용)
-      console.log('[useAddBook] Step 2: Linking user to book...', { userId: user.id, bookId });
+      console.log('[useAddBook] Step 2: Linking user to book...', { userId: (user as any)?.id, bookId });
       await authenticatedApiRequest('/api/v1/user-books', {
         method: 'POST',
         body: JSON.stringify({
-          userId: user.id,
+          userId: (user as any)?.id,
           bookId: bookId
         })
       });
@@ -175,7 +175,7 @@ export function useAddBook() {
   return { 
     addBook,
     isAuthenticated,
-    userId: user?.id,
+    userId: (user as any)?.id,
   };
 }
 
@@ -186,7 +186,7 @@ export function useAddUserBook() {
   // 사용자와 기존 책(bookId)을 연결하는 API 호출
   const addUserBook = async (payload: { userId: number; bookId: number }) => {
     // 인증 상태 확인
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated || !(user as any)?.id) {
       throw new Error('로그인이 필요합니다.');
     }
 
@@ -207,7 +207,7 @@ export function useAddUserBook() {
   return { 
     addUserBook,
     isAuthenticated,
-    userId: user?.id,
+    userId: (user as any)?.id,
   };
 }
 
@@ -217,7 +217,7 @@ export function useDeleteBook() {
   
   const deleteBook = async (bookId: number) => {
     // 인증 상태 확인
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated || !(user as any)?.id) {
       throw new Error('로그인이 필요합니다.');
     }
 
@@ -238,7 +238,7 @@ export function useDeleteBook() {
   return { 
     deleteBook,
     isAuthenticated,
-    userId: user?.id,
+    userId: (user as any)?.id,
   };
 }
 
@@ -260,7 +260,7 @@ export function useUpdateBook() {
     isbn?: string;
   }) => {
     // 인증 상태 확인
-    if (!isAuthenticated || !user?.id) {
+    if (!isAuthenticated || !(user as any)?.id) {
       throw new Error('로그인이 필요합니다.');
     }
 
@@ -283,7 +283,7 @@ export function useUpdateBook() {
   return { 
     updateBook,
     isAuthenticated,
-    userId: user?.id,
+    userId: (user as any)?.id,
   };
 }
 

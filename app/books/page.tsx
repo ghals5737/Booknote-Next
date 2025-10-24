@@ -1,23 +1,36 @@
+import { authOptions } from '@/lib/auth';
 import { UserBookResponsePage } from '@/lib/types/book/book';
+import { getServerSession } from 'next-auth';
 import { BooksClient } from './BooksClient';
 
-// SSR로 데이터 페칭 (클라이언트 사이드에서 인증 처리)
-async function getBooksData(): Promise<UserBookResponsePage | null> {
-  try {
+// SSR로 데이터 페칭 (NextAuth.js 세션에서 토큰 가져오기)
+async function getBooksData(): Promise<UserBookResponsePage> {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.accessToken) {
+        throw new Error('인증이 필요합니다.');
+    }
+    
     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9100';
     
-    // 클라이언트에서 인증을 처리하므로 서버에서는 기본 데이터만 반환
-    // 실제 인증은 BooksClient에서 처리
-    return null;
-  } catch (error) {
-    console.error('책 목록 조회 중 오류:', error);
-    return null;
-  }
+    const response = await fetch(`${baseUrl}/api/v1/user/books?page=0&size=10`,
+      {
+        headers: {
+          'Authorization': `Bearer ${session.accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+        throw new Error('데이터를 가져오는데 실패했습니다.');
+    }
+
+    const result = await response.json();
+    return result.data;
 }
 
 export default async function BooksPage() {
   const booksData = await getBooksData();
-  
-  // 클라이언트에서 인증 처리하도록 변경
-  return <BooksClient initialData={booksData || undefined} />;
+  console.log('booksData', booksData);
+  return <BooksClient initialData={booksData} />;
 }

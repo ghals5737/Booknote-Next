@@ -1,13 +1,12 @@
 'use client'
 import { AddBookDialog } from "@/components/book/AddBookDialog";
-import { useAuth } from "@/components/context/AuthContext";
 import { useSidebar } from "@/components/context/SidebarContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useNextAuth } from "@/hooks/use-next-auth";
+import { useNextAuth } from "@/hooks/use-nextauth";
 import {
   Book,
   FileText,
@@ -27,8 +26,7 @@ interface NavigationProps {
 const Navigation = ({ currentPage }: NavigationProps) => {
   const router = useRouter();
   const [isAddBookDialogOpen, setIsAddBookDialogOpen] = useState(false);
-  const { logout } = useNextAuth();
-  const { user } = useAuth();
+  const { logout, user } = useNextAuth();
   const { stats } = useDashboardStats();
   const { closeSidebar } = useSidebar();
   const isMobile = useIsMobile();

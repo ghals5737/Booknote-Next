@@ -7,16 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useNextAuth } from "@/hooks/use-next-auth"
 import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react"
+import { signIn } from "next-auth/react"
 import { useState } from "react"
 
 interface RegisterFormProps {
-  onToggleMode: () => void
+  readonly onToggleMode: () => void
 }
 
 export function RegisterForm({ onToggleMode }: RegisterFormProps) {
-  const { register, isLoading } = useNextAuth()
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -27,35 +26,79 @@ export function RegisterForm({ onToggleMode }: RegisterFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setIsLoading(true)
 
     if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim()) {
       setError("모든 필드를 입력해주세요.")
+      setIsLoading(false)
       return
     }
 
     if (formData.password !== formData.confirmPassword) {
       setError("비밀번호가 일치하지 않습니다.")
+      setIsLoading(false)
       return
     }
 
     if (formData.password.length < 8) {
       setError("비밀번호는 8자 이상이어야 합니다.")
+      setIsLoading(false)
       return
     }
 
     if (!agreedToTerms) {
       setError("이용약관에 동의해주세요.")
+      setIsLoading(false)
       return
     }
 
     try {
-      await register(formData.email, formData.password, formData.name)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "회원가입에 실패했습니다.")
+      // 회원가입 API 호출
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100'
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(errorData.message || "회원가입에 실패했습니다.")
+        setIsLoading(false)
+        return
+      }
+
+      const data = await response.json()
+      
+      if (data.success) {
+        // 회원가입 성공 후 자동 로그인
+        const result = await signIn("credentials", {
+          email: formData.email,
+          password: formData.password,
+          redirect: false,
+        })
+
+        if (result?.ok) {
+          globalThis.location.href = "/books"
+        } else {
+          setError("회원가입은 성공했지만 자동 로그인에 실패했습니다. 로그인 페이지에서 다시 로그인해주세요.")
+        }
+      } else {
+        setError(data.message || "회원가입에 실패했습니다.")
+      }
+    } catch {
+      setError("회원가입에 실패했습니다.")
+    } finally {
+      setIsLoading(false)
     }
   }
 

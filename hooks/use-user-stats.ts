@@ -1,6 +1,6 @@
-import { authenticatedApiRequest } from '@/lib/api/auth';
+import { authenticatedApiRequest } from '@/lib/api/nextauth-api';
 import useSWR from 'swr';
-import { useNextAuth } from './use-next-auth';
+import { useNextAuth } from './use-nextauth';
 
 export interface UserStats {
   books: {

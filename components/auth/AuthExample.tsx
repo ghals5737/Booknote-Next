@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/lib/api/auth';
+import { useNextAuth } from '@/hooks/use-nextauth';
 import React, { useState } from 'react';
 
 export default function AuthExample() {
@@ -11,7 +11,7 @@ export default function AuthExample() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const { login, signup, logout, isAuthenticated } = useAuth();
+  const { login, register, logout, isAuthenticated } = useNextAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +23,7 @@ export default function AuthExample() {
       if (isLogin) {
         result = await login(email, password);
       } else {
-        result = await signup(email, name, password);
+        result = await register(email, password, name);
       }
 
       if (result.success) {

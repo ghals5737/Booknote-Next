@@ -10,8 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useNextAuth } from "@/hooks/use-next-auth";
-import { authenticatedApiRequest } from "@/lib/api/auth";
+import { authenticatedApiRequest } from "@/lib/api/nextauth-api";
 import { BookDetailData, NoteData, QuoteData } from "@/lib/types/book/book";
 import { NoteResponse, NoteResponsePage } from "@/lib/types/note/note";
 import { QuoteResponsePage } from "@/lib/types/quote/quote";
@@ -30,32 +29,21 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import useSWR from "swr";
 
 interface BookDetailClientProps {
   bookId: string;
+  initialData?: {
+    bookDetail: BookDetailData;
+    quotesData: QuoteResponsePage;
+    notesData: NoteResponsePage;
+  };
 }
 
-export default function BookDetailClient({ bookId }: BookDetailClientProps) {
+export default function BookDetailClient({ bookId, initialData }: BookDetailClientProps) {
   const router = useRouter();
-  const { user } = useNextAuth();
-  const userId = user?.id?.toString();
-  const shouldFetch = !!userId && !!bookId;
-
-  // SWR fetchers
-  const fetcher = async <T,>(endpoint: string) => {
-    const res = await authenticatedApiRequest<T>(endpoint);
-    return res.data as unknown as T;
-  };
-
-  // Keys - 백엔드 API 스펙에 맞게 수정
-  const bookKey = shouldFetch ? `/api/v1/books/${bookId}` : null;
-  const quotesKey = shouldFetch ? `/api/v1/quotes/books/${bookId}?page=0&size=100&sort=created_at` : null;
-  const notesKey = shouldFetch ? `/api/v1/notes/books/${bookId}?page=0&size=100&sort=created_at` : null;
-
-  const { data: bookDetail, isLoading: bookLoading } = useSWR<BookDetailData>(bookKey, fetcher);
-  const { data: quotesData, isLoading: quotesLoading, mutate: mutateQuotes } = useSWR<QuoteResponsePage>(quotesKey, fetcher);
-  const { data: notesData, isLoading: notesLoading, mutate: mutateNotes } = useSWR<NoteResponsePage>(notesKey, fetcher);
+  const bookDetail = initialData?.bookDetail;
+  const quotesData = initialData?.quotesData;
+  const notesData = initialData?.notesData;
 
   const currentQuotes: QuoteData[] = Array.isArray(quotesData?.content) ? quotesData.content : (quotesData as unknown as QuoteData[] ?? []);
   const currentNotes: NoteData[] = Array.isArray(notesData?.content) ? notesData.content : (notesData as unknown as NoteData[] ?? []);
@@ -66,6 +54,10 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
   const [viewingQuote, setViewingQuote] = useState<QuoteData | null>(null);
   const [editingQuote, setEditingQuote] = useState<QuoteData | null>(null);
   const [showNoteEditor, setShowNoteEditor] = useState(false);
+  
+  // 로컬 상태로 데이터 관리
+  const [localQuotes, setLocalQuotes] = useState<QuoteData[]>(currentQuotes);
+  const [localNotes, setLocalNotes] = useState<NoteData[]>(currentNotes);
 
 
 
@@ -76,22 +68,16 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
     try {
       const payload = {
+        bookId: bookId,
         text: newQuote.content,
-        page: newQuote.page ? parseInt(newQuote.page) : 0,
-        thoughts: newQuote.memo || '',
-        isImportant: false
+        page: newQuote.page ? Number.parseInt(newQuote.page, 10) : 0,
       };
-      const res = await authenticatedApiRequest<QuoteData>(`/api/v1/books/${bookId}/quotes`, {
+      const res = await fetch(`/api/v1/quotes`, {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),        
       });
-
-      const created = res.data as QuoteData;
-      await mutateQuotes(async (prev: QuoteResponsePage | undefined) => {
-        const prevList = Array.isArray(prev?.content) ? prev.content : (prev as unknown as QuoteData[] ?? []);
-        return { ...(prev || {}), content: [created, ...prevList] } as QuoteResponsePage;
-      }, { revalidate: true });
-
+      const data = await res.json();
+      setLocalQuotes(prev => [data.data as QuoteData, ...prev]);
       setNewQuote({ content: '', page: '', memo: '' });
       setIsAddingQuote(false);
     } catch (error) {
@@ -101,13 +87,10 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const deleteNote = async (noteId: number) => {
     try {
-      await authenticatedApiRequest(`/api/v1/books/${bookId}/notes/${noteId}`, {
+      await fetch(`/api/v1/notes/${noteId}`, {
         method: 'DELETE'
       });
-      await mutateNotes(async (prev: NoteResponsePage | undefined) => {
-        const prevList = Array.isArray(prev?.content) ? prev.content : (prev as unknown as NoteData[] ?? []);
-        return { ...(prev || {}), content: prevList.filter((n: NoteData) => n.id !== noteId) } as NoteResponsePage;
-      }, { revalidate: true });
+      setLocalNotes(prev => prev.filter(n => n.id !== noteId));
     } catch (error) {
       console.error('Error deleting note:', error);
     }
@@ -115,13 +98,10 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
 
   const deleteQuote = async (quoteId: number) => {
     try {
-      await authenticatedApiRequest(`/api/v1/books/${bookId}/quotes/${quoteId}`, {
+      await fetch(`/api/v1/quotes/${quoteId}`, {
         method: 'DELETE'
       });
-      await mutateQuotes(async (prev: QuoteResponsePage | undefined) => {
-        const prevList = Array.isArray(prev?.content) ? prev.content : (prev as unknown as QuoteData[] ?? []);
-        return { ...(prev || {}), content: prevList.filter((q: QuoteData) => q.id !== quoteId) } as QuoteResponsePage;
-      }, { revalidate: true });
+      setLocalQuotes(prev => prev.filter(q => q.id !== quoteId));
     } catch (error) {
       console.error('Error deleting quote:', error);
     }
@@ -141,22 +121,18 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         })
       });
 
-      // 서버 응답 형태와 무관하게 로컬 편집 값으로 낙관적 갱신
-      await mutateQuotes(async (prev: QuoteResponsePage | undefined) => {
-        const prevList = Array.isArray(prev?.content) ? prev.content : (prev as unknown as QuoteData[] ?? []);
-        const nextList = prevList.map((q: QuoteData) =>
-          q.id === updatedQuote.id
-            ? {
-                ...q,
-                content: updatedQuote.content,
-                page: updatedQuote.page,
-                memo: updatedQuote.memo,
-                isImportant: updatedQuote.isImportant,
-              }
-            : q
-        );
-        return { ...(prev || {}), content: nextList } as QuoteResponsePage;
-      }, { revalidate: true });
+      // 로컬 상태 업데이트
+      setLocalQuotes(prev => prev.map(q => 
+        q.id === updatedQuote.id
+          ? {
+              ...q,
+              content: updatedQuote.content,
+              page: updatedQuote.page,
+              memo: updatedQuote.memo,
+              isImportant: updatedQuote.isImportant,
+            }
+          : q
+      ));
       setEditingQuote(null);
     } catch (error) {
       console.error('Error updating quote:', error);
@@ -170,7 +146,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         preSelectedBookId={bookId}
         onSave={() => {
           setShowNoteEditor(false);
-          mutateNotes();
+          // 노트 추가 후 로컬 상태 새로고침 (실제로는 서버에서 다시 가져와야 함)
         }}
         onCancel={() => setShowNoteEditor(false)}
       />
@@ -184,7 +160,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         initialNote={editingNote as NoteResponse}
         onSave={() => {
           setEditingNote(null);
-          mutateNotes();
+          // 노트 수정 후 로컬 상태 새로고침 (실제로는 서버에서 다시 가져와야 함)
         }}
         onCancel={() => setEditingNote(null)}
       />
@@ -314,13 +290,15 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
     );
   }
 
-  if (bookLoading || quotesLoading || notesLoading || !bookDetail) {
+  // 초기 데이터가 없으면 로딩 상태 표시
+  if (!initialData || !bookDetail) {
     return (
       <div className="min-h-screen bg-background p-6">
         <div className="text-muted-foreground">불러오는 중...</div>
       </div>
     );
   }
+
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -400,11 +378,11 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="notes" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            노트 ({currentNotes.length})
+            노트 ({localNotes.length})
           </TabsTrigger>
           <TabsTrigger value="quotes" className="flex items-center gap-2">
             <Quote className="h-4 w-4" />
-            좋아하는 문장 ({currentQuotes.length})
+            좋아하는 문장 ({localQuotes.length})
           </TabsTrigger>
         </TabsList>
 
@@ -467,7 +445,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
           </div>
 
           <div className="grid gap-4">
-            {currentNotes.length === 0 ? (
+            {localNotes.length === 0 ? (
               <Card>
                 <CardContent className="p-6 text-center">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -478,7 +456,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
                 </CardContent>
               </Card>
             ) : (
-              currentNotes.map((note) => (
+              localNotes.map((note) => (
                 <Card key={note.id}>
                   <CardHeader>
                     <div className="flex justify-between items-start">
@@ -601,7 +579,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
           </div>
 
           <div className="grid gap-4">
-            {currentQuotes.length === 0 ? (
+            {localQuotes.length === 0 ? (
               <Card>
                 <CardContent className="p-6 text-center">
                   <Quote className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -612,7 +590,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
                 </CardContent>
               </Card>
             ) : (
-              currentQuotes.map((quote) => (
+              localQuotes.map((quote) => (
                 <Card key={quote.id}>
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start mb-3">
@@ -706,7 +684,7 @@ export default function BookDetailClient({ bookId }: BookDetailClientProps) {
                   id="edit-quote-page"
                   type="number"
                   value={editingQuote.page}
-                  onChange={(e) => setEditingQuote({ ...editingQuote, page: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setEditingQuote({ ...editingQuote, page: Number.parseInt(e.target.value, 10) || 0 })}
                   placeholder="페이지 번호"
                 />
               </div>

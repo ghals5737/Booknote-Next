@@ -1,8 +1,8 @@
-import { authenticatedApiRequest } from '@/lib/api/auth';
+import { authenticatedApiRequest } from '@/lib/api/nextauth-api';
 import { NoteResponse, NoteResponsePage } from '@/lib/types/note/note';
 import { QuoteResponse, QuoteResponsePage } from '@/lib/types/quote/quote';
 import useSWR from 'swr';
-import { useNextAuth } from './use-next-auth';
+import { useNextAuth } from './use-nextauth';
 
 const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL;
 

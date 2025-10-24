@@ -1,12 +1,12 @@
 import {
-  SearchFilters,
-  SearchResult,
-  SearchSuggestionsResponse,
-  UnifiedSearchResponse
+    SearchFilters,
+    SearchResult,
+    SearchSuggestionsResponse,
+    UnifiedSearchResponse
 } from '@/lib/types/search/search';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import useSWR from 'swr';
-import { useNextAuth } from './use-next-auth';
+import { useNextAuth } from './use-nextauth';
 
 // 통합검색 API 호출 함수
 const searchFetcher = async (url: string): Promise<UnifiedSearchResponse> => {

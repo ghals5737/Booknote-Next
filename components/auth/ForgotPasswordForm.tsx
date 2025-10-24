@@ -2,13 +2,13 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { ArrowLeft, Mail, Loader2, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useNextAuth } from "@/hooks/use-next-auth"
+import { useNextAuth } from "@/hooks/use-nextauth"
+import { ArrowLeft, CheckCircle, Loader2, Mail } from "lucide-react"
+import { useState } from "react"
 
 interface ForgotPasswordFormProps {
   onBack: () => void

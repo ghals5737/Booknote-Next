@@ -6,37 +6,50 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useNextAuth } from "@/hooks/use-next-auth"
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react"
+import { signIn } from "next-auth/react"
 import { useState } from "react"
 
 interface LoginFormProps {
-  onToggleMode: () => void
-  onForgotPassword: () => void
+  readonly onToggleMode: () => void
+  readonly onForgotPassword: () => void
 }
 
 export function LoginForm({ onToggleMode, onForgotPassword }: LoginFormProps) {
-  const { login, isLoading } = useNextAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
-
-  console.log("process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID", process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID)
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setIsLoading(true)
 
     if (!email.trim() || !password.trim()) {
       setError("이메일과 비밀번호를 입력해주세요.")
+      setIsLoading(false)
       return
     }
 
     try {
-      await login(email, password)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "로그인에 실패했습니다.")
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        setError("이메일 또는 비밀번호가 올바르지 않습니다.")
+      } else if (result?.ok) {
+        // 로그인 성공 시 /books로 리다이렉트
+        globalThis.location.href = "/books"
+      }
+    } catch {
+      setError("로그인에 실패했습니다.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
