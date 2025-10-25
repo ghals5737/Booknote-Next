@@ -8,8 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBooks } from "@/hooks/use-books";
-import { useNotes, useQuotes } from "@/hooks/use-notes";
-import { NoteResponse } from "@/lib/types/note/note";
+import { NoteResponse, NoteResponsePage } from "@/lib/types/note/note";
+import { QuoteResponse, QuoteResponsePage } from "@/lib/types/quote/quote";
 import { formatDateYMD } from "@/lib/utils";
 import {
   AlertCircle,
@@ -30,7 +30,14 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function NotesClient() {
+interface NotesClientProps {
+  initialData?: {
+    notes: NoteResponsePage;
+    quotes: QuoteResponsePage;
+  };
+}
+
+export function NotesClient({ initialData }: NotesClientProps) {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,10 +45,22 @@ export function NotesClient() {
   const [sortByImportant, setSortByImportant] = useState(false);
   const [selectedBookId, setSelectedBookId] = useState<string>('all');
 
-  // SWR 훅 사용
-  const { notes, isLoading, error, mutateNotes } = useNotes(0, 10);
-  const { quotes, isLoading: quotesLoading, error: quotesError, mutateQuotes } = useQuotes(0, 50);
+  // SWR 훅 사용 (책 목록만 클라이언트 측에서 가져옴)
   const { books } = useBooks(0, 20);
+
+  // 초기 데이터에서 노트와 인용구 추출
+  const notesData = initialData?.notes;
+  const quotesData = initialData?.quotes;
+  
+  // 노트 배열 추출
+  const notes: NoteResponse[] = notesData 
+    ? (Array.isArray(notesData?.content) ? notesData.content : [])
+    : [];
+  
+  // 인용구 배열 추출
+  const quotes: QuoteResponse[] = quotesData
+    ? (Array.isArray(quotesData?.content) ? quotesData.content : [])
+    : [];
 
   const handleNoteClick = (note: NoteResponse) => {
     console.log(note);
@@ -76,6 +95,9 @@ export function NotesClient() {
     return dateB - dateA;
   });
 
+  const isLoading = false; // SSR이므로 항상 false
+  const error = null; // SSR이므로 에러는 없음
+
   if (isLoading) {
     return (
       <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
@@ -109,7 +131,7 @@ export function NotesClient() {
             <AlertCircle className="h-12 w-12 text-red-500" />
             <span>노트 목록을 불러오는 중 오류가 발생했습니다</span>
             <Button 
-              onClick={() => mutateNotes()}
+              onClick={() => {}} // mutateNotes() 제거
               variant="outline"
               className="mt-4"
             >
@@ -366,9 +388,9 @@ export function NotesClient() {
           <TabsContent value="quotes">
             <QuoteManager 
               quotes={quotes}
-              quotesLoading={quotesLoading}
-              quotesError={quotesError}
-              mutateQuotes={mutateQuotes}
+              quotesLoading={false} // quotesLoading 제거
+              quotesError={null} // quotesError 제거
+              mutateQuotes={() => {}} // mutateQuotes 제거
             />
           </TabsContent>
         </Tabs>

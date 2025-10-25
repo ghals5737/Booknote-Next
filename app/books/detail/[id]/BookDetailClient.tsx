@@ -106,9 +106,6 @@ export default function BookDetailClient({ bookId, initialData }: BookDetailClie
       console.error('Error deleting quote:', error);
     }
   };
-
-  // updateNote 함수는 더 이상 사용하지 않음 (NoteEditor에서 처리)
-
   const updateQuote = async (updatedQuote: QuoteData) => {
     try {
       await authenticatedApiRequest(`/api/v1/books/${bookId}/quotes/${updatedQuote.id}`, {
