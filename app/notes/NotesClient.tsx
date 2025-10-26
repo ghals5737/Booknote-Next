@@ -5,9 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useBooks } from "@/hooks/use-books";
 import { NoteResponse, NoteResponsePage } from "@/lib/types/note/note";
 import { QuoteResponse, QuoteResponsePage } from "@/lib/types/quote/quote";
 import { formatDateYMD } from "@/lib/utils";
@@ -28,7 +26,7 @@ import {
   Tag
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface NotesClientProps {
   initialData?: {
@@ -45,30 +43,72 @@ export function NotesClient({ initialData }: NotesClientProps) {
   const [sortByImportant, setSortByImportant] = useState(false);
   const [selectedBookId, setSelectedBookId] = useState<string>('all');
 
-  // SWR 훅 사용 (책 목록만 클라이언트 측에서 가져옴)
-  const { books } = useBooks(0, 20);
+  // SWR 훅 제거하고 props로 받은 데이터 사용
+  const [notes, setNotes] = useState<NoteResponse[]>(
+    initialData?.notes?.content ? (Array.isArray(initialData.notes.content) ? initialData.notes.content : []) : []
+  );
+  const [quotes, setQuotes] = useState<QuoteResponse[]>(
+    initialData?.quotes?.content ? (Array.isArray(initialData.quotes.content) ? initialData.quotes.content : []) : []
+  );
+  const [isLoading, setIsLoading] = useState(!initialData);
+  const [error, setError] = useState<Error | null>(null);
 
-  // 초기 데이터에서 노트와 인용구 추출
-  const notesData = initialData?.notes;
-  const quotesData = initialData?.quotes;
-  
-  // 노트 배열 추출
-  const notes: NoteResponse[] = notesData 
-    ? (Array.isArray(notesData?.content) ? notesData.content : [])
-    : [];
-  
-  // 인용구 배열 추출
-  const quotes: QuoteResponse[] = quotesData
-    ? (Array.isArray(quotesData?.content) ? quotesData.content : [])
-    : [];
+  useEffect(() => {
+    if (!initialData && !isLoading && !error) {
+      loadNotesData();
+    }
+  }, [initialData]);
+
+  const loadNotesData = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9100';
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      
+      const [notesResponse, quotesResponse] = await Promise.all([
+        fetch(`${baseUrl}/api/v1/notes/user?page=0&size=100`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+        fetch(`${baseUrl}/api/v1/quotes/user?page=0&size=100`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+      ]);
+
+      if (!notesResponse.ok || !quotesResponse.ok) {
+        throw new Error(`HTTP error! status: ${notesResponse.status} / ${quotesResponse.status}`);
+      }
+
+      const notesData = await notesResponse.json();
+      const quotesData = await quotesResponse.json();
+
+      setNotes(notesData.content || []);
+      setQuotes(quotesData.content || []);
+    } catch (error) {
+      console.error('노트 데이터 로드 실패:', error);
+      setError(error as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleNoteClick = (note: NoteResponse) => {
     console.log(note);
     router.push(`/notes/detail/${note.id}`);
   };
 
-  // handleBookClick과 handleDeleteNote는 현재 사용되지 않음
-  // 필요시 다시 활성화 가능
+  const refreshNotes = async () => {
+    await loadNotesData();
+  };
 
   // 필터링된 노트 목록
   const filteredNotes = notes.filter(note => {
@@ -94,9 +134,6 @@ export function NotesClient({ initialData }: NotesClientProps) {
     const dateB = b.updateDate ? new Date(b.updateDate).getTime() : 0;
     return dateB - dateA;
   });
-
-  const isLoading = false; // SSR이므로 항상 false
-  const error = null; // SSR이므로 에러는 없음
 
   if (isLoading) {
     return (
@@ -130,8 +167,11 @@ export function NotesClient({ initialData }: NotesClientProps) {
           <div className="flex flex-col items-center gap-3 text-cool">
             <AlertCircle className="h-12 w-12 text-red-500" />
             <span>노트 목록을 불러오는 중 오류가 발생했습니다</span>
+            <div className="text-sm text-muted-foreground mt-2">
+              오류: {error.message || '알 수 없는 오류'}
+            </div>
             <Button 
-              onClick={() => {}} // mutateNotes() 제거
+              onClick={refreshNotes}
               variant="outline"
               className="mt-4"
             >
@@ -152,11 +192,6 @@ export function NotesClient({ initialData }: NotesClientProps) {
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold text-foreground">내 노트</h1>
               <Badge variant="secondary">{filteredNotes.length}개</Badge>
-              {books && books.length > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  {books.length}권의 책
-                </Badge>
-              )}
             </div>
             
             <div className="flex items-center space-x-4">
@@ -188,23 +223,6 @@ export function NotesClient({ initialData }: NotesClientProps) {
                 <Star className="h-4 w-4 mr-2" />
                 중요순 정렬
               </Button>
-
-              {/* 책 선택 드롭다운 */}
-              {books && books.length > 0 && (
-                <Select value={selectedBookId} onValueChange={setSelectedBookId}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="책 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">전체 책</SelectItem>
-                    {books.map((book) => (
-                      <SelectItem key={book.id} value={book.id.toString()}>
-                        {book.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
               
               <div className="flex items-center border border-border rounded-lg">
                 <Button
@@ -388,9 +406,9 @@ export function NotesClient({ initialData }: NotesClientProps) {
           <TabsContent value="quotes">
             <QuoteManager 
               quotes={quotes}
-              quotesLoading={false} // quotesLoading 제거
-              quotesError={null} // quotesError 제거
-              mutateQuotes={() => {}} // mutateQuotes 제거
+              quotesLoading={false}
+              quotesError={null}
+              mutateQuotes={() => refreshNotes()}
             />
           </TabsContent>
         </Tabs>
