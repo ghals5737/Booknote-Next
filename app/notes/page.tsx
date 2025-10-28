@@ -1,9 +1,7 @@
-import { SWRProvider } from '@/components/providers/SWRProvider';
 import { authOptions } from '@/lib/auth';
 import { NoteResponsePage } from '@/lib/types/note/note';
 import { QuoteResponsePage } from '@/lib/types/quote/quote';
 import { getServerSession } from 'next-auth';
-import { Suspense } from 'react';
 import { NotesClient } from './NotesClient';
 
 // SSR로 데이터 페칭
@@ -60,30 +58,31 @@ async function getQuotesData(): Promise<QuoteResponsePage> {
 }
 
 export default async function NotesPage() {
-  const notesData = await getNotesData();
-  const quotesData = await getQuotesData();
-  
-  return (
-    <SWRProvider>
-      <Suspense fallback={
-        <div className="p-6 space-y-6 bg-background min-h-full">
-          <div className="flex items-center justify-between">
-            <div className="animate-pulse">
-              <div className="h-8 w-48 bg-muted rounded mb-2"></div>
-              <div className="h-4 w-32 bg-muted rounded"></div>
-            </div>
-            <div className="h-10 w-32 bg-muted rounded animate-pulse"></div>
-          </div>
-          <div className="flex items-center justify-center py-20">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-              <span>노트 목록을 불러오는 중...</span>
-            </div>
+  try {
+    const notesData = await getNotesData();
+    const quotesData = await getQuotesData();
+    
+    return (
+      <NotesClient initialData={{ notes: notesData, quotes: quotesData }} />
+    );
+  } catch (error) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-foreground mb-4">오류가 발생했습니다</h1>
+            <p className="text-muted-foreground mb-4">
+              {error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.'}
+            </p>
+            <button
+              onClick={() => globalThis.location.href = '/notes'}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              다시 시도
+            </button>
           </div>
         </div>
-      }>
-        <NotesClient initialData={{ notes: notesData, quotes: quotesData }} />
-      </Suspense>
-    </SWRProvider>
-  );
+      </div>
+    );
+  }
 }

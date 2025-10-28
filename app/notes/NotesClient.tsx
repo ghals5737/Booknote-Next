@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { authenticatedApiRequest } from "@/lib/api/nextauth-api";
 import { NoteResponse, NoteResponsePage } from "@/lib/types/note/note";
 import { QuoteResponse, QuoteResponsePage } from "@/lib/types/quote/quote";
 import { formatDateYMD } from "@/lib/utils";
 import {
-  AlertCircle,
   Book,
   Calendar,
   FileText,
@@ -18,18 +18,16 @@ import {
   Hash,
   Heart,
   List,
-  Loader2,
   Plus,
-  RefreshCw,
   Search,
   Star,
   Tag
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface NotesClientProps {
-  initialData?: {
+  initialData: {
     notes: NoteResponsePage;
     quotes: QuoteResponsePage;
   };
@@ -43,63 +41,14 @@ export function NotesClient({ initialData }: NotesClientProps) {
   const [sortByImportant, setSortByImportant] = useState(false);
   const [selectedBookId, setSelectedBookId] = useState<string>('all');
 
-  // SWR 훅 제거하고 props로 받은 데이터 사용
+  // 초기 데이터 사용
   const [notes, setNotes] = useState<NoteResponse[]>(
-    initialData?.notes?.content ? (Array.isArray(initialData.notes.content) ? initialData.notes.content : []) : []
+    initialData.notes.content || []
   );
   const [quotes, setQuotes] = useState<QuoteResponse[]>(
-    initialData?.quotes?.content ? (Array.isArray(initialData.quotes.content) ? initialData.quotes.content : []) : []
+    initialData.quotes.content || []
   );
-  const [isLoading, setIsLoading] = useState(!initialData);
-  const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    if (!initialData && !isLoading && !error) {
-      loadNotesData();
-    }
-  }, [initialData]);
-
-  const loadNotesData = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9100';
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      
-      const [notesResponse, quotesResponse] = await Promise.all([
-        fetch(`${baseUrl}/api/v1/notes/user?page=0&size=100`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }),
-        fetch(`${baseUrl}/api/v1/quotes/user?page=0&size=100`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-      ]);
-
-      if (!notesResponse.ok || !quotesResponse.ok) {
-        throw new Error(`HTTP error! status: ${notesResponse.status} / ${quotesResponse.status}`);
-      }
-
-      const notesData = await notesResponse.json();
-      const quotesData = await quotesResponse.json();
-
-      setNotes(notesData.content || []);
-      setQuotes(quotesData.content || []);
-    } catch (error) {
-      console.error('노트 데이터 로드 실패:', error);
-      setError(error as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleNoteClick = (note: NoteResponse) => {
     console.log(note);
@@ -107,7 +56,17 @@ export function NotesClient({ initialData }: NotesClientProps) {
   };
 
   const refreshNotes = async () => {
-    await loadNotesData();
+    try {
+      const [notesResponse, quotesResponse] = await Promise.all([
+        authenticatedApiRequest<NoteResponsePage>('/api/v1/notes/user?page=0&size=100'),
+        authenticatedApiRequest<QuoteResponsePage>('/api/v1/quotes/user?page=0&size=100')
+      ]);
+
+      setNotes(notesResponse.data.content || []);
+      setQuotes(quotesResponse.data.content || []);
+    } catch (error) {
+      console.error('노트 데이터 새로고침 실패:', error);
+    }
   };
 
   // 필터링된 노트 목록
@@ -134,55 +93,6 @@ export function NotesClient({ initialData }: NotesClientProps) {
     const dateB = b.updateDate ? new Date(b.updateDate).getTime() : 0;
     return dateB - dateA;
   });
-
-  if (isLoading) {
-    return (
-      <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div className="animate-slide-up">
-            <h1 className="text-3xl font-bold text-foreground">내 노트</h1>
-            <p className="text-cool mt-1">노트 목록을 불러오는 중...</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="flex items-center gap-3 text-cool">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>노트 목록을 불러오는 중...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6 space-y-6 bg-content min-h-full animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div className="animate-slide-up">
-            <h1 className="text-3xl font-bold text-foreground">내 노트</h1>
-            <p className="text-cool mt-1">오류가 발생했습니다</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="flex flex-col items-center gap-3 text-cool">
-            <AlertCircle className="h-12 w-12 text-red-500" />
-            <span>노트 목록을 불러오는 중 오류가 발생했습니다</span>
-            <div className="text-sm text-muted-foreground mt-2">
-              오류: {error.message || '알 수 없는 오류'}
-            </div>
-            <Button 
-              onClick={refreshNotes}
-              variant="outline"
-              className="mt-4"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              다시 시도
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
