@@ -31,7 +31,17 @@ export function ErrorState({
 	showBackButton = true,
 }: ErrorStateProps) {
 	const router = useRouter();
-	const { toast } = useToastContext();
+	
+	// ToastProvider가 없을 수도 있으므로 안전하게 처리
+	let toast: ((options: { title?: string; description?: string; variant?: 'default' | 'destructive' | 'success' | 'warning' }) => string) | null = null;
+	try {
+		const toastContext = useToastContext();
+		toast = toastContext.toast;
+	} catch {
+		// ToastProvider가 없는 경우 무시
+		toast = null;
+	}
+	
 	const [isRetrying, setIsRetrying] = useState(false);
 
 	const icon = {
@@ -80,13 +90,13 @@ export function ErrorState({
 			setIsRetrying(true);
 			try {
 				await onRetry();
-				toast({
+				toast?.({
 					title: "다시 시도 완료",
 					description: "요청을 다시 처리했습니다.",
 					variant: "success"
 				});
 			} catch (error) {
-				toast({
+				toast?.({
 					title: "재시도 실패",
 					description: "다시 시도했지만 문제가 지속됩니다.",
 					variant: "destructive"
@@ -109,7 +119,7 @@ export function ErrorState({
 	const handleCopyErrorId = () => {
 		if (errorId) {
 			navigator.clipboard.writeText(errorId);
-			toast({
+			toast?.({
 				title: "에러 ID 복사됨",
 				description: "고객 지원 시 이 ID를 제공해주세요.",
 				variant: "success"

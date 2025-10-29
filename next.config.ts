@@ -33,6 +33,24 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**', // unsplash.com의 모든 경로 허용
       },
+      {
+        protocol: 'https',
+        hostname: 'shopping-phinf.pstatic.net',
+        port: '',
+        pathname: '/**', // 네이버 쇼핑 이미지 허용
+      },
+      {
+        protocol: 'https',
+        hostname: 'bookthumb-phinf.pstatic.net',
+        port: '',
+        pathname: '/**', // 네이버 책 이미지 허용
+      },
+      {
+        protocol: 'https',
+        hostname: 'bookcover-phinf.pstatic.net',
+        port: '',
+        pathname: '/**', // 네이버 책 표지 이미지 허용
+      },
     ],
   },
 };

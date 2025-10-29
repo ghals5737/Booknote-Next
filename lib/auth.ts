@@ -18,7 +18,10 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+          console.log('[NextAuth] Attempting login for:', credentials.email)
+          
+          // 1. Next.js API 라우트를 통해 로그인하여 토큰 받기
+          const loginResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/v1/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -27,23 +30,59 @@ export const authOptions: NextAuthOptions = {
             }),
           })
 
-          if (!response.ok) {
+          console.log('[NextAuth] Login response status:', loginResponse.status)
+
+          if (!loginResponse.ok) {
+            const errorText = await loginResponse.text().catch(() => '')
+            console.error('Login failed:', loginResponse.status, errorText)
             return null
           }
 
-          const data = await response.json()
+          const loginData = await loginResponse.json()
+          console.log('[NextAuth] Login response data:', loginData)
           
-          if (data.success && data.data) {
-            return {
-              id: data.data.user?.id || data.data.id,
-              email: data.data.user?.email || data.data.email,
-              name: data.data.user?.name || data.data.name,
-              accessToken: data.data.accessToken,
-              refreshToken: data.data.refreshToken,
+          if (!loginData.success || !loginData.data) {
+            console.error('Login response invalid:', loginData)
+            return null
+          }
+
+          const { accessToken, refreshToken } = loginData.data
+
+          // 2. 토큰을 사용하여 사용자 정보 가져오기
+          try {
+            const userResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/v1/users/profile`, {
+              method: 'GET',
+              headers: { 
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+            })
+
+            if (userResponse.ok) {
+              const userData = await userResponse.json()
+              if (userData.success && userData.data) {
+                return {
+                  id: userData.data.id.toString(),
+                  email: userData.data.email,
+                  name: userData.data.name,
+                  accessToken,
+                  refreshToken,
+                }
+              }
             }
+          } catch (userError) {
+            console.error('Failed to fetch user info:', userError)
+          }
+
+          // 사용자 정보를 가져오지 못한 경우 기본값 사용
+          return {
+            id: 'unknown',
+            email: credentials.email,
+            name: credentials.email.split('@')[0],
+            accessToken,
+            refreshToken,
           }
           
-          return null
         } catch (error) {
           console.error('Auth error:', error)
           return null

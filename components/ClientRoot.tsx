@@ -2,7 +2,6 @@
 
 import { SidebarProvider } from "@/components/context/SidebarContext"
 import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary"
-import { SWRProvider } from "@/components/providers/SWRProvider"
 import { ToastProvider } from "@/components/providers/ToastProvider"
 import { SessionProvider } from "next-auth/react"
 import { useEffect } from "react"
@@ -35,16 +34,14 @@ export function ClientRoot({ children }: { readonly children: React.ReactNode })
     <ErrorBoundary>
       <ToastProvider>
         <TokenCleanupWrapper>
-          <SWRProvider>
-            <SessionProvider>
-              <SidebarProvider>
-                <MetadataSetter />
-                <PageWrapper>
-                  {children}
-                </PageWrapper>
-              </SidebarProvider>
-            </SessionProvider>
-          </SWRProvider>
+          <SessionProvider>
+            <SidebarProvider>
+              <MetadataSetter />
+              <PageWrapper>
+                {children}
+              </PageWrapper>
+            </SidebarProvider>
+          </SessionProvider>
         </TokenCleanupWrapper>
       </ToastProvider>
     </ErrorBoundary>
