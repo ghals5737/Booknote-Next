@@ -1,22 +1,9 @@
 import { Card } from "@/components/ui/card"
 import { Star } from "lucide-react"
 import Image from "next/image"
+import { UserBookResponse } from "../../../lib/types/book/book"
 
-interface LibraryBookCardProps {
-  book: {
-    title: string
-    author: string
-    category: string
-    categoryColor: string
-    cover: string
-    rating: number
-    progress: number
-    note: string
-    date: string
-  }
-}
-
-export function LibraryBookCard({ book }: LibraryBookCardProps) {
+export function LibraryBookCard({ book }: { book: UserBookResponse }) {
   const fullStars = Math.floor(book.rating)
   const hasHalfStar = book.rating % 1 !== 0
 

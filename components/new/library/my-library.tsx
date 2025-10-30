@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, SlidersHorizontal } from "lucide-react"
 import { useState } from "react"
+import { UserBookResponse } from "../../../lib/types/book/book"
 
 const categories = [
   { id: "all", label: "전체", count: 6 },
@@ -15,82 +16,8 @@ const categories = [
   { id: "psychology", label: "심리학", count: 1 },
 ]
 
-const books = [
-  {
-    id: 1,
-    title: "아토믹 해빗",
-    author: "제임스 클리어",
-    category: "자기계발",
-    categoryColor: "bg-blue-100 text-blue-700",
-    cover: "/atomic-habits-cover.png",
-    rating: 5,
-    progress: 75,
-    note: "12개 노트",
-    date: "2024-01-15",
-  },
-  {
-    id: 2,
-    title: "클린 코드",
-    author: "로버트 C. 마틴",
-    category: "개발",
-    categoryColor: "bg-green-100 text-green-700",
-    cover: "/clean-code-book-cover-programming.jpg",
-    rating: 4.5,
-    progress: 45,
-    note: "8개 노트",
-    date: "2024-01-14",
-  },
-  {
-    id: 3,
-    title: "사피엔스",
-    author: "유발 하라리",
-    category: "역사",
-    categoryColor: "bg-yellow-100 text-yellow-700",
-    cover: "/sapiens-book-cover-human-evolution.jpg",
-    rating: 5,
-    progress: 90,
-    note: "2개 노트",
-    date: "2024-01-13",
-  },
-  {
-    id: 4,
-    title: "데일 카네기 인간관계론",
-    author: "데일 카네기",
-    category: "자기계발",
-    categoryColor: "bg-blue-100 text-blue-700",
-    cover: "/how-to-win-friends-influence-people.jpg",
-    rating: 4,
-    progress: 30,
-    note: "5개 노트",
-    date: "2024-01-12",
-  },
-  {
-    id: 5,
-    title: "1984",
-    author: "조지 오웰",
-    category: "소설",
-    categoryColor: "bg-red-100 text-red-700",
-    cover: "/1984-book-cover.png",
-    rating: 5,
-    progress: 60,
-    note: "15개 노트",
-    date: "2024-01-11",
-  },
-  {
-    id: 6,
-    title: "생각, 빠르고 느리게",
-    author: "대니얼 카너먼",
-    category: "심리학",
-    categoryColor: "bg-purple-100 text-purple-700",
-    cover: "/thinking-fast-and-slow-brain.jpg",
-    rating: 4.5,
-    progress: 20,
-    note: "7개 노트",
-    date: "2024-01-10",
-  },
-]
 
-export function MyLibrary() {
+export function MyLibrary({ books }: { books: UserBookResponse[] }) {
   const [activeCategory, setActiveCategory] = useState("all")
 
   return (
