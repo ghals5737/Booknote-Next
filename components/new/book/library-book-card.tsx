@@ -1,23 +1,25 @@
 import { Card } from "@/components/ui/card"
 import { Star } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import { UserBookResponse } from "../../../lib/types/book/book"
 
 export function LibraryBookCard({ book }: { book: UserBookResponse }) {
-  const fullStars = Math.floor(book.rating)
-  const hasHalfStar = book.rating % 1 !== 0
+  const fullStars = Math.floor(book.rating || 0)
+  const hasHalfStar = (book.rating || 0) % 1 !== 0
 
   return (
+    <Link href={`/new/book/${book.id}`}>
     <Card className="overflow-hidden transition-all hover:shadow-lg">
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
-        <Image src={book.cover || "/placeholder.svg"} alt={book.title} fill className="object-cover" />
+        <Image src={book.coverImage || "/placeholder.svg"} alt={book.title} fill className="object-cover" />
       </div>
       <div className="p-4">
         <h3 className="mb-1 font-semibold text-balance">{book.title}</h3>
         <p className="mb-3 text-sm text-muted-foreground">{book.author}</p>
 
         <div className="mb-3">
-          <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${book.categoryColor}`}>
+          <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium `}>
             {book.category}
           </span>
         </div>
@@ -29,7 +31,7 @@ export function LibraryBookCard({ book }: { book: UserBookResponse }) {
           {hasHalfStar && (
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" style={{ clipPath: "inset(0 50% 0 0)" }} />
           )}
-          {[...Array(5 - Math.ceil(book.rating))].map((_, i) => (
+          {[...Array(5 - Math.ceil(book.rating || 0))].map((_, i) => (
             <Star key={`empty-${i}`} className="h-4 w-4 text-gray-300" />
           ))}
         </div>
@@ -39,12 +41,13 @@ export function LibraryBookCard({ book }: { book: UserBookResponse }) {
         </div>
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{book.note}</span>
+          <span>{book.noteCnt}</span>
           <span className="font-medium text-foreground">{book.progress}%</span>
         </div>
 
-        <p className="mt-2 text-xs text-muted-foreground">{book.date}</p>
+        <p className="mt-2 text-xs text-muted-foreground">{book.startDate} ~ {book.updateDate}</p>
       </div>
     </Card>
+    </Link>
   )
 }
