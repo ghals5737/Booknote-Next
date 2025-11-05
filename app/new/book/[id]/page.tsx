@@ -1,4 +1,3 @@
-import { Header } from "@/components/new/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { authOptions } from '@/lib/auth';
@@ -9,6 +8,7 @@ import { ArrowLeft, Bookmark, Edit, MoreVertical, Plus, Share2, Star } from "luc
 import { getServerSession } from 'next-auth';
 import Image from "next/image";
 import Link from "next/link";
+import { BookDetailTabs } from "../../../../components/new/book/book-detail-tabs";
 
 async function getBookDetailData(bookId: string): Promise<{
   bookDetail: BookDetailData;
@@ -73,7 +73,6 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <Link href="/" className="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="mr-2 h-4 w-4" />내 서재로 돌아가기
@@ -92,7 +91,6 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
                 <div>
                   <h1 className="mb-2 text-3xl font-bold text-balance">{initialData.bookDetail.title}</h1>
                   <p className="mb-3 text-lg text-muted-foreground">{initialData.bookDetail.author}</p>
-                  <p className="text-sm text-muted-foreground">예시</p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="icon">
@@ -143,10 +141,18 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
               </div>
 
               <div className="flex gap-2">
-                <Button className="flex-1">
-                  <Plus className="mr-2 h-4 w-4" />
-                  노트 추가
-                </Button>
+                <Link href={`/new/book/${id}/note/new`} className="flex-1">
+                  <Button className="w-full">
+                    <Plus className="mr-2 h-4 w-4" />
+                    노트 추가
+                  </Button>
+                </Link>
+                <Link href={`/new/book/${id}/quote/new`} className="flex-1">
+                  <Button className="w-full">
+                    <Plus className="mr-2 h-4 w-4" />
+                    인용구 추가
+                  </Button>
+                </Link>
                 <Button variant="outline">
                   <Bookmark className="mr-2 h-4 w-4" />
                   북마크
@@ -160,43 +166,13 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
           </div>
         </Card>
 
-        <div className="mb-6">
-          <div className="flex gap-4 border-b">
-            <button className="border-b-2 border-primary px-4 py-2 text-sm font-medium text-primary">
-              노트 ({initialData.notesData.totalElements})
-            </button>
-            <button className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">
-              하이라이트
-            </button>
-            <button className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground">
-              책 정보
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {initialData.notesData.content.map((note) => (
-            <Card key={note.id} className="p-6">
-              <div className="mb-3 flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold">{note.title}</h3>
-                  {note.isImportant && <span className="text-sm text-red-500">★ 중요</span>}
-                </div>
-              </div>
-              <p className="mb-4 text-sm leading-relaxed text-muted-foreground">{note.content}</p>
-              <div className="flex items-center justify-between">
-                <div className="flex flex-wrap gap-2">
-                  {note.tagList.map((tag) => (
-                    <span key={tag} className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <span className="text-xs text-muted-foreground">{note.startDate} ~ {note.updateDate}</span>
-              </div>
-            </Card>
-          ))}
-        </div>
+        <BookDetailTabs
+          bookId={initialData.bookDetail.id}
+          noteCount={initialData.notesData.totalElements}
+          quoteCount={initialData.quotesData.totalElements}
+          notes={initialData.notesData.content}
+          quotes={initialData.quotesData.content}
+        />
 
         <Button size="lg" className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg" aria-label="노트 추가">
           <Plus className="h-6 w-6" />
