@@ -62,9 +62,9 @@ async function getBookDetailData(bookId: string): Promise<{
   }
 }
 
-export default async function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const initialData = await getBookDetailData(id);
+export default async function BookDetailPage({ params }: { params: Promise<{ bookId: string }> }) {
+  const { bookId } = await params
+  const initialData = await getBookDetailData(bookId);
   console.log('initialData', initialData);
 
   if (!initialData) {
@@ -141,13 +141,13 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
               </div>
 
               <div className="flex gap-2">
-                <Link href={`/new/book/${id}/note/new`} className="flex-1">
+                <Link href={`/new/book/${bookId}/note/new`} className="flex-1">
                   <Button className="w-full">
                     <Plus className="mr-2 h-4 w-4" />
                     노트 추가
                   </Button>
                 </Link>
-                <Link href={`/new/book/${id}/quote/new`} className="flex-1">
+                <Link href={`/new/book/${bookId}/quote/new`} className="flex-1">
                   <Button className="w-full">
                     <Plus className="mr-2 h-4 w-4" />
                     인용구 추가
@@ -170,8 +170,8 @@ export default async function BookDetailPage({ params }: { params: Promise<{ id:
           bookId={initialData.bookDetail.id}
           noteCount={initialData.notesData.totalElements}
           quoteCount={initialData.quotesData.totalElements}
-          notes={initialData.notesData.content}
-          quotes={initialData.quotesData.content}
+          initialNotes={initialData.notesData.content }
+          initialQuotes={initialData.quotesData.content}
         />
 
         <Button size="lg" className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg" aria-label="노트 추가">

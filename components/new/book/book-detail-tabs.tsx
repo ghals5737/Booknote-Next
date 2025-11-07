@@ -1,14 +1,57 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { NoteData, QuoteData } from "@/lib/types/book/book"
-import { Star } from "lucide-react"
+import { NoteResponse } from "@/lib/types/note/note"
+import { QuoteResponse } from "@/lib/types/quote/quote"
+import { formatDateYMD } from "@/lib/utils"
+import { Star, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
 
-export function BookDetailTabs({ bookId, noteCount, quoteCount, notes, quotes }: { bookId: number, noteCount: number, quoteCount: number, notes: NoteData[], quotes: QuoteData[] }) {
+export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, initialQuotes }: { bookId: number, noteCount: number, quoteCount: number, initialNotes: NoteResponse[], initialQuotes: QuoteResponse[] }) {
   const [activeTab, setActiveTab] = useState<"notes" | "highlights" | "info">("notes")
+  const [notes, setNotes] = useState<NoteResponse[]>(initialNotes)
+  const [quotes, setQuotes] = useState<QuoteResponse[]>(initialQuotes)
+  const handleDeleteNote = async (e: React.MouseEvent, noteId: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (confirm("이 노트를 삭제하시겠습니까?")) {
+      console.log("[v0] Deleting note:", noteId)
+      const response = await fetch(`/api/v1/notes/${noteId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      if (response.ok) {
+        alert("노트가 삭제되었습니다.")
+        setNotes(prev => prev.filter((note) => note.id !== noteId))
+      } else {
+        alert("노트 삭제에 실패했습니다.")
+      }
+    }
+  }
+
+  const handleDeleteQuote = async (e: React.MouseEvent, quoteId: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (confirm("이 인용구를 삭제하시겠습니까?")) {
+      console.log("[v0] Deleting quote:", quoteId)
+      const response = await fetch(`/api/v1/quotes/${quoteId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      if (response.ok) {
+        alert("인용구가 삭제되었습니다.")
+        setQuotes(prev => prev.filter((quote) => quote.id !== quoteId))
+      } else {
+        alert("인용구 삭제에 실패했습니다.")
+    }
+  }
+}
 
   return (
     <>
@@ -50,14 +93,22 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, notes, quotes }:
       {activeTab === "notes" && (
         <div className="space-y-4">
           {notes.map((note) => (
-            <Link key={note.id} href={`/note/${bookId}/${note.id}`}>
+            <Link key={note.id} href={`/new/book/${bookId}/note/${note.id}`}>
               <Card className="p-6 transition-shadow hover:shadow-md mb-4">
                 <div className="mb-3 flex items-start justify-between">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold">{note.title}</h3>
                     {note.isImportant && <span className="text-sm text-red-500">★ 중요</span>}
                   </div>
-                  <span className="text-sm text-muted-foreground">p.{note.page}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => handleDeleteNote(e, note.id)}
+                      className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
+                      aria-label="노트 삭제"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
                 <p className="mb-4 text-sm leading-relaxed text-muted-foreground">{note.content}</p>
                 <div className="flex items-center justify-between">
@@ -68,7 +119,7 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, notes, quotes }:
                       </span>
                     ))}
                   </div>
-                  <span className="text-xs text-muted-foreground">{note.date}</span>
+                  <span className="text-xs text-muted-foreground">{formatDateYMD(note.startDate)}</span>
                 </div>
               </Card>
             </Link>
@@ -80,18 +131,29 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, notes, quotes }:
         <div className="space-y-4">
           {quotes.map((quote) => (
             <Card key={quote.id} className="p-6 transition-shadow hover:shadow-md">
+              <div className="mb-3 flex items-start justify-between">
+              <div>
               {quote.isImportant && (
                 <div className="mb-3 flex items-center gap-2 text-sm text-yellow-600">
                   <Star className="h-4 w-4 fill-yellow-600" />
                   <span className="font-medium">중요 인용구</span>
                 </div>
               )}
+              </div>
+               <button
+                  onClick={(e) => handleDeleteQuote(e, quote.id)}
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
+                  aria-label="인용구 삭제"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
               <blockquote className="mb-4 border-l-4 border-muted pl-4 text-base leading-relaxed">
                 {quote.content}
               </blockquote>
+             
               <div className="mb-4 flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">{quote.page}페이지</span>
-                <span className="text-xs text-muted-foreground">{quote.date}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {/* {quote.tagList.map((tag) => (

@@ -1,6 +1,10 @@
 'use client'
+import { Markdown } from "@/components/note/Markdown";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NoteResponse } from "@/lib/types/note/note";
 import {
@@ -8,13 +12,12 @@ import {
   Eye,
   EyeOff,
   Save,
-  Share
+  Share,
+  Tag,
+  X
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Markdown } from "./Markdown";
 
 interface NoteEditorProps {
   initialNote?: NoteResponse;
@@ -26,7 +29,6 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
   const router = useRouter();  
   
   const [title, setTitle] = useState(initialNote?.title || "새로운 노트");
-  const [currentPage, setCurrentPage] = useState("");
   const [content, setContent] = useState(initialNote?.content || `# 마크다운 편집기
 
 이곳에서 **마크다운**으로 노트를 작성할 수 있습니다.
@@ -47,7 +49,7 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
 
 이 노트는 다른 노트들과 연결되어 지식 네트워크를 형성합니다.`);
   
-  const [tags, setTags] = useState(initialNote?.tagList || ["학습", "마크다운", "지식관리"]);
+  const [tags, setTags] = useState<string[]>(initialNote?.tagList || []);
   const [newTag, setNewTag] = useState("");
   const [showPreview, setShowPreview] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -77,11 +79,15 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
       if (isEditMode && initialNote) {
         await fetch(`/api/v1/notes/${initialNote.id}`, {
           method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             title: title,
             content: content,
             html: content,
             isImportant: initialNote.isImportant,
+            tagList: tags,
           })
         });
         alert('노트가 성공적으로 수정되었습니다.');
@@ -89,12 +95,16 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
         // 생성 모드
         const response = await fetch('/api/v1/notes', {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
-            bookId: parseInt(bookId || ""),
+            bookId: Number.parseInt(bookId || "", 10),
             title: title,
             content: content,
             html: content,
             isImportant: false,
+            tagList: tags,
           })
         });
         const result = await response.json();
@@ -116,6 +126,8 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
     router.back();
   };
 
+  // 향후 마크다운 툴바에서 사용될 예정
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const insertMarkdown = (before: string, after: string = "") => {
     if (!textareaRef.current) return;
     
@@ -143,7 +155,7 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key !== 'Enter') return;
-    if ((e.nativeEvent as any).isComposing) return; // IME 조합 중이면 기본 처리
+    if ((e.nativeEvent as KeyboardEvent & { isComposing?: boolean }).isComposing) return; // IME 조합 중이면 기본 처리
   
     const textarea = e.currentTarget;
     const value = textarea.value;            // ⬅️ state 말고 실제 값 사용
@@ -155,7 +167,8 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
     const currentLine = value.slice(lineStart, start);
   
     // 1) 리스트 자동완성
-    const listMatch = currentLine.match(/^(\s*)([-*+]|(\d+)\.)\s/);
+    const listRegex = /^(\s*)([-*+]|(\d+)\.)\s/;
+    const listMatch = listRegex.exec(currentLine);
     if (listMatch) {
       e.preventDefault();
   
@@ -163,7 +176,7 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
       const bullet = listMatch[2] ?? '';
       const num = listMatch[3]; // 캡처된 숫자(없으면 undefined)
   
-      const nextMarker = num ? `${parseInt(num, 10) + 1}.` : bullet;
+      const nextMarker = num ? `${Number.parseInt(num, 10) + 1}.` : bullet;
       const insert = `\n${indent}${nextMarker} `;
   
       // 새 내용(항상 value 기준으로 생성)
@@ -212,20 +225,64 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
   
 
   const addTag = () => {
-    const trimmedTag = newTag.trim();
-    if (trimmedTag && !tags.includes(trimmedTag)) {
-      setTags([...tags, trimmedTag]);
-      setNewTag("");
-    } else if (trimmedTag && tags.includes(trimmedTag)) {
-      alert('이미 존재하는 태그입니다.');
-    } else {
+    const trimmedInput = newTag.trim();
+    if (!trimmedInput) {
       alert('태그를 입력해주세요.');
+      return;
     }
+
+    // 쉼표로 구분된 여러 태그 처리
+    const tagList = trimmedInput
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0);
+
+    if (tagList.length === 0) {
+      alert('태그를 입력해주세요.');
+      return;
+    }
+
+    // 중복 제거 및 새 태그만 추가
+    const newTags = tagList.filter(tag => !tags.includes(tag));
+    const duplicates = tagList.filter(tag => tags.includes(tag));
+
+    if (newTags.length > 0) {
+      setTags([...tags, ...newTags]);
+    }
+
+    if (duplicates.length > 0) {
+      alert(`다음 태그는 이미 존재합니다: ${duplicates.join(', ')}`);
+    }
+
+    setNewTag("");
   };
 
-  // const removeTag = (tagToRemove: string) => {
-  //   setTags(tags.filter(tag => tag !== tagToRemove));
-  // };
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag();
+    } else if (e.key === ',') {
+      // 쉼표 입력 시에도 태그 추가 (쉼표는 입력되지 않음)
+      e.preventDefault();
+      const currentValue = e.currentTarget.value;
+      const commaIndex = currentValue.indexOf(',');
+      if (commaIndex > 0) {
+        const tagBeforeComma = currentValue.substring(0, commaIndex).trim();
+        const remainingText = currentValue.substring(commaIndex + 1).trim();
+        
+        if (tagBeforeComma && !tags.includes(tagBeforeComma)) {
+          setTags([...tags, tagBeforeComma]);
+          setNewTag(remainingText);
+        } else {
+          setNewTag(remainingText);
+        }
+      }
+    }
+  };
 
  
   return (
@@ -249,7 +306,12 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
               </Button>
               <Button size="sm" onClick={saveNote} disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
-                {isSaving ? (isEditMode ? '수정 중...' : '저장 중...') : (isEditMode ? '수정' : '저장')}
+                {(() => {
+                  if (isSaving) {
+                    return isEditMode ? '수정 중...' : '저장 중...';
+                  }
+                  return isEditMode ? '수정' : '저장';
+                })()}
               </Button>
             </div>
           </div>
@@ -280,6 +342,7 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
                     placeholder="노트 제목..."
                   />
                 </div>
+                
                 <div className="flex items-center justify-between mt-4">
                   <Label className="text-xl font-semibold ">노트 내용</Label>
                   <Button
@@ -396,6 +459,43 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
                       </div>
                     </div>
                   )}
+                </div>
+                <div className="space-y-2 mt-4 border-t border-border pt-4">
+                  <Label className="text-xl font-semibold">태그</Label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {tags.map((tag) => (
+                      <Badge 
+                        key={tag} 
+                        variant="secondary"
+                        className="cursor-pointer hover:bg-destructive/10 hover:text-destructive transition-colors px-3 py-1"
+                      >
+                        <Tag className="h-3 w-3 mr-1" />
+                        {tag}
+                        <button
+                          onClick={() => removeTag(tag)}
+                          className="ml-2 hover:bg-destructive/20 rounded-full p-0.5"
+                          aria-label={`${tag} 태그 제거`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onKeyDown={handleTagInputKeyDown}
+                      placeholder="태그 입력 후 Enter 또는 쉼표로 추가..."
+                      className="flex-1"
+                    />
+                    <Button size="sm" onClick={addTag} type="button">
+                      추가
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    여러 태그를 쉼표(,) 또는 공백으로 구분하여 입력할 수 있습니다.
+                  </p>
                 </div>
               </CardContent>
             </Card>

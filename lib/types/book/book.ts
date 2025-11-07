@@ -132,6 +132,8 @@ export interface NoteData {
   isImportant: boolean;
   tagName: string;
   tagList: string[];
+  startDate: string;
+  updateDate: string;
 }
 
 // Common Pagination Types
