@@ -7,8 +7,29 @@ import { NoteResponse } from "@/lib/types/note/note"
 import { ArrowLeft, BookOpen, Copy, Edit, Share2, Star, Trash2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function NoteDetailClient({ noteDetail, bookDetail }: { noteDetail: NoteResponse, bookDetail: BookDetailData }) {
+  const router = useRouter()
+  const handleDeleteNote = async (e: React.MouseEvent, noteId: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (confirm("이 노트를 삭제하시겠습니까?")) {
+      console.log("[v0] Deleting note:", noteId)
+      const response = await fetch(`/api/v1/notes/${noteId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      if (response.ok) {
+        alert("노트가 삭제되었습니다.")
+        router.push(`/new/book/${bookDetail.id}`)
+      } else {
+        alert("노트 삭제에 실패했습니다.")
+      }
+    }
+  }
   return (
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -74,6 +95,7 @@ export default function NoteDetailClient({ noteDetail, bookDetail }: { noteDetai
                 variant="outline"
                 size="sm"
                 className="text-red-600 hover:bg-red-50 hover:text-red-700 bg-transparent"
+                onClick={(e) => handleDeleteNote(e, noteDetail.id)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 삭제
