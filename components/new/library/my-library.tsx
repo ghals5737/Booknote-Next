@@ -3,7 +3,7 @@
 import { LibraryBookCard } from "@/components/new/book/library-book-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, SlidersHorizontal } from "lucide-react"
+import { Link, Plus, Search, SlidersHorizontal } from "lucide-react"
 import { useState } from "react"
 import { UserBookResponse } from "../../../lib/types/book/book"
 
@@ -24,10 +24,18 @@ export function MyLibrary({ books }: { books: UserBookResponse[] }) {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-bold">내 서재</h2>
-        <Button variant="outline" size="sm">
-          <SlidersHorizontal className="mr-2 h-4 w-4" />
-          필터
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="default" size="sm" asChild>
+              <Link href="/add-book">
+                <Plus className="mr-2 h-4 w-4" />
+                책 추가
+              </Link>
+          </Button>          
+          <Button variant="outline" size="sm">
+            <SlidersHorizontal className="mr-2 h-4 w-4" />
+            필터
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6">
