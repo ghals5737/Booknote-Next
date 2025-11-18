@@ -1,9 +1,18 @@
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
+import { authOptions } from '../../../../../lib/auth';
 
 const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.accessToken) {
+      return NextResponse.json(
+        { success: false, message: 'Authorization header with Bearer token is required' },
+        { status: 401 }
+      );
+    }
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('query') || '';
     const limit = searchParams.get('limit') || searchParams.get('size') || '10';
@@ -15,7 +24,13 @@ export async function GET(request: NextRequest) {
     const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/search/books?query=${encodeURIComponent(query)}&limit=${encodeURIComponent(limit)}`;
     console.log('[proxy] books search ->', upstreamUrl);
 
-    const response = await fetch(upstreamUrl, { cache: 'no-store' });
+    const response = await fetch(upstreamUrl, { 
+      cache: 'no-store', 
+      headers: { 
+        'Authorization': `Bearer ${session?.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');

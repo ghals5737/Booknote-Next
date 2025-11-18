@@ -3,7 +3,8 @@
 import { LibraryBookCard } from "@/components/new/book/library-book-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Link, Plus, Search, SlidersHorizontal } from "lucide-react"
+import { Plus, Search, SlidersHorizontal } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { UserBookResponse } from "../../../lib/types/book/book"
 
@@ -19,17 +20,16 @@ const categories = [
 
 export function MyLibrary({ books }: { books: UserBookResponse[] }) {
   const [activeCategory, setActiveCategory] = useState("all")
-
+  const router = useRouter()
+  
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-bold">내 서재</h2>
         <div className="flex gap-2">
-          <Button variant="default" size="sm" asChild>
-              <Link href="/add-book">
-                <Plus className="mr-2 h-4 w-4" />
-                책 추가
-              </Link>
+          <Button variant="default" size="sm" onClick={() => router.push('/new/book/add')}>            
+              <Plus className="mr-2 h-4 w-4" />
+              책 추가
           </Button>          
           <Button variant="outline" size="sm">
             <SlidersHorizontal className="mr-2 h-4 w-4" />

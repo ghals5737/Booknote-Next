@@ -15,6 +15,17 @@ export type BookResponse = {
   pubdate: string | null;
 }
 
+export type SearchBookResponse = {
+  author: string;
+  description: string;
+  image: string;
+  isbn: string;
+  link: string;
+  pubdate: string;
+  publisher: string;
+  title: string;
+}
+
 // 백엔드 API 응답 타입
 export type BookApiResponse = {
   success: boolean;
