@@ -162,3 +162,16 @@ export interface SortData {
   sorted: boolean;
   unsorted: boolean;
 }
+
+export interface AddUserBookRequest {
+    title: string,
+    description: string,
+    author: string,
+    category: string,
+    progress: number,
+    totalPages: number,
+    imgUrl: string, 
+    isbn: string,    
+    publisher: string,
+    pubdate: string | null,
+}

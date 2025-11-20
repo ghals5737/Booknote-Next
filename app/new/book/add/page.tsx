@@ -1,22 +1,40 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { SearchBookResponse } from "@/lib/types/book/book";
+import { AddUserBookRequest, SearchBookResponse } from "@/lib/types/book/book";
 import { ArrowLeft, ImageIcon, Loader2, Search } from 'lucide-react';
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+const MANUAL_ISBN_PREFIX = "직접입력용 prefix";
+
+const buildManualIsbn = () => {
+    const now = new Date();
+    const dateSegment = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0"),
+        String(now.getHours()).padStart(2, "0"),
+        String(now.getMinutes()).padStart(2, "0"),
+    ].join("");
+    const randomSegment = Math.random().toString(36).slice(2, 8).toUpperCase();
+    return `${MANUAL_ISBN_PREFIX}${dateSegment}-${randomSegment}`;
+};
+
 export default function AddBookPage() {
+    const router = useRouter();
     // 폼 상태
     const [title, setTitle] = useState("");
     const [author, setAuthor] = useState("");
@@ -24,11 +42,20 @@ export default function AddBookPage() {
     const [pages, setPages] = useState("");
     const [description, setDescription] = useState("");
     const [coverUrl, setCoverUrl] = useState("");
-
+    const [isbn, setIsbn] = useState("");
+    const [publisher, setPublisher] = useState("");
+    const [pubdate, setPubdate] = useState("");
     // 검색 상태
     const [searchResults, setSearchResults] = useState<SearchBookResponse[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
+    const [mode, setMode] = useState<"search" | "manual">("search");
+    const [popupState, setPopupState] = useState({
+        open: false,
+        title: "",
+        description: "",
+        isSuccess: true,
+    });
 
     const searchBooks = useCallback(async (query: string) => {
         if (!query.trim() || query.length < 2) {
@@ -61,6 +88,9 @@ export default function AddBookPage() {
 
     // 책 제목 변경 시 debounce 적용하여 검색
     useEffect(() => {
+        if (mode !== "search") {
+            return;
+        }
         const timeoutId = setTimeout(() => {
             if (title.trim() && title.length >= 2) {
                 searchBooks(title);
@@ -71,7 +101,7 @@ export default function AddBookPage() {
         }, 300); // 300ms 딜레이
 
         return () => clearTimeout(timeoutId);
-    }, [title, searchBooks]);
+    }, [title, searchBooks, mode]);
 
     // 검색 결과에서 책 선택 시 폼 자동 채우기
     const handleSelectBook = (book: SearchBookResponse) => {
@@ -80,7 +110,102 @@ export default function AddBookPage() {
         setDescription(book.description || "");
         setCoverUrl(book.image || "");
         setShowSearchResults(false);
+        setIsbn(book.isbn || "");
+        setPublisher(book.publisher || "");
+        setPubdate(book.pubdate || "");
+        setMode("search");
     }
+
+    const handleModeChange = (nextMode: "search" | "manual") => {
+        if (nextMode === mode) return;
+        setMode(nextMode);
+        if (nextMode === "manual") {
+            setShowSearchResults(false);
+            setSearchResults([]);
+            const manualIsbn = buildManualIsbn();
+            setIsbn(manualIsbn);
+        } else {
+            setIsbn("");
+        }
+    };
+
+    const ensureIsbnForMode = () => {
+        if (mode === "manual") {
+            if (!isbn) {
+                const value = buildManualIsbn();
+                setIsbn(value);
+                return value;
+            }
+            return isbn;
+        }
+        return isbn;
+    };
+    
+    const handleAddBook = async () => {
+        console.log('handleAddBook');
+        if (!title.trim() || !author.trim() || !category.trim()) {
+            setPopupState({
+                open: true,
+                title: "필수 입력 누락",
+                description: "책 제목, 저자, 카테고리는 반드시 입력해야 합니다.",
+                isSuccess: false,
+            });
+            return;
+        }
+        const isbnValue = ensureIsbnForMode();
+        const requestData: AddUserBookRequest = {
+            title: title,
+            author: author,
+            description: description,
+            category: category,
+            progress: 0,
+            totalPages: Number.parseInt(pages || "0", 10) || 0,
+            imgUrl: coverUrl,
+            isbn: isbnValue,
+            publisher: publisher,
+            pubdate: pubdate,
+        }
+        try {
+            const response = await fetch('/api/v1/user-books', {
+              method: 'POST',
+              body: JSON.stringify(requestData),
+            });
+            const data = await response.json();
+            console.log(data);
+            if (data.success) {
+              setPopupState({
+                open: true,
+                title: '책 추가 완료',
+                description: '책이 내 서재에 추가되었습니다.',
+                isSuccess: true,
+              });
+            } else {
+              setPopupState({
+                open: true,
+                title: '책 추가 실패',
+                description: data.message || '책 추가 중 문제가 발생했습니다.',
+                isSuccess: false,
+              });
+            }
+            return data;        
+        } catch (error) {
+            console.error('책 추가 실패:', error);
+            setPopupState({
+                open: true,
+                title: '책 추가 실패',
+                description: '책 추가 중 오류가 발생했습니다.',
+                isSuccess: false,
+            });
+        }
+    }
+    
+    const handlePopupConfirm = () => {
+        const wasSuccess = popupState.isSuccess;
+        setPopupState((prev) => ({ ...prev, open: false }));
+        if (wasSuccess) {
+            router.push('/new/dashboard');
+        }
+    };
 
 
     return (
@@ -148,7 +273,6 @@ export default function AddBookPage() {
           {/* Right Section - Book Information */}
           <div className="space-y-6 rounded-lg border bg-card p-6">
             <h2 className="text-lg font-semibold">책 정보</h2>
-
             <div className="grid gap-6 sm:grid-cols-2">
               <div className="relative">
                 <Label htmlFor="title" className="text-sm font-medium">
@@ -159,35 +283,33 @@ export default function AddBookPage() {
                     id="title"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="책 제목을 입력하세요 (2글자 이상 자동 검색)"
+                    placeholder={
+                      mode === "search"
+                        ? "책 제목을 입력하세요 (2글자 이상 자동 검색)"
+                        : "책 제목을 직접 입력하세요"
+                    }
                     className="pr-10"
+                    disabled={mode === "manual" && isSearching}
                   />
-                  {isSearching && (
+                  {mode === "search" && isSearching && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
                       <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     </div>
                   )}
-                  {!isSearching && title.length >= 2 && (
+                  {mode === "search" && !isSearching && title.length >= 2 && (
                     <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   )}
                 </div>
                 
                 {/* 검색 결과 드롭다운 */}
-                {showSearchResults && searchResults.length > 0 && (
+                {mode === "search" && showSearchResults && searchResults.length > 0 && (
                   <div className="absolute z-50 mt-1 w-full rounded-lg border bg-card shadow-lg max-h-80 overflow-y-auto">
                     {searchResults.map((book, index) => (
-                      <div
+                      <button
+                        type="button"
                         key={book.isbn || `book-${index}`}
-                        role="button"
-                        tabIndex={0}
-                        className="cursor-pointer border-b p-3 hover:bg-muted last:border-b-0 focus:bg-muted focus:outline-none"
+                        className="w-full text-left border-b p-3 hover:bg-muted last:border-b-0 focus:bg-muted focus:outline-none"
                         onClick={() => handleSelectBook(book)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleSelectBook(book);
-                          }
-                        }}
                       >
                         <div className="flex items-center gap-3">
                           {book.image && (
@@ -214,10 +336,35 @@ export default function AddBookPage() {
                             )}
                           </div>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {mode === "search" ? (
+                    <>
+                      원하는 책이 보이지 않나요?{" "}
+                      <button
+                        type="button"
+                        className="text-primary font-medium underline-offset-2 hover:underline"
+                        onClick={() => handleModeChange("manual")}
+                      >
+                        책 제목 직접 입력하기
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      <span>직접 입력 모드입니다. ISBN은 자동으로 생성됩니다.</span>
+                      <button
+                        type="button"
+                        className="self-start text-primary font-medium underline-offset-2 hover:underline"
+                        onClick={() => handleModeChange("search")}
+                      >
+                        검색 모드로 돌아가기
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -293,12 +440,29 @@ export default function AddBookPage() {
           <Button variant="outline" asChild>
             <Link href="/">취소</Link>
           </Button>
-          <Button>
-            <span className="mr-1">+</span>
-            책 추가하기
+          <Button onClick={handleAddBook}>
+            <span className="mr-1" aria-hidden="true">+</span>
+            <span>책 추가하기</span>
           </Button>
         </div>
       </div>
+      <Dialog open={popupState.open} onOpenChange={(open) => setPopupState((prev) => ({ ...prev, open }))}>
+        <DialogContent className="sm:max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle className={popupState.isSuccess ? "text-green-600" : "text-red-500"}>
+              {popupState.title}
+            </DialogTitle>
+            <DialogDescription>
+              {popupState.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handlePopupConfirm}>
+              확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     )
 }

@@ -4,11 +4,14 @@ import { authOptions } from '@/lib/auth';
 import { BookDetailData } from "@/lib/types/book/book";
 import { NoteResponsePage } from "@/lib/types/note/note";
 import { QuoteResponsePage } from "@/lib/types/quote/quote";
-import { ArrowLeft, Bookmark, Edit, MoreVertical, Plus, Share2, Star } from "lucide-react";
+import { ArrowLeft, Bookmark, Plus, Share2, Star } from "lucide-react";
 import { getServerSession } from 'next-auth';
 import Image from "next/image";
 import Link from "next/link";
 import { BookDetailTabs } from "../../../../components/new/book/book-detail-tabs";
+import { BookActionButtons } from "./BookActionButtons";
+
+const STAR_INDICES = [0, 1, 2, 3, 4];
 
 async function getBookDetailData(bookId: string): Promise<{
   bookDetail: BookDetailData;
@@ -92,14 +95,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
                   <h1 className="mb-2 text-3xl font-bold text-balance">{initialData.bookDetail.title}</h1>
                   <p className="mb-3 text-lg text-muted-foreground">{initialData.bookDetail.author}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon">
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="outline" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </div>
+                <BookActionButtons bookId={bookId} />
               </div>
 
               <div className="mb-6 grid grid-cols-4 gap-4 text-center">
@@ -117,10 +113,10 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
                 </div>
                 <div>
                   <div className="mb-1 flex items-center justify-center gap-1">
-                    {[...Array(5)].map((_, i) => (
+                    {STAR_INDICES.map((value) => (
                       <Star
-                        key={i}
-                        className={`h-5 w-5 ${i < initialData.bookDetail.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                        key={`rating-star-${value}`}
+                        className={`h-5 w-5 ${value < initialData.bookDetail.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
                       />
                     ))}
                   </div>
