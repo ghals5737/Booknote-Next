@@ -1,3 +1,5 @@
+import { getSafeLocalStorage } from "@/lib/utils/storage";
+
 // 토큰 관리 유틸리티
 
 export interface TokenResponse {
@@ -12,11 +14,12 @@ export interface AuthTokens {
 
 // 토큰 저장/조회
 export const getStoredTokens = (): AuthTokens | null => {
-  if (typeof window === 'undefined') return null;
+  const storage = getSafeLocalStorage();
+  if (!storage) return null;
   
   try {
-    const accessToken = localStorage.getItem('access_token');
-    const refreshToken = localStorage.getItem('refresh_token');
+    const accessToken = storage.getItem('access_token');
+    const refreshToken = storage.getItem('refresh_token');
     
     if (accessToken && refreshToken) {
       return { accessToken, refreshToken };
@@ -29,29 +32,31 @@ export const getStoredTokens = (): AuthTokens | null => {
 };
 
 export const storeTokens = (tokens: AuthTokens): void => {
-  if (typeof window === 'undefined') return;
+  const storage = getSafeLocalStorage();
+  if (!storage) return;
   
   try {
     // localStorage에 저장
-    localStorage.setItem('access_token', tokens.accessToken);
-    localStorage.setItem('refresh_token', tokens.refreshToken);
+    storage.setItem('access_token', tokens.accessToken);
+    storage.setItem('refresh_token', tokens.refreshToken);
   } catch (error) {
     console.error('토큰 저장 실패:', error);
   }
 };
 
 export const clearTokens = (): void => {
-  if (typeof window === 'undefined') return;
+  const storage = getSafeLocalStorage();
+  if (!storage) return;
   
   try {
     // localStorage 정리
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('bn_user_id');
+    storage.removeItem('access_token');
+    storage.removeItem('refresh_token');
+    storage.removeItem('bn_user_id');
     
     // 중복 저장된 카멜케이스 토큰들도 정리
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    storage.removeItem('accessToken');
+    storage.removeItem('refreshToken');
   } catch (error) {
     console.error('토큰 삭제 실패:', error);
   }
@@ -110,23 +115,24 @@ export const isTokenExpired = (): boolean => {
 
 // 중복 토큰 정리 함수 (애플리케이션 시작 시 호출)
 export const cleanupDuplicateTokens = (): void => {
-  if (typeof window === 'undefined') return;
+  const storage = getSafeLocalStorage();
+  if (!storage) return;
   
   try {
     // 카멜케이스 토큰이 있으면 언더스코어 토큰으로 마이그레이션 후 제거
-    const camelCaseAccessToken = localStorage.getItem('accessToken');
-    const camelCaseRefreshToken = localStorage.getItem('refreshToken');
+    const camelCaseAccessToken = storage.getItem('accessToken');
+    const camelCaseRefreshToken = storage.getItem('refreshToken');
     
     if (camelCaseAccessToken && camelCaseRefreshToken) {
       //console.log('중복 토큰 발견 - 통일된 형식으로 마이그레이션 중...');
       
       // 언더스코어 형식으로 저장
-      localStorage.setItem('access_token', camelCaseAccessToken);
-      localStorage.setItem('refresh_token', camelCaseRefreshToken);
+      storage.setItem('access_token', camelCaseAccessToken);
+      storage.setItem('refresh_token', camelCaseRefreshToken);
       
       // 카멜케이스 토큰 제거
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      storage.removeItem('accessToken');
+      storage.removeItem('refreshToken');
       
       console.log('토큰 마이그레이션 완료');
     }

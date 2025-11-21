@@ -1,3 +1,5 @@
+import { getSafeLocalStorage } from "@/lib/utils/storage";
+
 // 공통 API 설정
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100',
@@ -39,36 +41,32 @@ export const API_CONFIG = {
 // 토큰 관리 유틸리티
 export const tokenManager = {
   getAccessToken: () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token');
-    }
-    return null;
+    const storage = getSafeLocalStorage();
+    return storage ? storage.getItem('access_token') : null;
   },
   
   getRefreshToken: () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('refresh_token');
-    }
-    return null;
+    const storage = getSafeLocalStorage();
+    return storage ? storage.getItem('refresh_token') : null;
   },
   
   setTokens: (accessToken: string, refreshToken: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('access_token', accessToken);
-      localStorage.setItem('refresh_token', refreshToken);
-    }
+    const storage = getSafeLocalStorage();
+    if (!storage) return;
+    storage.setItem('access_token', accessToken);
+    storage.setItem('refresh_token', refreshToken);
   },
   
   clearTokens: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('bn_user_id');
-      
-      // 중복 저장된 카멜케이스 토큰들도 정리
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-    }
+    const storage = getSafeLocalStorage();
+    if (!storage) return;
+
+    storage.removeItem('access_token');
+    storage.removeItem('refresh_token');
+    storage.removeItem('bn_user_id');
+    
+    storage.removeItem('accessToken');
+    storage.removeItem('refreshToken');
   },
   
   isAuthenticated: () => {

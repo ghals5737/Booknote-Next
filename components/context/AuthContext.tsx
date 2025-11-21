@@ -29,15 +29,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  // 초기 인증 상태 확인
-  useEffect(() => {
-    checkAuthStatus()
-  }, [])
-
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = useCallback(async () => {
     try {
-      if (tokenManager.isAuthenticated()) {
+      // 클라이언트 사이드에서만 실행
+      if (typeof window === 'undefined') {
+        setIsLoading(false)
+        return
+      }
+
+      const authenticated = tokenManager.isAuthenticated()
+      setIsAuthenticated(authenticated)
+
+      if (authenticated) {
         try {
           // lib/api/auth.ts의 authenticatedApiRequest 사용
           const data = await authenticatedApiRequest<{ user: User }>('/api/v1/users/profile')
@@ -56,20 +61,32 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
             setUser(user)
           } else {
             // 토큰이 유효하지 않은 경우 제거
+            setIsAuthenticated(false)
            // tokenManager.clearTokens()
           }
         } catch (apiError) {
           console.error("Profile API error:", apiError)
+          setIsAuthenticated(false)
           // API 오류 시 토큰 제거
           //tokenManager.clearTokens()
         }
       }
     } catch (error) {
       console.error("Auth check failed:", error)
+      setIsAuthenticated(false)
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
+
+  // 초기 인증 상태 확인
+  useEffect(() => {
+    // 클라이언트 사이드에서만 실행
+    if (typeof window !== 'undefined') {
+      setIsAuthenticated(tokenManager.isAuthenticated())
+    }
+    checkAuthStatus()
+  }, [checkAuthStatus])
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true)
@@ -78,6 +95,10 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       const response = await authApi.login({ email, password })
       
       if (response.success) {
+        // 로그인 성공 시 인증 상태 업데이트
+        if (typeof window !== 'undefined') {
+          setIsAuthenticated(tokenManager.isAuthenticated())
+        }
         // 로그인 후 프로필 정보 가져오기
         await checkAuthStatus()
       } else {
@@ -85,11 +106,12 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       }
     } catch (error) {
       console.error("Login failed:", error)
+      setIsAuthenticated(false)
       throw error
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [checkAuthStatus])
 
   const loginWithProvider = useCallback(async (provider: "google" | "github" | "kakao" | "naver") => {
     setIsLoading(true)
@@ -132,6 +154,10 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       const response = await authApi.signup({ email, password, name })
       
       if (response.success) {
+        // 회원가입 성공 시 인증 상태 업데이트
+        if (typeof window !== 'undefined') {
+          setIsAuthenticated(tokenManager.isAuthenticated())
+        }
         // 회원가입 성공 후 자동 로그인
         await checkAuthStatus()
       } else {
@@ -139,22 +165,27 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       }
     } catch (error) {
       console.error("Register failed:", error)
+      setIsAuthenticated(false)
       throw error
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [checkAuthStatus])
 
   const logout = useCallback(async () => {
     try {
       // lib/api/auth.ts의 authApi.logout 사용
       await authApi.logout()
       setUser(null)
+      setIsAuthenticated(false)
     } catch (error) {
       console.error("Logout failed:", error)
       // 로그아웃 실패해도 토큰은 클리어하고 사용자 상태 초기화
-      tokenManager.clearTokens()
+      if (typeof window !== 'undefined') {
+        tokenManager.clearTokens()
+      }
       setUser(null)
+      setIsAuthenticated(false)
     }
   }, [])
 
@@ -170,13 +201,13 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const contextValue = useMemo(() => ({
     user,
     isLoading,
-    isAuthenticated: tokenManager.isAuthenticated(),
+    isAuthenticated,
     login,
     loginWithProvider,
     register,
     logout,
     resetPassword,
-  }), [user, isLoading, login, loginWithProvider, register, logout, resetPassword]);
+  }), [user, isLoading, isAuthenticated, login, loginWithProvider, register, logout, resetPassword]);
 
   return (
     <AuthContext.Provider value={contextValue}>
