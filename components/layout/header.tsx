@@ -11,13 +11,13 @@ export function Header() {
           <span className="font-serif text-xl font-semibold">Booknote</span>
         </div>
         <nav className="flex items-center gap-6">
-          <a href="#" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+          <a href="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
             내 서재
           </a>
           <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             검색
           </a>
-          <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <a href="/review" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             리마인드
           </a>
           <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">

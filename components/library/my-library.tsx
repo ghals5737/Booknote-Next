@@ -1,12 +1,12 @@
 "use client"
 
-import { LibraryBookCard } from "@/components/new/book/library-book-card"
+import { LibraryBookCard } from "@/components/book/library-book-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, SlidersHorizontal } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { UserBookResponse } from "../../../lib/types/book/book"
+import { UserBookResponse } from "../../lib/types/book/book"
 
 const categories = [
   { id: "all", label: "전체", count: 6 },

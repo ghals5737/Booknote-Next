@@ -1,29 +1,35 @@
-import { SWRProvider } from '@/components/providers/SWRProvider';
-import { Suspense } from 'react';
-import { DashboardClient } from './DashboardClient';
+import { authOptions } from '@/lib/auth';
+import { UserBookResponsePage } from '@/lib/types/book/book';
+import { getServerSession } from 'next-auth';
+import DashboardClient from './DashboardClient';
+async function getBooksData(): Promise<UserBookResponsePage> {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.accessToken) {
+        throw new Error('인증이 필요합니다.');
+    }
+    
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9500';
+    console.log('baseUrl', baseUrl);
+    console.log('session.accessToken', session.accessToken);
+    const response = await fetch(`${baseUrl}/api/v1/user/books?page=0&size=10`,
+      {
+        headers: {
+          'Authorization': `Bearer ${session.accessToken}`,
+        },
+      }
+    );
 
-export default function DashboardPage() {
-  return (
-    <SWRProvider>
-      <Suspense fallback={
-        <div className="p-6 space-y-6 bg-background min-h-full">
-          <div className="flex items-center justify-between">
-            <div className="animate-pulse">
-              <div className="h-8 w-48 bg-muted rounded mb-2"></div>
-              <div className="h-4 w-32 bg-muted rounded"></div>
-            </div>
-            <div className="h-10 w-32 bg-muted rounded animate-pulse"></div>
-          </div>
-          <div className="flex items-center justify-center py-20">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-              <span>대시보드를 불러오는 중...</span>
-            </div>
-          </div>
-        </div>
-      }>
-        <DashboardClient />
-      </Suspense>
-    </SWRProvider>
-  );
+    if (!response.ok) {
+        throw new Error('데이터를 가져오는데 실패했습니다.');
+    }
+
+    const result = await response.json();
+    return result.data;
+}
+
+export default async function Dashboard() {
+  const booksData = await getBooksData();
+  console.log('booksData', booksData);    
+  return <DashboardClient booksData={booksData} />
 }

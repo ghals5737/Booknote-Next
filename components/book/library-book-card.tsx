@@ -1,15 +1,15 @@
 import { Card } from "@/components/ui/card"
+import { UserBookResponse } from "@/lib/types/book/book"
 import { Star } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { UserBookResponse } from "../../../lib/types/book/book"
 
 export function LibraryBookCard({ book }: { book: UserBookResponse }) {
   const fullStars = Math.floor(book.rating || 0)
   const hasHalfStar = (book.rating || 0) % 1 !== 0
 
   return (
-    <Link href={`/new/book/${book.id}`}>
+    <Link href={`/book/${book.id}`}>
     <Card className="overflow-hidden transition-all hover:shadow-lg">
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
         <Image src={book.coverImage || "/placeholder.svg"} alt={book.title} fill className="object-cover" />

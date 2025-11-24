@@ -78,6 +78,7 @@ export interface BookDetailData {
   coverImage: string;
   publisher: string;
   isbn: string;
+  pubdate?: string;
 }
 
 // Quote API Response Types

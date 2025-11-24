@@ -1,3 +1,4 @@
+import { BookDetailTabs } from "@/components/book/book-detail-tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { authOptions } from '@/lib/auth';
@@ -8,7 +9,6 @@ import { ArrowLeft, Bookmark, Plus, Share2, Star } from "lucide-react";
 import { getServerSession } from 'next-auth';
 import Image from "next/image";
 import Link from "next/link";
-import { BookDetailTabs } from "../../../../components/new/book/book-detail-tabs";
 import { BookActionButtons } from "./BookActionButtons";
 
 const STAR_INDICES = [0, 1, 2, 3, 4];
@@ -77,7 +77,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
   return (
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <Link href="/new/dashboard" className="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/dashboard" className="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="mr-2 h-4 w-4" />내 서재로 돌아가기
         </Link>
 

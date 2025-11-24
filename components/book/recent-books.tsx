@@ -1,4 +1,4 @@
-import { BookCard } from "@/components/new/book/book-card"
+import { BookCard } from "@/components/book/book-card"
 
 const recentBooks = [
   {
