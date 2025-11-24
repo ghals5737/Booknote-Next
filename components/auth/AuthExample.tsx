@@ -19,19 +19,19 @@ export default function AuthExample() {
     setMessage('');
 
     try {
-      let result;
+      let result: { success: boolean; error?: string } | undefined;
       if (isLogin) {
-        result = await login(email, password);
+        result = await login(email, password) as { success: boolean; error?: string };
       } else {
-        result = await register(email, password, name);
+        result = await register(email, password, name) as { success: boolean; error?: string };
       }
 
-      if (result.success) {
+      if (result?.success) {
         setMessage(isLogin ? '로그인 성공!' : '회원가입 성공!');
         // 성공 시 대시보드로 리다이렉트
         // router.push('/dashboard');
       } else {
-        setMessage(result.error || '오류가 발생했습니다');
+        setMessage(result?.error || '오류가 발생했습니다');
       }
     } catch (error) {
       setMessage('네트워크 오류가 발생했습니다');
@@ -44,15 +44,11 @@ export default function AuthExample() {
   const handleLogout = async () => {
     setLoading(true);
     try {
-      const result = await logout();
-      if (result.success) {
-        setMessage('로그아웃 성공!');
-        setEmail('');
-        setPassword('');
-        setName('');
-      } else {
-        setMessage(result.error || '로그아웃 실패');
-      }
+      await logout();
+      setMessage('로그아웃 성공!');
+      setEmail('');
+      setPassword('');
+      setName('');
     } catch (error) {
       setMessage('로그아웃 중 오류가 발생했습니다');
       console.error('오류가 발생했습니다', error);

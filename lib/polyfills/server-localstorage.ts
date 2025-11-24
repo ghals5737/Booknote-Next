@@ -50,7 +50,7 @@ const ensureServerLocalStorage = () => {
     },
   };
 
-  globalScope.localStorage = safeStorage;
+  globalScope.localStorage = safeStorage as unknown as Storage & { getItem?: (...args: unknown[]) => unknown; setItem?: (...args: unknown[]) => unknown; removeItem?: (...args: unknown[]) => unknown; clear?: () => void; key?: (index: number) => string | null; length?: number; };
 };
 
 ensureServerLocalStorage();

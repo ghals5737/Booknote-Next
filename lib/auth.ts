@@ -98,8 +98,9 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       // 초기 로그인 시
       if (user) {
-        token.accessToken = (user as any).accessToken
-        token.refreshToken = (user as any).refreshToken
+        const userWithTokens = user as typeof user & { accessToken?: string; refreshToken?: string };
+        token.accessToken = userWithTokens.accessToken
+        token.refreshToken = userWithTokens.refreshToken
         token.userId = user.id
       }
       
@@ -137,7 +138,7 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.accessToken = token.accessToken as string
         session.refreshToken = token.refreshToken as string
-        session.user.id = token.userId as string
+        //session.user.id = token.userId as string
       }
       
       return session

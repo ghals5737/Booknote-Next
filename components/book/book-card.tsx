@@ -14,7 +14,7 @@ interface BookCardProps {
   variant?: "recent" | "library"
 }
 
-export function BookCard({ book, variant = "recent" }: BookCardProps) {
+export function BookCard({ book }: BookCardProps) {
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg">
       <div className="flex gap-4 p-4">
