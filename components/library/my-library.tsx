@@ -27,7 +27,7 @@ export function MyLibrary({ books }: { books: UserBookResponse[] }) {
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-bold">내 서재</h2>
         <div className="flex gap-2">
-          <Button variant="default" size="sm" onClick={() => router.push('/new/book/add')}>            
+          <Button variant="default" size="sm" onClick={() => router.push('/book/add')}>            
               <Plus className="mr-2 h-4 w-4" />
               책 추가
           </Button>          
