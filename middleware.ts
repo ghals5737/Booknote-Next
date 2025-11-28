@@ -20,6 +20,15 @@ export default withAuth(
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
 
+    // 루트 경로 리다이렉트: 토큰이 있으면 /dashboard, 없으면 /auth
+    if (pathname === '/') {
+      if (token) {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      } else {
+        return NextResponse.redirect(new URL('/auth', req.url))
+      }
+    }
+
     return NextResponse.next()
   },
   {
