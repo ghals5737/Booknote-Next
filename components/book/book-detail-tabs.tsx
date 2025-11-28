@@ -93,7 +93,7 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, in
       {activeTab === "notes" && (
         <div className="space-y-4">
           {notes.map((note) => (
-            <Link key={note.id} href={`/new/book/${bookId}/note/${note.id}`}>
+            <Link key={note.id} href={`/book/${bookId}/note/${note.id}`}>
               <Card className="p-6 transition-shadow hover:shadow-md mb-4">
                 <div className="mb-3 flex items-start justify-between">
                   <div className="flex items-center gap-2">

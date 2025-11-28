@@ -137,13 +137,13 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
               </div>
 
               <div className="flex gap-2">
-                <Link href={`/new/book/${bookId}/note/new`} className="flex-1">
+                <Link href={`/book/${bookId}/note/new`} className="flex-1">
                   <Button className="w-full">
                     <Plus className="mr-2 h-4 w-4" />
                     노트 추가
                   </Button>
                 </Link>
-                <Link href={`/new/book/${bookId}/quote/new`} className="flex-1">
+                <Link href={`/book/${bookId}/quote/new`} className="flex-1">
                   <Button className="w-full">
                     <Plus className="mr-2 h-4 w-4" />
                     인용구 추가

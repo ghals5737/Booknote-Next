@@ -15,9 +15,9 @@ export default withAuth(
       return NextResponse.redirect(new URL('/auth', req.url))
     }
 
-    // 이미 로그인된 사용자가 인증 페이지에 접근하는 경우
-    if ((pathname.startsWith('/auth') || pathname.startsWith('/signup')) && token) {
-      return NextResponse.redirect(new URL('/books', req.url))
+    // 이미 로그인된 사용자가 인증 페이지에 접근하는 경우에만 리디렉션
+    if (token && (pathname.startsWith('/auth') || pathname.startsWith('/signup'))) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
     }
 
     return NextResponse.next()

@@ -16,7 +16,7 @@ interface BookCardProps {
 
 export function BookCard({ book }: BookCardProps) {
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-lg">
+    <Card className="overflow-hidden transition-all hover:shadow-lg p-0">
       <div className="flex gap-4 p-4">
         <div className="relative h-32 w-24 flex-shrink-0 overflow-hidden rounded-md">
           <Image src={book.cover || "/placeholder.svg"} alt={book.title} fill className="object-cover" />

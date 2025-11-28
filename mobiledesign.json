@@ -1,0 +1,186 @@
+{
+    "designSystem": {
+      "meta": {
+        "appName": "BookTrackingUI",
+        "styleArchetype": "Clean Minimalist / Soft UI",
+        "baseUnit": "4px"
+      },
+      "colorPalette": {
+        "brand": {
+          "primary": "#00C292",
+          "primaryGradient": "linear-gradient(135deg, #00C292 0%, #00A87E 100%)",
+          "secondary": "#FBBF24",
+          "accentRed": "#EF4444"
+        },
+        "surfaces": {
+          "appBackground": "#F3F5F7",
+          "cardBackground": "#FFFFFF",
+          "modalBackground": "#FFFFFF"
+        },
+        "typography": {
+          "heading": "#1F2937",
+          "body": "#4B5563",
+          "caption": "#9CA3AF",
+          "inverse": "#FFFFFF"
+        },
+        "uiElements": {
+          "border": "#E5E7EB",
+          "divider": "#F3F4F6",
+          "inactiveIcon": "#9CA3AF"
+        }
+      },
+      "componentStyles": {
+        "layoutContainers": {
+          "mainScreen": {
+            "fill": "#F3F5F7",
+            "padding": "24px"
+          },
+          "contentCard": {
+            "backgroundColor": "#FFFFFF",
+            "borderRadius": "20px",
+            "boxShadow": "0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01)",
+            "padding": "16px",
+            "border": "none"
+          }
+        },
+        "navigation": {
+          "bottomTabBar": {
+            "backgroundColor": "#FFFFFF",
+            "borderTop": "1px solid #F3F4F6",
+            "height": "80px",
+            "padding": "10px 24px 30px 24px",
+            "itemState": {
+              "active": {
+                "iconColor": "#00C292",
+                "labelColor": "#00C292"
+              },
+              "inactive": {
+                "iconColor": "#9CA3AF",
+                "labelColor": "transparent"
+              }
+            }
+          },
+          "topHeader": {
+            "backgroundColor": "transparent",
+            "textColor": "#1F2937",
+            "actionIconColor": "#4B5563"
+          }
+        },
+        "dataVisualization": {
+          "progressBar": {
+            "trackColor": "#F3F4F6",
+            "fillColorPrimary": "#00C292",
+            "fillColorSecondary": "#FBBF24",
+            "height": "6px",
+            "borderRadius": "10px"
+          },
+          "barChart": {
+            "barColor": "#10B981",
+            "barWidth": "12px",
+            "borderRadius": "6px 6px 6px 6px",
+            "activeBarColor": "#00C292",
+            "inactiveBarOpacity": "0.7",
+            "labelColor": "#9CA3AF"
+          },
+          "statsGrid": {
+            "itemContainer": {
+              "display": "flex",
+              "flexDirection": "row",
+              "alignItems": "center",
+              "gap": "12px"
+            },
+            "iconBadge": {
+              "size": "40px",
+              "borderRadius": "12px",
+              "backgroundColor": "#FDF2F2",
+              "iconColor": "#EF4444"
+            }
+          }
+        },
+        "interactiveElements": {
+          "buttons": {
+            "primary": {
+              "backgroundColor": "#00C292",
+              "textColor": "#FFFFFF",
+              "borderRadius": "12px",
+              "padding": "12px 24px",
+              "fontWeight": "600",
+              "boxShadow": "0 4px 12px rgba(0, 194, 146, 0.3)"
+            },
+            "outline": {
+              "backgroundColor": "transparent",
+              "borderColor": "#E5E7EB",
+              "borderWidth": "1px",
+              "textColor": "#1F2937",
+              "borderRadius": "12px"
+            },
+            "segmentedControl": {
+              "containerColor": "#F3F4F6",
+              "borderRadius": "12px",
+              "padding": "4px",
+              "activeTab": {
+                "backgroundColor": "#FFFFFF",
+                "textColor": "#1F2937",
+                "boxShadow": "0 2px 4px rgba(0,0,0,0.05)"
+              },
+              "inactiveTab": {
+                "backgroundColor": "transparent",
+                "textColor": "#6B7280"
+              }
+            }
+          },
+          "bookListItems": {
+            "container": {
+              "display": "flex",
+              "padding": "0px",
+              "marginBottom": "20px"
+            },
+            "thumbnail": {
+              "width": "48px",
+              "height": "72px",
+              "borderRadius": "6px",
+              "boxShadow": "0 4px 6px rgba(0,0,0,0.1)"
+            },
+            "typography": {
+              "title": {
+                "fontSize": "16px",
+                "fontWeight": "700",
+                "color": "#1F2937",
+                "marginBottom": "4px"
+              },
+              "author": {
+                "fontSize": "13px",
+                "fontWeight": "400",
+                "color": "#6B7280",
+                "marginBottom": "8px"
+              }
+            }
+          }
+        },
+        "typographySystem": {
+          "fontFamily": "System UI, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          "h1": {
+            "fontSize": "24px",
+            "fontWeight": "700",
+            "lineHeight": "1.2",
+            "letterSpacing": "-0.5px"
+          },
+          "h2": {
+            "fontSize": "18px",
+            "fontWeight": "700",
+            "color": "#1F2937"
+          },
+          "subtitle": {
+            "fontSize": "14px",
+            "fontWeight": "400",
+            "color": "#6B7280"
+          },
+          "statNumber": {
+            "fontSize": "20px",
+            "fontWeight": "800",
+            "color": "#1F2937"
+          }
+        }
+      }
+    }
+  }
