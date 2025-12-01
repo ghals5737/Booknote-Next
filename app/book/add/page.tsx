@@ -203,7 +203,7 @@ export default function AddBookPage() {
         const wasSuccess = popupState.isSuccess;
         setPopupState((prev) => ({ ...prev, open: false }));
         if (wasSuccess) {
-            router.push('/new/dashboard');
+            router.push('/dashboard');
         }
     };
 
