@@ -1,6 +1,11 @@
-import { BookOpen } from "lucide-react"
+"use client";
+import { BookOpen } from "lucide-react";
+import { useState } from "react";
+import { SearchModal } from "./SearchModal";
 
 export function Header() {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   return (
     <header className="border-b border-border bg-card">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
@@ -14,9 +19,13 @@ export function Header() {
           <a href="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
             내 서재
           </a>
-          <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            type="button"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setIsSearchOpen(true)}
+          >
             검색
-          </a>
+          </button>
           <a href="/review" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             리마인드
           </a>
@@ -25,6 +34,10 @@ export function Header() {
           </a>
         </nav>
       </div>
+      {/* 검색 모달 */}
+      {isSearchOpen && (
+        <SearchModal onClose={() => setIsSearchOpen(false)} />
+      )}
     </header>
   )
 }
