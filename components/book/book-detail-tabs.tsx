@@ -7,6 +7,7 @@ import { formatDateYMD } from "@/lib/utils"
 import { Star, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
+import { Markdown } from "../note/Markdown"
 
 
 export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, initialQuotes }: { bookId: number, noteCount: number, quoteCount: number, initialNotes: NoteResponse[], initialQuotes: QuoteResponse[] }) {
@@ -110,7 +111,8 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, in
                     </button>
                   </div>
                 </div>
-                <p className="mb-4 text-sm leading-relaxed text-muted-foreground">{note.content}</p>
+                {/* <p className="mb-4 text-sm leading-relaxed text-muted-foreground">{note.content}</p> */}
+                <Markdown content={note.content} />
                 <div className="flex items-center justify-between">
                   <div className="flex flex-wrap gap-2">
                     {note.tagList.map((tag) => (
