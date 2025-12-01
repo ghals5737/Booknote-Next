@@ -2,8 +2,8 @@ import { Card } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
 import { BookDetailData } from "@/lib/types/book/book";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { BookUpdateClient } from "./BookUpdateClient";
 
 const PUBLIC_API_BASE_URL =

@@ -53,7 +53,7 @@ async function getBookDetailData(bookId: string): Promise<{
     const bookDetail = await bookResponse.json();
     const quotesData = quotesResponse.ok ? await quotesResponse.json() : { content: [], totalElements: 0, totalPages: 0 };
     const notesData = notesResponse.ok ? await notesResponse.json() : { content: [], totalElements: 0, totalPages: 0 };
-
+    console.log(':quotesData:',quotesData);
     return {
       bookDetail: bookDetail.data || bookDetail,
       quotesData: quotesData.data || quotesData,

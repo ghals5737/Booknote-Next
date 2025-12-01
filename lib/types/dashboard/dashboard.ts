@@ -24,7 +24,7 @@ export interface RecentNoteItem {
   
   // 최근 활동 아이템 타입
   export interface RecentActivityItem {
-    type: 'note_created' | 'book_added' | 'quote_added' | 'book_finished';
+    type: 'NOTE_CREATED' | 'BOOK_ADDED' | 'QUOTE_ADDED' | 'BOOK_FINISHED' | 'note_created' | 'book_added' | 'quote_added' | 'book_finished';
     bookTitle: string;
     timestamp: string;
   }

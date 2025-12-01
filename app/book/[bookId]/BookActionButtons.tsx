@@ -30,7 +30,7 @@ export function BookActionButtons({ bookId }: BookActionButtonsProps) {
       }
 
       setIsConfirmOpen(false);
-      router.push("/new/dashboard");
+      router.push("/dashboard");
       router.refresh();
     } catch (error) {
       console.error("책 삭제 실패:", error);

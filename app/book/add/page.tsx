@@ -55,6 +55,7 @@ export default function AddBookPage() {
         title: "",
         description: "",
         isSuccess: true,
+        bookId: null as number | null,
     });
 
     const searchBooks = useCallback(async (query: string) => {
@@ -149,6 +150,7 @@ export default function AddBookPage() {
                 title: "필수 입력 누락",
                 description: "책 제목, 저자, 카테고리는 반드시 입력해야 합니다.",
                 isSuccess: false,
+                bookId: null,
             });
             return;
         }
@@ -173,11 +175,13 @@ export default function AddBookPage() {
             const data = await response.json();
             console.log(data);
             if (data.success) {
+              const bookId = data.data?.id || data.data?.bookId || null;
               setPopupState({
                 open: true,
                 title: '책 추가 완료',
                 description: '책이 내 서재에 추가되었습니다.',
                 isSuccess: true,
+                bookId: bookId,
               });
             } else {
               setPopupState({
@@ -185,6 +189,7 @@ export default function AddBookPage() {
                 title: '책 추가 실패',
                 description: data.message || '책 추가 중 문제가 발생했습니다.',
                 isSuccess: false,
+                bookId: null,
               });
             }
             return data;        
@@ -195,14 +200,19 @@ export default function AddBookPage() {
                 title: '책 추가 실패',
                 description: '책 추가 중 오류가 발생했습니다.',
                 isSuccess: false,
+                bookId: null,
             });
         }
     }
     
     const handlePopupConfirm = () => {
         const wasSuccess = popupState.isSuccess;
+        const bookId = popupState.bookId;
         setPopupState((prev) => ({ ...prev, open: false }));
-        if (wasSuccess) {
+        if (wasSuccess && bookId) {
+            router.push(`/book/${bookId}`);
+        } else if (wasSuccess) {
+            // bookId가 없는 경우 대시보드로
             router.push('/dashboard');
         }
     };
