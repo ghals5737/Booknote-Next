@@ -1,39 +1,27 @@
-import { BookCard } from "@/components/book/book-card"
+import { BookCard } from "@/components/book/book-card";
+import { UserBookResponse } from "../../lib/types/book/book";
 
-const recentBooks = [
-  {
-    id: 1,
-    title: "아토믹 해빗",
-    author: "제임스 클리어",
-    cover: "https://shopping-phinf.pstatic.net/main_5642510/56425107616.20250826081238.jpg",
-    progress: 75,
-    currentPage: 240,
-    totalPages: 320,
-    note: "12개 노트",
-  },
-  {
-    id: 2,
-    title: "클린 코드",
-    author: "로버트 C. 마틴",
-    cover: "https://shopping-phinf.pstatic.net/main_5589735/55897358373.20250723101012.jpg",
-    progress: 45,
-    currentPage: 208,
-    totalPages: 464,
-    note: "8개 노트",
-  },
-  {
-    id: 3,
-    title: "사피엔스",
-    author: "유발 하라리",
-    cover: "https://shopping-phinf.pstatic.net/main_5675573/56755736555.20250918101444.jpg",
-    progress: 90,
-    currentPage: 461,
-    totalPages: 512,
-    note: "2개 노트",
-  },
-]
+interface RecentBooksProps {
+  books: UserBookResponse[];
+}
 
-export function RecentBooks() {
+export function RecentBooks({ books }: RecentBooksProps) {
+  // 대시보드에서 내려온 전체 책 목록 중 최근 책 몇 권만 선택
+  const recentBooks = books.slice(0, 3).map((book) => ({
+    id: book.id,
+    title: book.title,
+    author: book.author,
+    cover: book.coverImage || "/placeholder.svg",
+    progress: book.progress,
+    currentPage: book.currentPage,
+    totalPages: book.totalPages,
+    note: `${book.noteCnt}개 노트`,
+  }));
+
+  if (recentBooks.length === 0) {
+    return null;
+  }
+
   return (
     <div className="mb-12">
       <div className="mb-4 flex items-center justify-between">
