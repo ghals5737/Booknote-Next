@@ -4,8 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { BookDetailData } from "@/lib/types/book/book";
+import { ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -110,135 +118,210 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
     const wasSuccess = dialogState.isSuccess;
     setDialogState((prev) => ({ ...prev, open: false }));
     if (wasSuccess) {
-      router.push(`/new/book/${bookId}`);
+      router.push(`/book/${bookId}`);
       router.refresh();
     }
   };
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <Label htmlFor="title">책 제목 *</Label>
-          <Input
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="책 제목을 입력하세요"
-            required
-          />
+      <form onSubmit={handleSubmit}>
+        <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
+          {/* Left Section - Book Cover */}
+          <div className="space-y-4">
+            <div>
+              <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted overflow-hidden">
+                {coverImage ? (
+                  <img
+                    src={coverImage}
+                    alt="책 표지"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <div className={`text-center ${coverImage ? 'hidden' : ''}`}>
+                  <ImageIcon className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">표지 이미지</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="cover" className="text-sm font-medium">
+                표지 URL
+              </Label>
+              <Input
+                id="cover"
+                type="url"
+                value={coverImage}
+                onChange={(e) => setCoverImage(e.target.value)}
+                placeholder="이미지 URL을 입력하세요"
+                className="mt-1.5"
+              />
+            </div>
+          </div>
+
+          {/* Right Section - Book Information */}
+          <div className="space-y-6 rounded-lg border bg-card p-6">
+            <h2 className="text-lg font-semibold">책 정보</h2>
+            
+            <div>
+              <Label htmlFor="title" className="text-sm font-medium">
+                책 제목 *
+              </Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="책 제목을 입력하세요"
+                className="mt-1.5"
+                required
+              />
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="author" className="text-sm font-medium">
+                  저자 *
+                </Label>
+                <Input
+                  id="author"
+                  value={author}
+                  onChange={(e) => setAuthor(e.target.value)}
+                  placeholder="저자명을 입력하세요"
+                  className="mt-1.5"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="category" className="text-sm font-medium">
+                  카테고리 *
+                </Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue placeholder="카테고리를 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="self-help">자기계발</SelectItem>
+                    <SelectItem value="dev">개발</SelectItem>
+                    <SelectItem value="history">역사</SelectItem>
+                    <SelectItem value="novel">소설</SelectItem>
+                    <SelectItem value="psychology">심리학</SelectItem>
+                    <SelectItem value="business">비즈니스</SelectItem>
+                    <SelectItem value="science">과학</SelectItem>
+                    <SelectItem value="essay">에세이</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="publisher" className="text-sm font-medium">
+                출판사
+              </Label>
+              <Input
+                id="publisher"
+                value={publisher}
+                onChange={(e) => setPublisher(e.target.value)}
+                placeholder="출판사를 입력하세요"
+                className="mt-1.5"
+              />
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="isbn" className="text-sm font-medium">
+                  ISBN
+                </Label>
+                <Input 
+                  id="isbn" 
+                  value={isbn} 
+                  readOnly 
+                  disabled 
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="pubdate" className="text-sm font-medium">
+                  출판일
+                </Label>
+                <Input
+                  id="pubdate"
+                  type="date"
+                  value={pubdate}
+                  onChange={(e) => setPubdate(e.target.value)}
+                  className="mt-1.5"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="description" className="text-sm font-medium">
+                책 설명
+              </Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="책에 대한 간단한 설명을 입력하세요"
+                className="mt-1.5 min-h-[120px] resize-none"
+              />
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-3">
+              <div>
+                <Label htmlFor="totalPages" className="text-sm font-medium">
+                  총 페이지
+                </Label>
+                <Input
+                  id="totalPages"
+                  type="number"
+                  min={0}
+                  value={totalPages}
+                  onChange={(e) => setTotalPages(Number(e.target.value) || 0)}
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="currentPage" className="text-sm font-medium">
+                  현재 페이지
+                </Label>
+                <Input
+                  id="currentPage"
+                  type="number"
+                  min={0}
+                  value={currentPage}
+                  onChange={(e) => setCurrentPage(Number(e.target.value) || 0)}
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="progress" className="text-sm font-medium">
+                  진행률 (%)
+                </Label>
+                <Input
+                  id="progress"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={progress}
+                  onChange={(e) => setProgress(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                  className="mt-1.5"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="author">저자 *</Label>
-            <Input
-              id="author"
-              value={author}
-              onChange={(e) => setAuthor(e.target.value)}
-              placeholder="저자명을 입력하세요"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="category">카테고리 *</Label>
-            <Input
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="카테고리를 입력하세요"
-              required
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label htmlFor="publisher">출판사</Label>
-          <Input
-            id="publisher"
-            value={publisher}
-            onChange={(e) => setPublisher(e.target.value)}
-            placeholder="출판사를 입력하세요"
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="isbn">ISBN</Label>
-            <Input id="isbn" value={isbn} readOnly disabled />
-          </div>
-          <div>
-            <Label htmlFor="pubdate">출판일</Label>
-            <Input
-              id="pubdate"
-              type="date"
-              value={pubdate}
-              onChange={(e) => setPubdate(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label htmlFor="cover">표지 이미지 URL</Label>
-          <Input
-            id="cover"
-            type="url"
-            value={coverImage}
-            onChange={(e) => setCoverImage(e.target.value)}
-            placeholder="표지 이미지 URL을 입력하세요"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="description">책 설명</Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="책에 대한 설명을 입력하세요"
-            rows={4}
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div>
-            <Label htmlFor="totalPages">총 페이지</Label>
-            <Input
-              id="totalPages"
-              type="number"
-              min={0}
-              value={totalPages}
-              onChange={(e) => setTotalPages(Number(e.target.value) || 0)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="currentPage">현재 페이지</Label>
-            <Input
-              id="currentPage"
-              type="number"
-              min={0}
-              value={currentPage}
-              onChange={(e) => setCurrentPage(Number(e.target.value) || 0)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="progress">진행률 (%)</Label>
-            <Input
-              id="progress"
-              type="number"
-              min={0}
-              max={100}
-              value={progress}
-              onChange={(e) => setProgress(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3">
+        {/* Action Buttons */}
+        <div className="mt-8 flex justify-end gap-3">
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push(`/new/book/${bookId}`)}
+            onClick={() => router.push(`/book/${bookId}`)}
             disabled={isSubmitting}
           >
             취소

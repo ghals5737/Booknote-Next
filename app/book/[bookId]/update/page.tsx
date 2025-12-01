@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card";
 import { authOptions } from "@/lib/auth";
 import { BookDetailData } from "@/lib/types/book/book";
 import { getServerSession } from "next-auth";
@@ -43,24 +42,22 @@ export default async function BookUpdatePage({
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <Link
-          href={`/new/book/${bookId}`}
+          href={`/book/${bookId}`}
           className="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
         >
           ← 책 상세로 돌아가기
         </Link>
 
-        <Card className="p-6 sm:p-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">책 정보 수정</h1>
-            <p className="text-sm text-muted-foreground">
-              책 정보를 수정하고 저장하면 내 서재에 반영됩니다.
-            </p>
-          </div>
+        <div className="mb-8">
+          <h1 className="mb-2 text-3xl font-bold">책 정보 수정</h1>
+          <p className="text-muted-foreground">
+            책 정보를 수정하고 저장하면 내 서재에 반영됩니다.
+          </p>
+        </div>
 
-          <BookUpdateClient bookId={bookId} initialData={initialData} />
-        </Card>
+        <BookUpdateClient bookId={bookId} initialData={initialData} />
       </main>
     </div>
   );
