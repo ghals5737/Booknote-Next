@@ -1,5 +1,6 @@
 "use client"
 
+import { Markdown } from "@/components/note/Markdown"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { BookDetailData } from "@/lib/types/book/book"
@@ -108,8 +109,8 @@ export default function NoteDetailClient({ noteDetail, bookDetail }: { noteDetai
             <span>작성: {noteDetail.startDate}</span>
           </div>
 
-          <p className="mb-6 text-base leading-relaxed">{noteDetail.content}</p>
-
+          {/* <p className="mb-6 text-base leading-relaxed">{noteDetail.content}</p> */}
+          <Markdown content={noteDetail.content} />
           <div className="border-t pt-4">
             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
               <span>🏷️</span>
