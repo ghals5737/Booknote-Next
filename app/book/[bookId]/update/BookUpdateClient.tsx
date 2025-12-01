@@ -201,7 +201,7 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
                   카테고리 *
                 </Label>
                 <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="mt-1.5">
+                  <SelectTrigger className="mt-1.5 w-full">
                     <SelectValue placeholder="카테고리를 선택하세요" />
                   </SelectTrigger>
                   <SelectContent>
