@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { AddUserBookRequest, SearchBookResponse } from "@/lib/types/book/book";
+import { AddUserBookRequest, BOOK_CATEGORY_IDS, BOOK_CATEGORY_LABELS, SearchBookResponse } from "@/lib/types/book/book";
 import { ArrowLeft, ImageIcon, Loader2, Search } from 'lucide-react';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -401,14 +401,11 @@ export default function AddBookPage() {
                     <SelectValue placeholder="카테고리를 선택하세요" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="self-help">자기계발</SelectItem>
-                    <SelectItem value="dev">개발</SelectItem>
-                    <SelectItem value="history">역사</SelectItem>
-                    <SelectItem value="novel">소설</SelectItem>
-                    <SelectItem value="psychology">심리학</SelectItem>
-                    <SelectItem value="business">비즈니스</SelectItem>
-                    <SelectItem value="science">과학</SelectItem>
-                    <SelectItem value="essay">에세이</SelectItem>
+                    {BOOK_CATEGORY_IDS.map((id) => (
+                      <SelectItem key={id} value={id}>
+                        {BOOK_CATEGORY_LABELS[id]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

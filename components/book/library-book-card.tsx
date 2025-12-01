@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card"
-import { UserBookResponse } from "@/lib/types/book/book"
+import { BOOK_CATEGORY_LABELS, UserBookResponse } from "@/lib/types/book/book"
 import { Star } from "lucide-react"
 import moment from "moment"
 import Image from "next/image"
@@ -8,6 +8,7 @@ import Link from "next/link"
 export function LibraryBookCard({ book }: { book: UserBookResponse }) {
   const fullStars = Math.floor(book.rating || 0)
   const hasHalfStar = (book.rating || 0) % 1 !== 0
+  const categoryLabel = BOOK_CATEGORY_LABELS[book.category as keyof typeof BOOK_CATEGORY_LABELS] ?? book.category
 
   return (
     <Link href={`/book/${book.id}`}>
@@ -21,7 +22,7 @@ export function LibraryBookCard({ book }: { book: UserBookResponse }) {
         <div className="flex items-center justify-between">
         <div className="mb-3">
           <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium `}>
-            {book.category}
+            {categoryLabel}
           </span>
         </div>
 

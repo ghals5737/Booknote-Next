@@ -6,21 +6,39 @@ import { Input } from "@/components/ui/input"
 import { Plus, Search, SlidersHorizontal } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { UserBookResponse } from "../../lib/types/book/book"
+import { BOOK_CATEGORY_IDS, BOOK_CATEGORY_LABELS, UserBookResponse } from "../../lib/types/book/book"
 
-const categories = [
-  { id: "all", label: "전체", count: 6 },
-  { id: "self-help", label: "자기계발", count: 2 },
-  { id: "dev", label: "개발", count: 1 },
-  { id: "history", label: "역사", count: 1 },
-  { id: "novel", label: "소설", count: 1 },
-  { id: "psychology", label: "심리학", count: 1 },
+const CATEGORY_DEFINITIONS = [
+  { id: "all", label: "전체" },
+  ...BOOK_CATEGORY_IDS.map((id) => ({
+    id,
+    label: BOOK_CATEGORY_LABELS[id],
+  })),
 ]
 
 
 export function MyLibrary({ books }: { books: UserBookResponse[] }) {
   const [activeCategory, setActiveCategory] = useState("all")
   const router = useRouter()
+  
+  const categories = CATEGORY_DEFINITIONS.map((category) => {
+    if (category.id === "all") {
+      return {
+        ...category,
+        count: books.length,
+      }
+    }
+
+    return {
+      ...category,
+      count: books.filter((book) => book.category === category.id).length,
+    }
+  })
+
+  const filteredBooks =
+    activeCategory === "all"
+      ? books
+      : books.filter((book) => book.category === activeCategory)
   
   return (
     <div>
@@ -46,23 +64,25 @@ export function MyLibrary({ books }: { books: UserBookResponse[] }) {
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            onClick={() => setActiveCategory(category.id)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              activeCategory === category.id
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            }`}
-          >
-            {category.label} ({category.count})
-          </button>
-        ))}
+        {categories
+          .filter((category) => category.id === "all" || category.count > 0)
+          .map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setActiveCategory(category.id)}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                activeCategory === category.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
+            >
+              {category.label} ({category.count})
+            </button>
+          ))}
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {books.map((book) => (
+        {filteredBooks.map((book) => (
           <LibraryBookCard key={book.id} book={book} />
         ))}
       </div>

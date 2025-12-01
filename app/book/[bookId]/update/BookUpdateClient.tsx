@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { BookDetailData } from "@/lib/types/book/book";
+import { BOOK_CATEGORY_IDS, BOOK_CATEGORY_LABELS, BookDetailData } from "@/lib/types/book/book";
 import { ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -205,14 +205,11 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
                     <SelectValue placeholder="카테고리를 선택하세요" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="self-help">자기계발</SelectItem>
-                    <SelectItem value="dev">개발</SelectItem>
-                    <SelectItem value="history">역사</SelectItem>
-                    <SelectItem value="novel">소설</SelectItem>
-                    <SelectItem value="psychology">심리학</SelectItem>
-                    <SelectItem value="business">비즈니스</SelectItem>
-                    <SelectItem value="science">과학</SelectItem>
-                    <SelectItem value="essay">에세이</SelectItem>
+                    {BOOK_CATEGORY_IDS.map((id) => (
+                      <SelectItem key={id} value={id}>
+                        {BOOK_CATEGORY_LABELS[id]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

@@ -1,5 +1,32 @@
 import { PageResponse } from "../pagenation/pagenation";
 
+// 공통 Book 카테고리 type 및 라벨 정의
+export const BOOK_CATEGORY_IDS = [
+  "self-help",
+  "dev",
+  "history",
+  "novel",
+  "psychology",
+  "business",
+  "science",
+  "essay",
+  "humanities",
+] as const;
+
+export type BookCategoryId = (typeof BOOK_CATEGORY_IDS)[number];
+
+export const BOOK_CATEGORY_LABELS: Record<BookCategoryId, string> = {
+  "self-help": "자기계발",
+  dev: "개발",
+  history: "역사",
+  novel: "소설",
+  psychology: "심리학",
+  business: "비즈니스",
+  science: "과학",
+  essay: "에세이",
+  humanities :"인문학",
+};
+
 // 백엔드 BookResponse와 매칭되는 타입
 export type BookResponse = {
   id: number | null;
@@ -35,23 +62,23 @@ export type BookApiResponse = {
 }
 
 export type UserBookResponse = {
-    id: number;
-    title: string;
-    author: string;
-    description: string;
-    startDate: string | null;
-    updateDate: string | null;
-    progress: number;
-    totalPages: number;
-    currentPage: number;
-    category: string;
-    rating: number | null;
-    coverImage: string | null;
-    publisher: string;
-    isbn: string;
-    noteCnt: number;
-    quoteCnt: number;
-  }
+  id: number;
+  title: string;
+  author: string;
+  description: string;
+  startDate: string | null;
+  updateDate: string | null;
+  progress: number;
+  totalPages: number;
+  currentPage: number;
+  category: string;
+  rating: number | null;
+  coverImage: string | null;
+  publisher: string;
+  isbn: string;
+  noteCnt: number;
+  quoteCnt: number;
+}
 
   export type UserBookResponsePage = PageResponse<UserBookResponse>
 
@@ -165,14 +192,14 @@ export interface SortData {
 }
 
 export interface AddUserBookRequest {
-    title: string,
-    description: string,
-    author: string,
-    category: string,
-    progress: number,
-    totalPages: number,
-    imgUrl: string, 
-    isbn: string,    
-    publisher: string,
-    pubdate: string | null,
+  title: string,
+  description: string,
+  author: string,
+  category: string,
+  progress: number,
+  totalPages: number,
+  imgUrl: string,
+  isbn: string,
+  publisher: string,
+  pubdate: string | null,
 }
