@@ -51,14 +51,12 @@ export function SearchModal({ onClose }: SearchModalProps) {
                     size: "10",
                 });
 
-                // 서버에서 getServerSession으로 쿠키에서 세션을 읽어오므로
-                // 클라이언트에서 Authorization 헤더를 보낼 필요 없음
                 const response = await fetch(`/api/v1/search/unified?${params}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    credentials: "include", // 쿠키 포함
+                    credentials: "include",
                     cache: "no-store",
                 });
 
@@ -159,9 +157,9 @@ export function SearchModal({ onClose }: SearchModalProps) {
 
                     {query && query.length >= 2 && !isLoading && !error && searchResults && (
                         <div className="space-y-4">
-                            <BookSearchSection items={transformedBooks} />
-                            <NoteSearchSection items={transformedNotes} />
-                            <QuoteSearchSection items={transformedQuotes} />
+                            <BookSearchSection items={transformedBooks} query={debouncedQuery} />
+                            <NoteSearchSection items={transformedNotes} query={debouncedQuery} />
+                            <QuoteSearchSection items={transformedQuotes} query={debouncedQuery} />
                         </div>
                     )}
 

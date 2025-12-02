@@ -1,6 +1,8 @@
 "use client";
 
+import { highlightText } from "@/lib/utils/highlight";
 import { BookOpen } from "lucide-react";
+import { useMemo } from "react";
 
 type BookItem = {
   id: string;
@@ -11,16 +13,26 @@ type BookItem = {
 
 type BookSearchSectionProps = {
   items: BookItem[];
+  query?: string;
 };
 
-export function BookSearchSection({ items }: BookSearchSectionProps) {
+export function BookSearchSection({ items, query = "" }: BookSearchSectionProps) {
   if (!items.length) return null;
+
+  // 하이라이팅된 아이템들을 메모이제이션 (검색어나 아이템이 변경될 때만 재계산)
+  const highlightedItems = useMemo(() => {
+    return items.map((item) => ({
+      ...item,
+      highlightedTitle: highlightText(item.title, query),
+      highlightedAuthor: highlightText(item.author, query),
+    }));
+  }, [items, query]);
 
   return (
     <section className="space-y-2">
       <h3 className="text-[11px] font-medium text-muted-foreground">책</h3>
       <div className="space-y-1.5">
-        {items.map((item) => (
+        {highlightedItems.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -30,9 +42,11 @@ export function BookSearchSection({ items }: BookSearchSectionProps) {
               <BookOpen className="w-4 h-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-medium">{item.title}</p>
+              <p className="truncate text-sm font-medium">
+                {item.highlightedTitle}
+              </p>
               <p className="text-[11px] text-muted-foreground truncate">
-                {item.author} · {item.meta}
+                {item.highlightedAuthor} · {item.meta}
               </p>
             </div>
           </button>

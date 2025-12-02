@@ -1,6 +1,8 @@
 "use client";
 
+import { highlightText } from "@/lib/utils/highlight";
 import { FileText } from "lucide-react";
+import { useMemo } from "react";
 
 type NoteItem = {
   id: string;
@@ -11,16 +13,27 @@ type NoteItem = {
 
 type NoteSearchSectionProps = {
   items: NoteItem[];
+  query?: string;
 };
 
-export function NoteSearchSection({ items }: NoteSearchSectionProps) {
+export function NoteSearchSection({ items, query = "" }: NoteSearchSectionProps) {
   if (!items.length) return null;
+
+  // 하이라이팅된 아이템들을 메모이제이션
+  const highlightedItems = useMemo(() => {
+    return items.map((item) => ({
+      ...item,
+      highlightedTitle: highlightText(item.title, query),
+      highlightedBookTitle: highlightText(item.bookTitle, query),
+      highlightedSnippet: highlightText(item.snippet, query),
+    }));
+  }, [items, query]);
 
   return (
     <section className="space-y-2">
       <h3 className="text-[11px] font-medium text-muted-foreground">노트</h3>
       <div className="space-y-1.5">
-        {items.map((item) => (
+        {highlightedItems.map((item) => (
           <button
             key={item.id}
             type="button"
@@ -30,12 +43,14 @@ export function NoteSearchSection({ items }: NoteSearchSectionProps) {
               <FileText className="w-4 h-4 text-secondary-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-medium">{item.title}</p>
-              <p className="text-[11px] text-muted-foreground truncate">
-                {item.bookTitle}
+              <p className="truncate text-sm font-medium">
+                {item.highlightedTitle}
               </p>
               <p className="text-[11px] text-muted-foreground truncate">
-                {item.snippet}
+                {item.highlightedBookTitle}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">
+                {item.highlightedSnippet}
               </p>
             </div>
           </button>
