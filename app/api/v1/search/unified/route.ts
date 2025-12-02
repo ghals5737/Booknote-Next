@@ -1,16 +1,27 @@
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
+import { authOptions } from '../../../../../lib/auth';
 
 const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
 
 export async function GET(request: NextRequest) {
   try {
+    // 세션 확인 (다른 검색 API와 동일한 방식)
+    const session = await getServerSession(authOptions);
+    if (!session?.accessToken) {
+      return NextResponse.json(
+        { success: false, message: 'Authorization header with Bearer token is required' },
+        { status: 401 }
+      );
+    }
+
     const url = new URL(request.url);
     const urlSearchParams = url.searchParams;
     const query = urlSearchParams.get('query') || '';
     const type = urlSearchParams.get('type') || 'all'; // all, books, notes, quotes
     const page = parseInt(urlSearchParams.get('page') || '1');
     const size = parseInt(urlSearchParams.get('size') || '10');
-    const userId = urlSearchParams.get('userId');
+
 
     if (!query.trim() || query.length < 2) {
       return NextResponse.json({ 
@@ -30,20 +41,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: '사용자 ID가 필요합니다.' },
-        { status: 400 }
-      );
-    }
-
     // 백엔드 통합검색 API 호출
     const searchParams = new URLSearchParams({
       query,
       type,
       page: page.toString(),
       size: size.toString(),
-      userId
     });
 
     const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/search/unified?${searchParams}`;
@@ -52,6 +55,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(upstreamUrl, {
       cache: 'no-store',
       headers: {
+        'Authorization': `Bearer ${session.accessToken}`,
         'Content-Type': 'application/json',
       }
     });
