@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
           console.log('[NextAuth] Attempting login for:', credentials.email)
           
           // 1. Next.js API 라우트를 통해 로그인하여 토큰 받기
-          const loginResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/v1/auth/login`, {
+          const loginResponse = await fetch(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL || 'http://localhost:3000'}/api/v1/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -50,7 +50,7 @@ export const authOptions: NextAuthOptions = {
 
           // 2. 토큰을 사용하여 사용자 정보 가져오기
           try {
-            const userResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/v1/users/profile`, {
+            const userResponse = await fetch(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL || 'http://localhost:3000'}/api/v1/users/profile`, {
               method: 'GET',
               headers: { 
                 'Authorization': `Bearer ${accessToken}`,
@@ -107,24 +107,35 @@ export const authOptions: NextAuthOptions = {
       // Google 로그인 시
       if (account?.provider === "google") {
         try {
-          // Google 사용자 정보로 백엔드에 사용자 생성/로그인
-          const response = await fetch(`${API_BASE_URL}/api/v1/auth/google`, {
+          console.log('[NextAuth] Google login - token:', { email: token.email, name: token.name, googleId: token.sub, picture: token.picture })
+          
+          // Next.js API 라우트를 통해 Google 로그인하여 토큰 받기
+          const googleResponse = await fetch(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL || 'http://localhost:3000'}/api/v1/auth/google`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               email: token.email,
               name: token.name,
               googleId: token.sub,
+              profileImage: token.picture,
             }),
           })
+
+          console.log('[NextAuth] Google login response status:', googleResponse.status)
+
+          if (!googleResponse.ok) {
+            const errorText = await googleResponse.text().catch(() => '')
+            console.error('Google login failed:', googleResponse.status, errorText)
+            return token
+          }
+
+          const googleData = await googleResponse.json()
+          console.log('[NextAuth] Google login response data:', googleData)
           
-          if (response.ok) {
-            const data = await response.json()
-            if (data.success && data.data) {
-              token.accessToken = data.data.accessToken
-              token.refreshToken = data.data.refreshToken
-              token.userId = data.data.user?.id || data.data.id
-            }
+          if (googleData.success && googleData.data) {
+            token.accessToken = googleData.data.accessToken
+            token.refreshToken = googleData.data.refreshToken
+            token.userId = googleData.data.user?.id || googleData.data.id
           }
         } catch (error) {
           console.error('Google auth error:', error)

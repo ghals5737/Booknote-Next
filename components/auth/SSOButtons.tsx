@@ -22,7 +22,7 @@ export function SSOButtons() {
   const handleSSOLogin = async (provider: "google") => {
     setLoadingProvider(provider)
     try {
-      await signIn(provider, { callbackUrl: "/books" })
+      await signIn(provider, { callbackUrl: "/dashboard" })
     } catch (error) {
       console.error(`${provider} login failed:`, error)
     } finally {

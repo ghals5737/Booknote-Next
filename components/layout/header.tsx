@@ -1,6 +1,20 @@
-import { BookOpen } from "lucide-react"
+"use client"
+
+import { BookOpen, LogOut } from "lucide-react"
+import { useNextAuth } from "@/hooks/use-nextauth"
+import { Button } from "@/components/ui/button"
 
 export function Header() {
+  const { isAuthenticated, logout } = useNextAuth()
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error("로그아웃 오류:", error)
+    }
+  }
+
   return (
     <header className="border-b border-border bg-card">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
@@ -23,6 +37,17 @@ export function Header() {
           <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             통계
           </a>
+          {isAuthenticated && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              로그아웃
+            </Button>
+          )}
         </nav>
       </div>
     </header>
