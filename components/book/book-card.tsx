@@ -1,8 +1,10 @@
-import { Card } from "@/components/ui/card"
-import Image from "next/image"
+import { Card } from "@/components/ui/card";
+import Image from "next/image";
+import Link from "next/link";
 
 interface BookCardProps {
   book: {
+    id: number;
     title: string
     author: string
     cover: string
@@ -16,6 +18,7 @@ interface BookCardProps {
 
 export function BookCard({ book }: BookCardProps) {
   return (
+    <Link href={`/book/${book.id}`}>
     <Card className="overflow-hidden transition-all hover:shadow-lg p-0">
       <div className="flex gap-4 p-4">
         <div className="relative h-32 w-24 flex-shrink-0 overflow-hidden rounded-md">
@@ -41,5 +44,6 @@ export function BookCard({ book }: BookCardProps) {
         </div>
       </div>
     </Card>
+    </Link>
   )
 }

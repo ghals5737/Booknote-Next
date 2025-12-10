@@ -106,6 +106,7 @@ export interface BookDetailData {
   publisher: string;
   isbn: string;
   pubdate?: string;
+  isBookmarked: boolean;
 }
 
 // Quote API Response Types

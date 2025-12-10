@@ -44,7 +44,7 @@ export function LibraryBookCard({ book }: { book: UserBookResponse }) {
         </div>
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{book.noteCnt}</span>
+          <span>{book.currentPage}/{book.totalPages}p</span>
           <span className="font-medium text-foreground">{book.progress}%</span>
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">

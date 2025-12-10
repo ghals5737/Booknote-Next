@@ -1,8 +1,8 @@
 "use client"
 
-import { BookOpen, LogOut } from "lucide-react"
-import { useNextAuth } from "@/hooks/use-nextauth"
 import { Button } from "@/components/ui/button"
+import { useNextAuth } from "@/hooks/use-nextauth"
+import { BookOpen, LogOut, User } from "lucide-react"
 
 export function Header() {
   const { isAuthenticated, logout } = useNextAuth()
@@ -36,6 +36,12 @@ export function Header() {
           </a>
           <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             통계
+          </a>
+          <a
+            href="/profile"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+          >
+            <User className="h-4 w-4" />
           </a>
           {isAuthenticated && (
             <Button
