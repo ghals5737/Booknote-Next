@@ -28,9 +28,13 @@ export function Header() {
           <a href="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
             내 서재
           </a>
-          <a href="/search" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <button
+            type="button"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setIsSearchOpen(true)}
+          >
             검색
-          </a>
+          </button>
           <a href="/review" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             리마인드
           </a>
@@ -56,6 +60,10 @@ export function Header() {
           )}
         </nav>
       </div>
+      {/* 검색 모달 */}
+      {isSearchOpen && (
+        <SearchModal onClose={() => setIsSearchOpen(false)} />
+      )}
     </header>
   )
 }
