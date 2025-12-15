@@ -1,7 +1,6 @@
 "use client"
 
 import { DailyDiscoveryCard } from "@/components/dashboard/daily-discovery-card"
-import { Card, CardContent } from "@/components/ui/card"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 

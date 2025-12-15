@@ -17,8 +17,6 @@ type NoteSearchSectionProps = {
 };
 
 export function NoteSearchSection({ items, query = "" }: NoteSearchSectionProps) {
-  if (!items.length) return null;
-
   // 하이라이팅된 아이템들을 메모이제이션
   const highlightedItems = useMemo(() => {
     return items.map((item) => ({
@@ -28,6 +26,7 @@ export function NoteSearchSection({ items, query = "" }: NoteSearchSectionProps)
       highlightedSnippet: highlightText(item.snippet, query),
     }));
   }, [items, query]);
+  if (!items.length) return null;
 
   return (
     <section className="space-y-2">

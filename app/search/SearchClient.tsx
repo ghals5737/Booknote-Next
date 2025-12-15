@@ -1,14 +1,13 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { BookCard } from "@/components/book/book-card"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Search, X, SearchX, BookOpen, FileText, Quote } from "lucide-react"
-import { BookCard } from "@/components/book/book-card"
-import Image from "next/image"
+import { BookOpen, FileText, Quote, Search, SearchX, X } from "lucide-react"
 import Link from "next/link"
+import { useEffect, useMemo, useState } from "react"
 
 type SearchResultType = "BOOK" | "NOTE" | "QUOTE"
 
@@ -264,7 +263,7 @@ export function SearchClient() {
                         </div>
                         <div className="bg-muted/50 rounded-lg p-3 mb-3">
                           <p className="text-sm italic line-clamp-3">
-                            "{result.content}"
+                            &quot;{result.content}&quot;
                           </p>
                         </div>
                         <div className="flex items-center justify-between text-xs text-muted-foreground">

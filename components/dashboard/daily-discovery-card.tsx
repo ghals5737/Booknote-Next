@@ -81,7 +81,7 @@ export function DailyDiscoveryCard() {
           {/* 중단: 인용구 */}
           <div className="space-y-3">
             <p className="text-lg leading-relaxed text-foreground italic">
-              "{selectedQuote.quote}"
+              &quot;{selectedQuote.quote}&quot;
             </p>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>{selectedQuote.emoji}</span>

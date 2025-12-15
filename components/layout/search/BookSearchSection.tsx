@@ -17,16 +17,17 @@ type BookSearchSectionProps = {
 };
 
 export function BookSearchSection({ items, query = "" }: BookSearchSectionProps) {
-  if (!items.length) return null;
-
   // 하이라이팅된 아이템들을 메모이제이션 (검색어나 아이템이 변경될 때만 재계산)
   const highlightedItems = useMemo(() => {
+    if (!items.length) return [];
     return items.map((item) => ({
       ...item,
       highlightedTitle: highlightText(item.title, query),
       highlightedAuthor: highlightText(item.author, query),
     }));
   }, [items, query]);
+
+  if (!items.length) return null; 
 
   return (
     <section className="space-y-2">

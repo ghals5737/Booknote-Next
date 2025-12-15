@@ -168,7 +168,7 @@ export function SearchModal({ onClose }: SearchModalProps) {
                      !searchResults.notes?.length && 
                      !searchResults.quotes?.length && (
                         <div className="text-xs text-muted-foreground py-4">
-                            '{query}'에 대한 검색 결과가 없습니다.
+                            &apos;{query}&apos;에 대한 검색 결과가 없습니다.
                         </div>
                     )}
                 </div>

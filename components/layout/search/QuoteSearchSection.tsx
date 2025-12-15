@@ -17,8 +17,6 @@ type QuoteSearchSectionProps = {
 };
 
 export function QuoteSearchSection({ items, query = "" }: QuoteSearchSectionProps) {
-  if (!items.length) return null;
-
   // 하이라이팅된 아이템들을 메모이제이션
   const highlightedItems = useMemo(() => {
     return items.map((item) => ({
@@ -27,6 +25,7 @@ export function QuoteSearchSection({ items, query = "" }: QuoteSearchSectionProp
       highlightedBookTitle: highlightText(item.bookTitle, query),
     }));
   }, [items, query]);
+  if (!items.length) return null;
 
   return (
     <section className="space-y-2">

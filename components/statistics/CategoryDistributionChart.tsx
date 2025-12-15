@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
 
 const MOCK_DATA = [
   { name: "자기계발", value: 35, color: "hsl(var(--primary))" },
@@ -38,7 +38,7 @@ export function CategoryDistributionChart() {
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
+                    `${name} ${(percent ?? 0 * 100).toFixed(0)}%`
                   }
                   outerRadius={100}
                   fill="#8884d8"

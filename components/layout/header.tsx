@@ -3,9 +3,12 @@
 import { Button } from "@/components/ui/button"
 import { useNextAuth } from "@/hooks/use-nextauth"
 import { BookOpen, LogOut, User } from "lucide-react"
+import { useState } from "react"
+import { SearchModal } from "./SearchModal"
 
 export function Header() {
   const { isAuthenticated, logout } = useNextAuth()
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -28,11 +31,7 @@ export function Header() {
           <a href="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
             내 서재
           </a>
-          <button
-            type="button"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => setIsSearchOpen(true)}
-          >
+          <button onClick={() => setIsSearchOpen(true)} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             검색
           </button>
           <a href="/review" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
