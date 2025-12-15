@@ -28,13 +28,13 @@ export function Header() {
           <a href="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
             내 서재
           </a>
-          <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <a href="/search" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             검색
           </a>
           <a href="/review" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             리마인드
           </a>
-          <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <a href="/statistics" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             통계
           </a>
           <a

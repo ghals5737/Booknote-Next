@@ -4,7 +4,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, BookOpen, Calendar, Camera, FileText, LogOut, Mail, Quote, User } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { ArrowLeft, BookOpen, Calendar, Camera, FileText, LogOut, Mail, Quote, User, Bell } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -15,6 +18,8 @@ export default function ProfilePage() {
     email: "reader@booknote.com",
     bio: "책을 사랑하는 사람입니다.",
   })
+  const [reminderEnabled, setReminderEnabled] = useState(true)
+  const [reminderTime, setReminderTime] = useState("08:00")
 
   const stats = [
     {
@@ -161,6 +166,67 @@ export default function ProfilePage() {
                 <Button variant="outline" className="w-full justify-start bg-transparent">
                   데이터 내보내기
                 </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Reminder Settings Section */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Bell className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-semibold">리마인더 설정</h2>
+              </div>
+              <Separator className="mb-6" />
+              
+              <div className="space-y-6">
+                {/* 매일 알림 받기 스위치 */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="daily-reminder" className="text-base font-medium">
+                      매일 알림 받기
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      매일 오늘의 발견을 알림으로 받아보세요
+                    </p>
+                  </div>
+                  <Switch
+                    id="daily-reminder"
+                    checked={reminderEnabled}
+                    onCheckedChange={setReminderEnabled}
+                  />
+                </div>
+
+                {/* 알림 시간 선택 */}
+                {reminderEnabled && (
+                  <div className="space-y-2">
+                    <Label htmlFor="reminder-time" className="text-base font-medium">
+                      알림 시간
+                    </Label>
+                    <Select value={reminderTime} onValueChange={setReminderTime}>
+                      <SelectTrigger id="reminder-time" className="w-full">
+                        <SelectValue placeholder="알림 시간 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="06:00">오전 6:00</SelectItem>
+                        <SelectItem value="07:00">오전 7:00</SelectItem>
+                        <SelectItem value="08:00">오전 8:00</SelectItem>
+                        <SelectItem value="09:00">오전 9:00</SelectItem>
+                        <SelectItem value="10:00">오전 10:00</SelectItem>
+                        <SelectItem value="11:00">오전 11:00</SelectItem>
+                        <SelectItem value="12:00">오후 12:00</SelectItem>
+                        <SelectItem value="13:00">오후 1:00</SelectItem>
+                        <SelectItem value="14:00">오후 2:00</SelectItem>
+                        <SelectItem value="18:00">오후 6:00</SelectItem>
+                        <SelectItem value="20:00">오후 8:00</SelectItem>
+                        <SelectItem value="21:00">오후 9:00</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-sm text-muted-foreground">
+                      선택한 시간에 오늘의 발견을 알림으로 받습니다
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
