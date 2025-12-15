@@ -5,11 +5,12 @@ import { authOptions } from '@/lib/auth';
 import { BookDetailData } from "@/lib/types/book/book";
 import { NoteResponsePage } from "@/lib/types/note/note";
 import { QuoteResponsePage } from "@/lib/types/quote/quote";
-import { ArrowLeft, Bookmark, Plus, Share2, Star } from "lucide-react";
+import { ArrowLeft, Plus, Share2, Star } from "lucide-react";
 import { getServerSession } from 'next-auth';
 import Image from "next/image";
 import Link from "next/link";
 import { BookActionButtons } from "./BookActionButtons";
+import { BookmarkButton } from "./BookmarkButton";
 
 const STAR_INDICES = [0, 1, 2, 3, 4];
 
@@ -149,10 +150,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
                     인용구 추가
                   </Button>
                 </Link>
-                <Button variant="outline">
-                  <Bookmark className="mr-2 h-4 w-4" />
-                  북마크
-                </Button>
+                <BookmarkButton bookId={bookId} isBookmarked={initialData.bookDetail.isBookmarked || false} />
                 <Button variant="outline">
                   <Share2 className="mr-2 h-4 w-4" />
                   공유

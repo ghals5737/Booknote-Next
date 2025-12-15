@@ -1,10 +1,19 @@
-"use client";
-import { BookOpen } from "lucide-react";
-import { useState } from "react";
-import { SearchModal } from "./SearchModal";
+"use client"
+
+import { Button } from "@/components/ui/button"
+import { useNextAuth } from "@/hooks/use-nextauth"
+import { BookOpen, LogOut, User } from "lucide-react"
 
 export function Header() {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { isAuthenticated, logout } = useNextAuth()
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch (error) {
+      console.error("로그아웃 오류:", error)
+    }
+  }
 
   return (
     <header className="border-b border-border bg-card">
@@ -32,6 +41,23 @@ export function Header() {
           <a href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             통계
           </a>
+          <a
+            href="/profile"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+          >
+            <User className="h-4 w-4" />
+          </a>
+          {isAuthenticated && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              로그아웃
+            </Button>
+          )}
         </nav>
       </div>
       {/* 검색 모달 */}

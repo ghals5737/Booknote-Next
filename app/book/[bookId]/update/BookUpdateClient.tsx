@@ -33,6 +33,7 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
   const [totalPages, setTotalPages] = useState(initialData.totalPages || 0);
   const [currentPage, setCurrentPage] = useState(initialData.currentPage || 0);
   const [progress, setProgress] = useState(initialData.progress || 0);
+  const [rating, setRating] = useState(initialData.rating || 0);
   const [pubdate, setPubdate] = useState(
     initialData.pubdate ? initialData.pubdate.slice(0, 10) : ""
   );
@@ -73,6 +74,8 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
         category: category.trim(),
         progress: normalizedProgress,
         totalPages: Math.max(totalPages, 0),
+        currentPage: Math.max(currentPage, 0),
+        rating: Math.max(0, Math.min(5, rating)),
         imgUrl: coverImage,
         pubdate:
           pubdate ||
@@ -82,7 +85,7 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
         isbn,
       };
 
-      const response = await fetch(`/api/v1/books`, {
+      const response = await fetch(`/api/v1/user/books`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",          
@@ -268,7 +271,7 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
               />
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-4">
               <div>
                 <Label htmlFor="totalPages" className="text-sm font-medium">
                   총 페이지
@@ -306,6 +309,20 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
                   max={100}
                   value={progress}
                   onChange={(e) => setProgress(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label htmlFor="rating" className="text-sm font-medium">
+                  평점 (0-5)
+                </Label>
+                <Input
+                  id="rating"
+                  type="number"
+                  min={0}
+                  max={5}
+                  value={rating}
+                  onChange={(e) => setRating(Math.min(5, Math.max(0, Number(e.target.value) || 0)))}
                   className="mt-1.5"
                 />
               </div>
