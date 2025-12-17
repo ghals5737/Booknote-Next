@@ -20,7 +20,7 @@ interface NotificationTime {
 interface NotificationSettings {
   id: number
   enabledYn: string
-  notificationTime: NotificationTime
+  notificationTime: NotificationTime | string
 }
 
 const stats = [
@@ -67,8 +67,21 @@ export default function ProfilePage() {
         const data = response.data
 
         const enabled = data.enabledYn === "Y"
-        const hour = data.notificationTime?.hour ?? 8
-        const minute = data.notificationTime?.minute ?? 0
+        
+        // notificationTime이 문자열인 경우 파싱
+        let hour = 8
+        let minute = 0
+        
+        if (typeof data.notificationTime === "string") {
+          // "14:00:00" 형식의 문자열 파싱
+          const [h, m] = data.notificationTime.split(":").map(Number)
+          hour = h ?? 8
+          minute = m ?? 0
+        } else if (data.notificationTime) {
+          // 객체인 경우 (하위 호환성)
+          hour = data.notificationTime.hour ?? 8
+          minute = data.notificationTime.minute ?? 0
+        }
 
         const formattedTime = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
 
