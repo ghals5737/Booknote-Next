@@ -10,17 +10,19 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts"
+import { MonthlyStat } from "@/lib/types/statistics/statistics"
 
-const MOCK_DATA = [
-  { month: "24.05", books: 3 },
-  { month: "24.06", books: 5 },
-  { month: "24.07", books: 4 },
-  { month: "24.08", books: 6 },
-  { month: "24.09", books: 4 },
-  { month: "24.10", books: 2 },
-]
+interface MonthlyReadingChartProps {
+  monthlyData: MonthlyStat[];
+}
 
-export function MonthlyReadingChart() {
+export function MonthlyReadingChart({ monthlyData }: MonthlyReadingChartProps) {
+  const chartData = monthlyData.map((item) => ({
+    month: item.label,
+    books: item.readCount,
+    pages: item.pageCount,
+  }))
+
   return (
     <Card>
       <CardHeader>
@@ -28,7 +30,7 @@ export function MonthlyReadingChart() {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={MOCK_DATA} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
             <XAxis
               dataKey="month"

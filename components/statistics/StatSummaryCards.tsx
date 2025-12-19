@@ -1,47 +1,45 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { BookOpen, FileText, Star, BookMarked } from "lucide-react"
+import { BookOpen, FileText, BookMarked, BookCheck } from "lucide-react"
+import { StatSummary } from "@/lib/types/statistics/statistics"
 
-const MOCK_DATA = {
-  totalBooks: 24,
-  totalPages: 5420,
-  totalNotes: 156,
-  averageRating: 4.3,
+interface StatSummaryCardsProps {
+  summary: StatSummary;
 }
 
-const stats = [
-  {
-    icon: BookOpen,
-    label: "총 독서량",
-    value: MOCK_DATA.totalBooks,
-    unit: "권",
-    color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-  },
-  {
-    icon: BookMarked,
-    label: "누적 페이지",
-    value: MOCK_DATA.totalPages.toLocaleString(),
-    unit: "p",
-    color: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-  },
-  {
-    icon: FileText,
-    label: "작성한 노트",
-    value: MOCK_DATA.totalNotes,
-    unit: "개",
-    color: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-  },
-  {
-    icon: Star,
-    label: "평균 평점",
-    value: MOCK_DATA.averageRating.toFixed(1),
-    unit: "점",
-    color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
-  },
-]
+export function StatSummaryCards({ summary }: StatSummaryCardsProps) {
+  const stats = [
+    {
+      icon: BookOpen,
+      label: "전체 책",
+      value: summary.totalBooks,
+      unit: "권",
+      color: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+    },
+    {
+      icon: BookCheck,
+      label: "읽은 책",
+      value: summary.readBooks,
+      unit: "권",
+      color: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+    },
+    {
+      icon: BookMarked,
+      label: "누적 페이지",
+      value: summary.totalPages.toLocaleString(),
+      unit: "p",
+      color: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+    },
+    {
+      icon: FileText,
+      label: "작성한 노트",
+      value: summary.totalNotes,
+      unit: "개",
+      color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+    },
+  ]
 
-export function StatSummaryCards() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => (
