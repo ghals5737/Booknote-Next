@@ -46,4 +46,5 @@ export interface UIReviewItem {
   status?: "overdue" | "pending" | "completed";
   itemId: number;
   bookId?: number;
+  completedTime?: string | null;
 }

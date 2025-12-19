@@ -45,7 +45,9 @@ export const authenticatedApiRequest = async <T>(
   const data = await response.json()
   
   if (!response.ok) {
-    throw new Error(data.message || 'API 요청 실패')
+    // 에러 응답 형식이 다를 수 있음 (code, message, status 형식 또는 success, message 형식)
+    const errorMessage = data.message || data.code || 'API 요청 실패'
+    throw new Error(errorMessage)
   }
   
   return data

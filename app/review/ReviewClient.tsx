@@ -15,7 +15,7 @@ import { Progress } from "@/components/ui/progress"
 import { useToast } from "@/hooks/use-toast"
 import { completeReviewItem } from "@/lib/api/review"
 import { UIReviewItem } from "@/lib/types/review/review"
-import { AlertCircle, Calendar, Check, CheckCircle, ExternalLink, FileText, LayoutGrid, LayoutList, Quote, StickyNote } from "lucide-react"
+import { AlertCircle, BookOpen, Calendar, Check, CheckCircle, ExternalLink, FileText, LayoutGrid, LayoutList, Quote, StickyNote } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
@@ -63,7 +63,16 @@ function ReviewCarousel({ items, onItemComplete }: { items: UIReviewItem[], onIt
     }
   }, [current, items, onItemComplete, isLoading])
 
-  const progressValue = count > 0 ? (current / count) * 100 : 0
+  // 오늘 날짜 기준으로 완료된 아이템 개수 계산
+  const today = new Date().toISOString().split('T')[0]
+  const completedTodayCount = items.filter(item => {
+    if (!item.completedTime) return false
+    const completedDate = new Date(item.completedTime).toISOString().split('T')[0]
+    return completedDate === today
+  }).length
+  
+  const totalCount = items.length
+  const progressValue = totalCount > 0 ? (completedTodayCount / totalCount) * 100 : 0
 
   return (
     <>
@@ -72,7 +81,7 @@ function ReviewCarousel({ items, onItemComplete }: { items: UIReviewItem[], onIt
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">진행률</span>
           <span className="font-semibold">
-            {current} / {count}
+            {completedTodayCount} / {totalCount}
           </span>
         </div>
         <Progress value={progressValue} className="h-2" />
@@ -269,6 +278,10 @@ export default function ReviewClient({ items }: ReviewClientProps) {
   const router = useRouter()
   const { toast } = useToast()
 
+  useEffect(() => {
+    console.log('[ReviewClient] items:', items)
+  }, [items])
+
   const handleItemComplete = useCallback(async (itemId: number) => {
     try {
       await completeReviewItem(itemId)
@@ -348,7 +361,24 @@ export default function ReviewClient({ items }: ReviewClientProps) {
         </div>
 
         {/* Carousel Mode */}
-        {mode === "carousel" && <ReviewCarousel items={items} onItemComplete={handleItemComplete} />}
+        {mode === "carousel" && (
+          items.length === 0 ? (
+            <Card className="w-full">
+              <CardContent className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <BookOpen className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">복습할 항목이 없습니다</h3>
+                <p className="text-muted-foreground text-center max-w-md">
+                  오늘 복습할 노트나 인용구가 없습니다.<br />
+                  새로운 노트나 인용구를 추가하면 복습 목록에 추가됩니다.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <ReviewCarousel items={items} onItemComplete={handleItemComplete} />
+          )
+        )}
 
         {/* List Mode */}
         {mode === "list" && <ReviewListView items={items} onItemComplete={handleItemComplete} onItemPostpone={handleItemPostpone} />}

@@ -60,6 +60,7 @@ function convertToUIReviewItem(
       status,
       itemId: reviewItem.itemId,
       bookId: note.bookId,
+      completedTime: reviewItem.completedTime,
     }
   }
   
@@ -80,6 +81,7 @@ function convertToUIReviewItem(
       status,
       itemId: reviewItem.itemId,
       bookId: quote.bookId,
+      completedTime: reviewItem.completedTime,
     }
   }
 
@@ -94,6 +96,7 @@ function convertToUIReviewItem(
     dueDate: review.plannedTime,
     status,
     itemId: reviewItem.itemId,
+    completedTime: reviewItem.completedTime,
   }
 }
 
