@@ -42,7 +42,7 @@ function convertToUIReviewItem(
   } else if (isOverdue) {
     status = "overdue"
   }
-
+  console.log(reviewItem)
   // NOTE 타입인 경우
   if (reviewItem.itemType === "NOTE" && reviewItem.note) {
     const note = reviewItem.note
@@ -50,7 +50,7 @@ function convertToUIReviewItem(
       id: reviewItem.id,
       type: "NOTE",
       content: note.content || note.title || "",
-      source: note.bookTitle || "알 수 없음",
+      source: reviewItem.bookTitle || "알 수 없음",
       page: undefined,
       date: note.updateDate || note.startDate || new Date().toISOString().split('T')[0],
       tags: note.tagList || [],
@@ -59,7 +59,7 @@ function convertToUIReviewItem(
       frequency: undefined,
       status,
       itemId: reviewItem.itemId,
-      bookId: note.bookId,
+      bookId: note.bookId > 0 ? note.bookId : undefined,
       completedTime: reviewItem.completedTime,
     }
   }
@@ -71,7 +71,7 @@ function convertToUIReviewItem(
       id: reviewItem.id,
       type: "QUOTE",
       content: quote.content || "",
-      source: "알 수 없음", // QuoteResponse에 bookTitle이 없음
+      source: reviewItem.bookTitle || "알 수 없음",
       page: quote.page,
       date: new Date().toISOString().split('T')[0],
       tags: [],

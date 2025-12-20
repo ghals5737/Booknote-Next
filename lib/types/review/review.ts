@@ -14,6 +14,7 @@ export interface ReviewItem {
   completedTime: string | null;
   note: NoteResponse | null;
   quote: QuoteResponse | null;
+  bookTitle: string | null;
 }
 
 export interface Review {
