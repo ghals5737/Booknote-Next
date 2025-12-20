@@ -30,7 +30,7 @@ export function RecentBooks({ books }: RecentBooksProps) {
           전체 보기
         </a>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {recentBooks.map((book) => (
           <BookCard key={book.id} book={book} variant="recent" />
         ))}

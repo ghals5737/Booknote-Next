@@ -3,12 +3,32 @@
 import { Button } from "@/components/ui/button"
 import { useNextAuth } from "@/hooks/use-nextauth"
 import { BookOpen, LogOut, User } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { SearchModal } from "./SearchModal"
 
 export function Header() {
   const { isAuthenticated, logout } = useNextAuth()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+  // Command+K (Mac) 또는 Ctrl+K (Windows/Linux) 단축키 처리
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Command+K (Mac) 또는 Ctrl+K (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault()
+        setIsSearchOpen(true)
+      }
+      // ESC 키로 모달 닫기
+      if (event.key === 'Escape' && isSearchOpen) {
+        setIsSearchOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isSearchOpen])
 
   const handleLogout = async () => {
     try {
