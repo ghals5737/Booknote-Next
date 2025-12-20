@@ -12,7 +12,7 @@ export function ReviewCardContent({ item }: ReviewCardContentProps) {
         {item.type === "QUOTE" ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-center leading-relaxed px-2 text-2xl md:text-3xl lg:text-4xl italic text-foreground">
-              "{item.content}"
+              &ldquo;{item.content}&rdquo;
             </p>
           </div>
         ) : (

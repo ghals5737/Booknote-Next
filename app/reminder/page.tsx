@@ -16,7 +16,7 @@ async function getTodayReviews(): Promise<ReviewTodayResponse['data']> {
       'Authorization': `Bearer ${session.accessToken}`,
       'Accept': '*/*',
     },
-    cache: 'no-store', // 항상 최신 데이터를 가져오기 위해
+    cache: 'no-store', 
   })
 
   if (!response.ok) {

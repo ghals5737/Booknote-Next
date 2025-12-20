@@ -31,7 +31,7 @@ export default function ReminderClient({ reviews }: ReminderClientProps) {
               <div key={review.id} className="bg-card border border-border rounded-lg p-6">
                 <div className="mb-4">
                   <h2 className="text-lg font-semibold mb-2">
-                    계획된 시간: {new Date(review.plannedTIme).toLocaleString('ko-KR')}
+                    계획된 시간: {new Date(review.plannedTime).toLocaleString('ko-KR')}
                   </h2>
                   {review.completedTime && (
                     <p className="text-sm text-muted-foreground">

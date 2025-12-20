@@ -28,7 +28,7 @@ export async function completeReviewItem(reviewItemId: number): Promise<ReviewIt
     {
       method: 'POST',
     }
-  )
+  ) as Promise<ReviewItemSuccessResponse>
 }
 
 /**
@@ -41,6 +41,6 @@ export async function postponeReviewItem(reviewItemId: number): Promise<ReviewIt
     {
       method: 'POST',
     }
-  )
+  ) as Promise<ReviewItemPostponeResponse>
 }
 
