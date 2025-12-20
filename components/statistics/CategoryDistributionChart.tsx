@@ -76,7 +76,7 @@ export function CategoryDistributionChart({ categoryData }: CategoryDistribution
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
                   }}
-                  formatter={(value: number) => [`${value}권`, "책 수"]}
+                  formatter={(value) => [`${typeof value === 'number' ? value : 0}권`, "책 수"]}
                 />
               </PieChart>
             </ResponsiveContainer>

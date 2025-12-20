@@ -1,16 +1,16 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MonthlyStat } from "@/lib/types/statistics/statistics";
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts"
-import { MonthlyStat } from "@/lib/types/statistics/statistics"
+} from "recharts";
 
 interface MonthlyReadingChartProps {
   monthlyData: MonthlyStat[];
@@ -48,7 +48,7 @@ export function MonthlyReadingChart({ monthlyData }: MonthlyReadingChartProps) {
                 borderRadius: "8px",
               }}
               labelStyle={{ color: "hsl(var(--foreground))" }}
-              formatter={(value: number) => [`${value}권`, "독서량"]}
+              formatter={(value) => [`${typeof value === 'number' ? value : 0}권`, "독서량"]}
             />
             <Bar
               dataKey="books"
