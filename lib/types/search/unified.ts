@@ -46,6 +46,7 @@ export type TransformedBookItem = {
 
 export type TransformedNoteItem = {
   id: string;
+  bookId: string;
   title: string;
   bookTitle: string;
   snippet: string;
@@ -53,6 +54,7 @@ export type TransformedNoteItem = {
 
 export type TransformedQuoteItem = {
   id: string;
+  bookId: string;
   text: string;
   bookTitle: string;
   meta: string;

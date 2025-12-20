@@ -1,6 +1,7 @@
 "use client"
 
 import { authenticatedApiRequest } from "@/lib/api/nextauth-api"
+import { UserProfileResponse } from "@/lib/types/user/profile"
 import { ArrowLeft, BookOpen, Calendar, FileText, Quote } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -23,41 +24,106 @@ interface NotificationSettings {
   notificationTime: NotificationTime | string
 }
 
-const stats = [
-  {
-    icon: BookOpen,
-    label: "읽은 책",
-    value: 24,
-    color: "bg-blue-100 text-blue-600",
-  },
-  {
-    icon: FileText,
-    label: "작성한 노트",
-    value: 156,
-    color: "bg-green-100 text-green-600",
-  },
-  {
-    icon: Quote,
-    label: "저장한 인용구",
-    value: 89,
-    color: "bg-purple-100 text-purple-600",
-  },
-  {
-    icon: Calendar,
-    label: "연속 독서",
-    value: "12일",
-    color: "bg-orange-100 text-orange-600",
-  },
-]
+type ProfileData = {
+  name: string
+  email: string
+  bio: string
+  nickname: string
+  profileImgUrl: string
+}
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState({
-    name: "독서 애호가",
-    email: "reader@booknote.com",
-    bio: "책을 사랑하는 사람입니다.",
+  const [profile, setProfile] = useState<ProfileData>({
+    name: "",
+    email: "",
+    bio: "",
+    nickname: "",
+    profileImgUrl: "",
   })
+  const [stats, setStats] = useState([
+    {
+      icon: BookOpen,
+      label: "읽은 책",
+      value: 0,
+      color: "bg-blue-100 text-blue-600",
+    },
+    {
+      icon: FileText,
+      label: "작성한 노트",
+      value: 0,
+      color: "bg-green-100 text-green-600",
+    },
+    {
+      icon: Quote,
+      label: "저장한 인용구",
+      value: 0,
+      color: "bg-purple-100 text-purple-600",
+    },
+    {
+      icon: Calendar,
+      label: "연속 독서",
+      value: "0일",
+      color: "bg-orange-100 text-orange-600",
+    },
+  ])
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [reminderEnabled, setReminderEnabled] = useState(true)
   const [reminderTime, setReminderTime] = useState("08:00")
+
+  // 프로필 조회
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoadingProfile(true)
+        const response = await authenticatedApiRequest<UserProfileResponse>("/api/v1/users/profile")
+        
+        const { user, stats: profileStats } = response.data
+        
+        // 프로필 정보 설정
+        setProfile({
+          name: user.name || "",
+          email: user.email || "",
+          bio: user.bio || "",
+          nickname: user.nickname || "",
+          profileImgUrl: user.profileImage || "",
+        })
+        
+        // 통계 정보 설정
+        setStats([
+          {
+            icon: BookOpen,
+            label: "읽은 책",
+            value: profileStats.totalBooks,
+            color: "bg-blue-100 text-blue-600",
+          },
+          {
+            icon: FileText,
+            label: "작성한 노트",
+            value: profileStats.totalNotes,
+            color: "bg-green-100 text-green-600",
+          },
+          {
+            icon: Quote,
+            label: "저장한 인용구",
+            value: profileStats.totalQuotes,
+            color: "bg-purple-100 text-purple-600",
+          },
+          {
+            icon: Calendar,
+            label: "연속 독서",
+            value: `${profileStats.readingStreak}일`,
+            color: "bg-orange-100 text-orange-600",
+          },
+        ])
+      } catch (error) {
+        console.error("[ProfilePage] 프로필 조회 실패:", error)
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   // 알림 설정 조회
   useEffect(() => {
@@ -134,7 +200,19 @@ export default function ProfilePage() {
         </Link>
 
         <div className="space-y-6">
-          <ProfileHeaderCard value={profile} onChange={setProfile} />
+          {isLoadingProfile ? (
+            <div className="flex items-center justify-center p-6">
+              <p className="text-muted-foreground">프로필 정보를 불러오는 중...</p>
+            </div>
+          ) : (
+            <ProfileHeaderCard 
+              value={profile} 
+              onChange={setProfile}
+              onUpdate={() => {
+                // 프로필 업데이트 후 필요시 추가 작업 수행
+              }}
+            />
+          )}
           <ProfileStatsGrid stats={stats} />
           <ProfileSettingsCard />
           <ReminderSettingsCard

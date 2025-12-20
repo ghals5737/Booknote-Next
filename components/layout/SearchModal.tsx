@@ -3,7 +3,8 @@
 import type { UnifiedSearchResponse } from "@/lib/types/search/unified";
 import { transformBooks, transformNotes, transformQuotes } from "@/lib/utils/search-transform";
 import { Loader2, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BookSearchSection } from "./search/BookSearchSection";
 import { NoteSearchSection } from "./search/NoteSearchSection";
 import { QuoteSearchSection } from "./search/QuoteSearchSection";
@@ -12,12 +13,21 @@ type SearchModalProps = {
     onClose: () => void;
 };
 
+type SearchableItem = {
+    type: "book" | "note" | "quote";
+    id: string;
+    bookId?: string;
+};
+
 export function SearchModal({ onClose }: SearchModalProps) {
+    const router = useRouter();
     const [query, setQuery] = useState("");
     const [debouncedQuery, setDebouncedQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchResults, setSearchResults] = useState<UnifiedSearchResponse["data"] | null>(null);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const resultsContainerRef = useRef<HTMLDivElement>(null);
 
     // Debounce 검색어 (300ms)
     useEffect(() => {
@@ -106,6 +116,100 @@ export function SearchModal({ onClose }: SearchModalProps) {
         [searchResults?.quotes]
     );
 
+    // 모든 검색 가능한 아이템을 하나의 리스트로 통합
+    const allItems = useMemo<SearchableItem[]>(() => {
+        const items: SearchableItem[] = [];
+        transformedBooks.forEach((book) => {
+            items.push({ type: "book", id: book.id });
+        });
+        transformedNotes.forEach((note) => {
+            items.push({ type: "note", id: note.id, bookId: note.bookId });
+        });
+        transformedQuotes.forEach((quote) => {
+            items.push({ type: "quote", id: quote.id, bookId: quote.bookId });
+        });
+        return items;
+    }, [transformedBooks, transformedNotes, transformedQuotes]);
+
+    // 검색 결과가 변경되면 선택 인덱스 초기화
+    useEffect(() => {
+        setSelectedIndex(-1);
+    }, [debouncedQuery, allItems.length]);
+
+    // 아이템 클릭 핸들러
+    const handleItemClick = useCallback((item: SearchableItem) => {
+        if (item.type === "book") {
+            router.push(`/book/${item.id}`);
+        } else if (item.type === "note" && item.bookId) {
+            router.push(`/book/${item.bookId}/note/${item.id}`);
+        } else if (item.type === "quote" && item.bookId) {
+            // 인용구는 책 상세 페이지로 이동 (인용구 탭)
+            router.push(`/book/${item.bookId}`);
+        }
+        onClose();
+    }, [router, onClose]);
+
+    // 키보드 네비게이션 핸들러
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                onClose();
+                return;
+            }
+
+            // 검색 결과가 없으면 방향키 무시
+            if (allItems.length === 0) return;
+
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                setSelectedIndex((prev) => (prev < allItems.length - 1 ? prev + 1 : prev));
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
+            } else if (e.key === "Enter" && selectedIndex >= 0) {
+                e.preventDefault();
+                const selectedItem = allItems[selectedIndex];
+                handleItemClick(selectedItem);
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [allItems, selectedIndex, onClose, handleItemClick]);
+
+    // 선택된 항목으로 스크롤
+    useEffect(() => {
+        if (selectedIndex >= 0 && resultsContainerRef.current) {
+            const selectedElement = resultsContainerRef.current.querySelector(
+                `[data-item-index="${selectedIndex}"]`
+            );
+            if (selectedElement) {
+                selectedElement.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            }
+        }
+    }, [selectedIndex]);
+
+    // 각 섹션에서 선택된 인덱스 범위 계산
+    const getBookIndexRange = () => {
+        const start = 0;
+        const end = transformedBooks.length;
+        return { start, end };
+    };
+
+    const getNoteIndexRange = () => {
+        const start = transformedBooks.length;
+        const end = start + transformedNotes.length;
+        return { start, end };
+    };
+
+    const getQuoteIndexRange = () => {
+        const start = transformedBooks.length + transformedNotes.length;
+        const end = start + transformedQuotes.length;
+        return { start, end };
+    };
+
     return (
         <div
             className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm pt-24"
@@ -156,10 +260,28 @@ export function SearchModal({ onClose }: SearchModalProps) {
                     )}
 
                     {query && query.length >= 2 && !isLoading && !error && searchResults && (
-                        <div className="space-y-4">
-                            <BookSearchSection items={transformedBooks} query={debouncedQuery} />
-                            <NoteSearchSection items={transformedNotes} query={debouncedQuery} />
-                            <QuoteSearchSection items={transformedQuotes} query={debouncedQuery} />
+                        <div ref={resultsContainerRef} className="space-y-4">
+                            <BookSearchSection
+                                items={transformedBooks}
+                                query={debouncedQuery}
+                                selectedIndex={selectedIndex}
+                                indexRange={getBookIndexRange()}
+                                onItemClick={handleItemClick}
+                            />
+                            <NoteSearchSection
+                                items={transformedNotes}
+                                query={debouncedQuery}
+                                selectedIndex={selectedIndex}
+                                indexRange={getNoteIndexRange()}
+                                onItemClick={handleItemClick}
+                            />
+                            <QuoteSearchSection
+                                items={transformedQuotes}
+                                query={debouncedQuery}
+                                selectedIndex={selectedIndex}
+                                indexRange={getQuoteIndexRange()}
+                                onItemClick={handleItemClick}
+                            />
                         </div>
                     )}
 

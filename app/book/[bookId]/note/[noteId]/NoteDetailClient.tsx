@@ -25,7 +25,7 @@ export default function NoteDetailClient({ noteDetail, bookDetail }: { noteDetai
       })
       if (response.ok) {
         alert("노트가 삭제되었습니다.")
-        router.push(`/new/book/${bookDetail.id}`)
+        router.push(`/book/${bookDetail.id}`)
       } else {
         alert("노트 삭제에 실패했습니다.")
       }
@@ -38,7 +38,7 @@ export default function NoteDetailClient({ noteDetail, bookDetail }: { noteDetai
         <div className="mb-6 flex items-center justify-between rounded-lg border bg-card p-4">
           <div className="flex items-center gap-3">
             <Link
-              href={`/new/book/${bookDetail.id}`}
+              href={`/book/${bookDetail.id}`}
               className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -139,7 +139,7 @@ export default function NoteDetailClient({ noteDetail, bookDetail }: { noteDetai
             <div className="flex-1">
               <h3 className="mb-1 font-semibold">{bookDetail.title}</h3>
               <p className="mb-3 text-sm text-muted-foreground">{bookDetail.author}</p>
-              <Link href={`/new/book/${bookDetail.id}`}>
+              <Link href={`/book/${bookDetail.id}`}>
                 <Button variant="outline" size="sm">
                   책 상세보기
                 </Button>

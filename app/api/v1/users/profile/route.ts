@@ -58,3 +58,71 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader) {
+      return NextResponse.json(
+        { success: false, message: 'Authorization header required' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+
+    // 테스트 토큰인 경우 테스트 응답 반환
+    if (authHeader.includes('test-access-token')) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          user: {
+            id: 1,
+            email: 'ttt@ttt',
+            name: body.name || '테스트 사용자',
+            nickname: body.nickname || null,
+            bio: body.bio || null,
+            profileImage: body.profileImgUrl || null,
+            provider: 'email',
+            createdAt: new Date().toISOString(),
+            lastLoginAt: null
+          }
+        },
+        status: 200,
+        message: '프로필이 업데이트되었습니다.'
+      });
+    }
+
+    // 백엔드 API로 프록시
+    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/users/profile`;
+
+    const response = await fetch(upstreamUrl, {
+      method: 'PUT',
+      headers: { 
+        'Authorization': authHeader,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      console.error('[proxy] profile update upstream error', response.status, text);
+      return NextResponse.json(
+        { success: false, message: 'Failed to update profile', details: text },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Profile PUT proxy error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Profile update proxy error' },
+      { status: 500 }
+    );
+  }
+}
