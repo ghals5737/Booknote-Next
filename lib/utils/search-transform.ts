@@ -1,12 +1,12 @@
 // 통합 검색 API 응답을 컴포넌트 타입에 맞게 변환하는 유틸리티 함수
 
 import type {
-    TransformedBookItem,
-    TransformedNoteItem,
-    TransformedQuoteItem,
-    UnifiedSearchBookItem,
-    UnifiedSearchNoteItem,
-    UnifiedSearchQuoteItem,
+  TransformedBookItem,
+  TransformedNoteItem,
+  TransformedQuoteItem,
+  UnifiedSearchBookItem,
+  UnifiedSearchNoteItem,
+  UnifiedSearchQuoteItem,
 } from "@/lib/types/search/unified";
 
 export function transformBooks(
@@ -27,6 +27,7 @@ export function transformNotes(
   if (!notes) return [];
   return notes.map((note) => ({
     id: note.id,
+    bookId: note.bookId,
     title: note.title,
     bookTitle: note.bookTitle || "알 수 없음",
     snippet: note.snippet || note.content?.substring(0, 100) + "..." || "",
@@ -43,6 +44,7 @@ export function transformQuotes(
     if (quote.chapter) metaParts.push(quote.chapter);
     return {
       id: quote.id,
+      bookId: quote.bookId,
       text: quote.text,
       bookTitle: quote.bookTitle || "알 수 없음",
       meta: metaParts.length > 0 ? metaParts.join(" · ") : "",
