@@ -1,5 +1,6 @@
 import { authOptions } from "@/lib/auth"
 import { Review, ReviewItem, ReviewTodayResponse, UIReviewItem } from "@/lib/types/review/review"
+import { getLastReviewDate, getLastReviewText } from "@/lib/utils/review-date"
 import { getServerSession } from "next-auth"
 import ReviewClient from "./ReviewClient"
 
@@ -42,10 +43,18 @@ function convertToUIReviewItem(
   } else if (isOverdue) {
     status = "overdue"
   }
-  console.log(reviewItem)
+  
   // NOTE 타입인 경우
   if (reviewItem.itemType === "NOTE" && reviewItem.note) {
     const note = reviewItem.note
+    // 마지막 복습일 계산 (백엔드에서 제공되면 사용, 없으면 계산)
+    const lastReviewTime = reviewItem.lastReviewTime || reviewItem.completedTime || null
+    const lastReviewDate = getLastReviewDate(
+      lastReviewTime,
+      note.startDate
+    )
+    const lastReviewText = getLastReviewText(lastReviewDate)
+    
     return {
       id: reviewItem.id,
       type: "NOTE",
@@ -61,12 +70,20 @@ function convertToUIReviewItem(
       itemId: reviewItem.itemId,
       bookId: note.bookId > 0 ? note.bookId : undefined,
       completedTime: reviewItem.completedTime,
+      lastReviewTime: lastReviewDate?.toISOString() || null,
+      reviewCount: reviewItem.reviewCount,
+      lastReviewText,
     }
   }
   
   // QUOTE 타입인 경우
   if (reviewItem.itemType === "QUOTE" && reviewItem.quote) {
     const quote = reviewItem.quote
+    // 마지막 복습일 계산 (백엔드에서 제공되면 사용, 없으면 계산)
+    const lastReviewTime = reviewItem.lastReviewTime || reviewItem.completedTime || null
+    const lastReviewDate = getLastReviewDate(lastReviewTime)
+    const lastReviewText = getLastReviewText(lastReviewDate)
+    
     return {
       id: reviewItem.id,
       type: "QUOTE",
@@ -82,10 +99,17 @@ function convertToUIReviewItem(
       itemId: reviewItem.itemId,
       bookId: quote.bookId,
       completedTime: reviewItem.completedTime,
+      lastReviewTime: lastReviewDate?.toISOString() || null,
+      reviewCount: reviewItem.reviewCount,
+      lastReviewText,
     }
   }
 
   // 기본값 (데이터가 없는 경우)
+  const lastReviewTime = reviewItem.lastReviewTime || reviewItem.completedTime || null
+  const lastReviewDate = getLastReviewDate(lastReviewTime)
+  const lastReviewText = getLastReviewText(lastReviewDate)
+  
   return {
     id: reviewItem.id,
     type: reviewItem.itemType,
@@ -97,6 +121,9 @@ function convertToUIReviewItem(
     status,
     itemId: reviewItem.itemId,
     completedTime: reviewItem.completedTime,
+    lastReviewTime: lastReviewDate?.toISOString() || null,
+    reviewCount: reviewItem.reviewCount,
+    lastReviewText,
   }
 }
 
