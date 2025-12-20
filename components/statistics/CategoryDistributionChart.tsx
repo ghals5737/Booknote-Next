@@ -1,8 +1,8 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
-import { CategoryStat } from "@/lib/types/statistics/statistics"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CategoryStat } from "@/lib/types/statistics/statistics";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 interface CategoryDistributionChartProps {
   categoryData: CategoryStat[];
@@ -59,8 +59,8 @@ export function CategoryDistributionChart({ categoryData }: CategoryDistribution
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percentage }) =>
-                    `${name} ${percentage}%`
+                  label={({ name, percent }) =>
+                    `${name} ${Math.round((percent ?? 0) * 100)}%`
                   }
                   outerRadius={100}
                   fill="#8884d8"
