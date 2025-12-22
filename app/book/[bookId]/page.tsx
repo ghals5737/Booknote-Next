@@ -5,14 +5,13 @@ import { authOptions } from '@/lib/auth';
 import { BookDetailData } from "@/lib/types/book/book";
 import { NoteResponsePage } from "@/lib/types/note/note";
 import { QuoteResponsePage } from "@/lib/types/quote/quote";
-import { ArrowLeft, Plus, Share2, Star } from "lucide-react";
+import { ArrowLeft, Plus, Share2 } from "lucide-react";
 import { getServerSession } from 'next-auth';
 import Image from "next/image";
 import Link from "next/link";
 import { BookActionButtons } from "./BookActionButtons";
 import { BookmarkButton } from "./BookmarkButton";
-
-const STAR_INDICES = [0, 1, 2, 3, 4];
+import { StarRatingWrapper } from "./StarRatingWrapper";
 
 async function getBookDetailData(bookId: string): Promise<{
   bookDetail: BookDetailData;
@@ -113,13 +112,11 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
                   <div className="text-xs text-muted-foreground">현재 페이지</div>
                 </div>
                 <div>
-                  <div className="mb-1 flex items-center justify-center gap-1">
-                    {STAR_INDICES.map((value) => (
-                      <Star
-                        key={`rating-star-${value}`}
-                        className={`h-5 w-5 ${value < initialData.bookDetail.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                      />
-                    ))}
+                  <div className="mb-1 flex items-center justify-center">
+                    <StarRatingWrapper
+                      bookId={Number(initialData.bookDetail.id)}
+                      initialRating={initialData.bookDetail.rating || 0}
+                    />
                   </div>
                   <div className="text-xs text-muted-foreground">평점</div>
                 </div>
