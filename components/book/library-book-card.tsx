@@ -1,9 +1,11 @@
-import { Card } from "@/components/ui/card"
-import { BOOK_CATEGORY_LABELS, UserBookResponse } from "@/lib/types/book/book"
-import { Star } from "lucide-react"
-import moment from "moment"
-import Image from "next/image"
-import Link from "next/link"
+"use client";
+
+import { StarRatingInput } from "@/components/book/star-rating-input";
+import { Card } from "@/components/ui/card";
+import { BOOK_CATEGORY_LABELS, UserBookResponse } from "@/lib/types/book/book";
+import moment from "moment";
+import Image from "next/image";
+import Link from "next/link";
 
 export function LibraryBookCard({ book }: { book: UserBookResponse }) {
   const fullStars = Math.floor(book.rating || 0)
@@ -29,16 +31,18 @@ export function LibraryBookCard({ book }: { book: UserBookResponse }) {
             </span>
           </div>
 
-          <div className="flex items-center gap-1 h-8 w-[100px] justify-end">
-            {[...Array(fullStars)].map((_, i) => (
-              <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400 flex-shrink-0" />
-            ))}
-            {hasHalfStar && (
-              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400 flex-shrink-0" style={{ clipPath: "inset(0 50% 0 0)" }} />
-            )}
-            {[...Array(5 - Math.ceil(book.rating || 0))].map((_, i) => (
-              <Star key={`empty-${i}`} className="h-4 w-4 text-gray-300 flex-shrink-0" />
-            ))}
+          <div 
+            className="flex items-center h-8 w-[100px] justify-end"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <StarRatingInput
+              bookId={Number(book.id)}
+              initialRating={book.rating || 0}
+              size="sm"
+              showLabel={false}
+              refreshOnUpdate={true}
+            />
           </div>
           </div>
         </div>

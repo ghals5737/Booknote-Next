@@ -16,6 +16,7 @@ export function RecentBooks({ books }: RecentBooksProps) {
     currentPage: book.currentPage,
     totalPages: book.totalPages,
     note: `${book.noteCnt}개 노트`,
+    rating: book.rating || 0,
   }));
 
   if (recentBooks.length === 0) {

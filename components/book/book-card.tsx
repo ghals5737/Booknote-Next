@@ -1,3 +1,6 @@
+"use client";
+
+import { StarRatingInput } from "@/components/book/star-rating-input";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,6 +15,7 @@ interface BookCardProps {
     currentPage: number
     totalPages: number
     note: string
+    rating?: number
   }
   variant?: "recent" | "library"
 }
@@ -37,9 +41,25 @@ export function BookCard({ book }: BookCardProps) {
             <div className="h-2 overflow-hidden rounded-full bg-secondary">
               <div className="h-full bg-primary transition-all" style={{ width: `${book.progress}%` }} />
             </div>
-            <p className="text-xs text-muted-foreground">
-              {book.currentPage}/{book.totalPages}p
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {book.currentPage}/{book.totalPages}p
+              </p>
+              {book.rating !== undefined && (
+                <div 
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
+                  <StarRatingInput
+                    bookId={book.id}
+                    initialRating={book.rating || 0}
+                    size="sm"
+                    showLabel={false}
+                    refreshOnUpdate={true}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
