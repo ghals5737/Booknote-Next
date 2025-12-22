@@ -3,7 +3,7 @@ name: Build and Deploy on Tag
 on:
   push:
     tags:
-      - 'v*.*.*' 
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -31,11 +31,9 @@ jobs:
         echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}" >> .env
         echo "NEXT_PUBLIC_GOOGLE_CLIENT_SECRET=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET }}" >> .env
 
-
-
     - name: Build Docker image
       run: docker buildx build . -t registry.booknote.site/booknote-front:latest --push
-     
+
     - name: Send POST request to webhook
       run: |
         curl -X POST https://webhook.booknote.site \
@@ -43,4 +41,17 @@ jobs:
         -d '{"status": "success", "message": "Deployment completed for tag ${{ github.ref_name }}", "authKey": "${{ secrets.WEBHOOK_AUTH_KEY }}", "serviceName": "BooknoteFront"}'
 
     - name: Logout from Docker registry
+      if: always()
       run: docker logout registry.booknote.site
+
+    # Slack 알림 (성공/실패/취소 모두)
+    - name: Notify Slack (always)
+      if: always()
+      uses: slackapi/slack-github-action@v2.0.0
+      with:
+        webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+        webhook-type: incoming-webhook
+        payload: |
+          {
+            "text": "${{ job.status == 'success' && '✅' || job.status == 'failure' && '❌' || '⚠️' }} *BooknoteFront Deploy* - `${{ job.status }}`\n• Tag: `${{ github.ref_name }}`\n• Repo: `${{ github.repository }}`\n• Commit: `${{ github.sha }}`\n• Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
