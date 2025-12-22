@@ -30,7 +30,7 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
   const [category, setCategory] = useState(initialData.category || "");
   const [description, setDescription] = useState(initialData.description || "");
   const [publisher, setPublisher] = useState(initialData.publisher || "");
-  const [coverImage, setCoverImage] = useState(initialData.coverImage || "");
+  const [coverImage] = useState(initialData.coverImage || "");
   const [totalPages, setTotalPages] = useState(initialData.totalPages || 0);
   const [currentPage, setCurrentPage] = useState(initialData.currentPage || 0);
   const [progress, setProgress] = useState(initialData.progress || 0);

@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MonthlyStat } from "@/lib/types/statistics/statistics"
-import { BookOpen } from "lucide-react"
 
 interface ActivityTabProps {
   monthlyData: MonthlyStat[];
@@ -14,7 +13,6 @@ export function ActivityTab({ monthlyData }: ActivityTabProps) {
   
   // 전체 통계 계산
   const totalPages = monthlyData.reduce((sum, item) => sum + item.pageCount, 0);
-  const totalBooks = monthlyData.reduce((sum, item) => sum + item.readCount, 0);
   const averagePagesPerMonth = monthlyData.length > 0 
     ? Math.round(totalPages / monthlyData.length) 
     : 0;

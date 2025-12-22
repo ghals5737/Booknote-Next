@@ -8,8 +8,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 export function LibraryBookCard({ book }: { book: UserBookResponse }) {
-  const fullStars = Math.floor(book.rating || 0)
-  const hasHalfStar = (book.rating || 0) % 1 !== 0
   const categoryLabel = BOOK_CATEGORY_LABELS[book.category as keyof typeof BOOK_CATEGORY_LABELS] ?? book.category
 
   return (
