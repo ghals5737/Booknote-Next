@@ -43,11 +43,11 @@ export function BookActionButtons({ bookId }: BookActionButtonsProps) {
   return (
     <>
       <div className="flex gap-2">
-        <Link href={`/book/${bookId}/update`}>
-          <Button variant="outline" size="icon" title="책 정보 수정">
+        <Button variant="outline" size="icon" title="책 정보 수정" asChild>
+          <Link href={`/book/${bookId}/update`}>
             <Edit className="h-4 w-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <Button
           variant="outline"
           size="icon"
