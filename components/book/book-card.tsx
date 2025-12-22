@@ -22,18 +22,18 @@ interface BookCardProps {
 
 export function BookCard({ book }: BookCardProps) {
   return (
-    <Link href={`/book/${book.id}`}>
-    <Card className="overflow-hidden transition-all hover:shadow-lg p-0">
-      <div className="flex gap-4 p-4">
+    <Link href={`/book/${book.id}`} className="h-full block">
+    <Card className="overflow-hidden transition-all hover:shadow-lg p-0 h-full flex flex-col">
+      <div className="flex gap-4 p-4 flex-1">
         <div className="relative h-32 w-24 flex-shrink-0 overflow-hidden rounded-md">
           <Image src={book.cover || "/placeholder.svg"} alt={book.title} fill className="object-cover" />
         </div>
-        <div className="flex flex-1 flex-col justify-between">
-          <div>
-            <h3 className="mb-1 font-semibold text-balance">{book.title}</h3>
-            <p className="text-sm text-muted-foreground">{book.author}</p>
+        <div className="flex flex-1 flex-col justify-between min-w-0">
+          <div className="min-h-[3.5rem]">
+            <h3 className="mb-1 font-semibold line-clamp-2 leading-tight">{book.title}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-1">{book.author}</p>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 mt-auto">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{book.note}</span>
               <span className="font-medium text-foreground">{book.progress}%</span>

@@ -1,8 +1,10 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
+import { BookDetailData } from "@/lib/types/book/book"
 import { NoteResponse } from "@/lib/types/note/note"
 import { QuoteResponse } from "@/lib/types/quote/quote"
+import { BOOK_CATEGORY_LABELS } from "@/lib/types/book/book"
 import { formatDateYMD } from "@/lib/utils"
 import { Star, Trash2 } from "lucide-react"
 import Link from "next/link"
@@ -10,7 +12,7 @@ import { useState } from "react"
 import { Markdown } from "../note/Markdown"
 
 
-export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, initialQuotes }: { bookId: number, noteCount: number, quoteCount: number, initialNotes: NoteResponse[], initialQuotes: QuoteResponse[] }) {
+export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, initialQuotes, bookDetail }: { bookId: number, noteCount: number, quoteCount: number, initialNotes: NoteResponse[], initialQuotes: QuoteResponse[], bookDetail: BookDetailData }) {
   const [activeTab, setActiveTab] = useState<"notes" | "highlights" | "info">("notes")
   const [notes, setNotes] = useState<NoteResponse[]>(initialNotes)
   const [quotes, setQuotes] = useState<QuoteResponse[]>(initialQuotes)
@@ -171,7 +173,74 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, in
 
       {activeTab === "info" && (
         <Card className="p-6">
-          <p className="text-muted-foreground">책 정보가 여기에 표시됩니다.</p>
+          <div className="space-y-6">
+            <div>
+              <h3 className="mb-4 text-xl font-semibold">기본 정보</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">제목</p>
+                  <p className="mt-1 text-base">{bookDetail.title}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">저자</p>
+                  <p className="mt-1 text-base">{bookDetail.author}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">출판사</p>
+                  <p className="mt-1 text-base">{bookDetail.publisher || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">출판일</p>
+                  <p className="mt-1 text-base">{bookDetail.pubdate || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">ISBN</p>
+                  <p className="mt-1 text-base">{bookDetail.isbn || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">카테고리</p>
+                  <p className="mt-1 text-base">
+                    {bookDetail.category ? (BOOK_CATEGORY_LABELS[bookDetail.category as keyof typeof BOOK_CATEGORY_LABELS] || bookDetail.category) : "-"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {bookDetail.description && (
+              <div>
+                <h3 className="mb-4 text-xl font-semibold">책 소개</h3>
+                <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{bookDetail.description}</p>
+              </div>
+            )}
+
+            <div>
+              <h3 className="mb-4 text-xl font-semibold">읽기 정보</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">시작일</p>
+                  <p className="mt-1 text-base">{bookDetail.startDate ? formatDateYMD(bookDetail.startDate) : "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">최근 업데이트</p>
+                  <p className="mt-1 text-base">{bookDetail.updateDate ? formatDateYMD(bookDetail.updateDate) : "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">진행률</p>
+                  <p className="mt-1 text-base">{bookDetail.progress}%</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">페이지</p>
+                  <p className="mt-1 text-base">{bookDetail.currentPage} / {bookDetail.totalPages}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">평점</p>
+                  <p className="mt-1 text-base">
+                    {bookDetail.rating ? `${bookDetail.rating} / 5` : "-"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </Card>
       )}
     </>
