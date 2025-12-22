@@ -53,23 +53,23 @@ export function NoteSearchSection({
               onClick={() =>
                 onItemClick({ type: "note", id: item.id, bookId: item.bookId })
               }
-              className={`w-full flex items-start gap-3 rounded-md px-3 py-2 cursor-pointer text-left transition-colors ${
+              className={`w-full flex items-start gap-2 sm:gap-3 rounded-lg px-3 sm:px-3 py-2.5 sm:py-2 cursor-pointer text-left transition-all duration-200 ${
                 isSelected
                   ? "bg-primary/10 ring-2 ring-primary/20"
-                  : "hover:bg-muted/80"
+                  : "hover:bg-muted/80 active:bg-muted/60"
               }`}
             >
-              <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-md bg-secondary/60">
-                <FileText className="w-4 h-4 text-secondary-foreground" />
+              <div className="mt-0.5 flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-md bg-secondary/60 flex-shrink-0">
+                <FileText className="w-4 h-4 sm:w-4 sm:h-4 text-secondary-foreground" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-medium">
+              <div className="flex-1 min-w-0 py-0.5">
+                <p className="truncate text-sm sm:text-sm font-medium leading-tight">
                   {item.highlightedTitle}
                 </p>
-                <p className="text-[11px] text-muted-foreground truncate">
+                <p className="text-[11px] sm:text-[11px] text-muted-foreground truncate mt-0.5">
                   {item.highlightedBookTitle}
                 </p>
-                <p className="text-[11px] text-muted-foreground truncate">
+                <p className="text-[11px] sm:text-[11px] text-muted-foreground truncate mt-0.5 line-clamp-1">
                   {item.highlightedSnippet}
                 </p>
               </div>
