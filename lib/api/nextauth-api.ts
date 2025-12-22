@@ -22,7 +22,10 @@ export const authenticatedApiRequest = async <T>(
     throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.')
   }
   
-  const url = `${API_BASE_URL}${endpoint}`
+  // 상대 경로(/api/...)로 시작하면 Next.js API 라우트로, 아니면 백엔드로 직접 요청
+  const url = endpoint.startsWith('/api/') 
+    ? endpoint  // Next.js API 라우트 (상대 경로)
+    : `${API_BASE_URL}${endpoint}`  // 백엔드 직접 요청 (절대 URL)
   
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -40,6 +43,7 @@ export const authenticatedApiRequest = async <T>(
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: 'include', // 쿠키 포함 (Next.js API 라우트용)
   })
   
   const data = await response.json()
