@@ -236,4 +236,13 @@
   .knowledge-node {
     @apply bg-gradient-to-br from-[hsl(var(--primary-muted))] to-[hsl(var(--accent))] rounded-full border-2 border-primary/20 hover:border-primary transition-[var(--transition-smooth)];
   }
+
+  /* Scrollbar hide utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
