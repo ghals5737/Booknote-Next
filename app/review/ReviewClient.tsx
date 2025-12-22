@@ -6,7 +6,7 @@ import { completeReviewItem } from "@/lib/api/review"
 import { UIReviewItem } from "@/lib/types/review/review"
 import { LayoutGrid, LayoutList } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useState } from "react"
 import { EmptyState } from "./components/EmptyState"
 import { ReviewCarousel } from "./components/ReviewCarousel"
 import { ReviewListView } from "./components/ReviewListView"
@@ -21,18 +21,28 @@ export default function ReviewClient({ items }: ReviewClientProps) {
   const router = useRouter()
   const { toast } = useToast()
 
-  useEffect(() => {
-    console.log('[ReviewClient] items:', items)
-  }, [items])
-
-  const handleItemComplete = useCallback(async (itemId: number) => {
+  const handleItemComplete = useCallback(async (itemId: number, isLastItem?: boolean) => {
     try {
       await completeReviewItem(itemId)
-      toast({
-        title: "복습 완료",
-        description: "복습 항목이 완료 처리되었습니다.",
-        variant: "success",
-      })
+      
+      // API 호출 성공 후, 현재 상태에서 마지막 항목인지 다시 확인
+      const remainingItems = items.filter(item => item.id !== itemId && item.status !== "completed")
+      const isActuallyLastItem = remainingItems.length === 0 || isLastItem
+      
+      if (isActuallyLastItem) {
+        toast({
+          title: "축하합니다! 🎉",
+          description: "오늘의 복습을 모두 완료했습니다!",
+          variant: "success",
+        })
+      } else {
+        toast({
+          title: "복습 완료",
+          description: "복습 항목이 완료 처리되었습니다.",
+          variant: "success",
+        })
+      }
+      
       router.refresh()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "복습 완료 처리에 실패했습니다."
@@ -42,7 +52,7 @@ export default function ReviewClient({ items }: ReviewClientProps) {
         variant: "destructive",
       })
     }
-  }, [router, toast])
+  }, [router, toast, items])
 
   const handleItemPostpone = useCallback(async (itemId: number) => {
     try {
@@ -106,7 +116,12 @@ export default function ReviewClient({ items }: ReviewClientProps) {
           items.length === 0 ? (
             <EmptyState />
           ) : (
-            <ReviewCarousel items={items} onItemComplete={handleItemComplete} />
+            <ReviewCarousel 
+              items={items} 
+              onItemComplete={async (itemId: number, isLastItem?: boolean) => {
+                await handleItemComplete(itemId, isLastItem)
+              }} 
+            />
           )
         )}
 

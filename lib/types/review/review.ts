@@ -15,6 +15,8 @@ export interface ReviewItem {
   note: NoteResponse | null;
   quote: QuoteResponse | null;
   bookTitle: string | null;
+  lastReviewTime?: string | null;  // 마지막 복습 시간 (백엔드 개선 시 제공)
+  reviewCount?: number;             // 복습 횟수 (백엔드 개선 시 제공)
 }
 
 export interface Review {
@@ -42,10 +44,13 @@ export interface UIReviewItem {
   date: string;
   tags: string[];
   title?: string;
-  dueDate?: string;
+  dueDate?: string;              // 예정 복습일
   frequency?: string;
   status?: "overdue" | "pending" | "completed";
   itemId: number;
   bookId?: number;
   completedTime?: string | null;
+  lastReviewTime?: string | null; 
+  reviewCount?: number;           
+  lastReviewText?: string;        
 }
