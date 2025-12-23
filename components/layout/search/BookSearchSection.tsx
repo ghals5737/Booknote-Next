@@ -51,20 +51,20 @@ export function BookSearchSection({
               type="button"
               data-item-index={globalIndex}
               onClick={() => onItemClick({ type: "book", id: item.id })}
-              className={`w-full flex items-start gap-3 rounded-md px-3 py-2 cursor-pointer text-left transition-colors ${
+              className={`w-full flex items-start gap-2 sm:gap-3 rounded-lg px-3 sm:px-3 py-2.5 sm:py-2 cursor-pointer text-left transition-all duration-200 ${
                 isSelected
                   ? "bg-primary/10 ring-2 ring-primary/20"
-                  : "hover:bg-muted/80"
+                  : "hover:bg-muted/80 active:bg-muted/60"
               }`}
             >
-              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
-                <BookOpen className="w-4 h-4 text-primary" />
+              <div className="mt-0.5 flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center rounded-md bg-primary/10 flex-shrink-0">
+                <BookOpen className="w-4 h-4 sm:w-4 sm:h-4 text-primary" />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-medium">
+              <div className="flex-1 min-w-0 py-0.5">
+                <p className="truncate text-sm sm:text-sm font-medium leading-tight">
                   {item.highlightedTitle}
                 </p>
-                <p className="text-[11px] text-muted-foreground truncate">
+                <p className="text-[11px] sm:text-[11px] text-muted-foreground truncate mt-0.5">
                   {item.highlightedAuthor} · {item.meta}
                 </p>
               </div>

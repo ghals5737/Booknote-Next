@@ -1,14 +1,45 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useNextAuth } from "@/hooks/use-nextauth"
-import { BookOpen, LogOut, User } from "lucide-react"
+import { BarChart3, BookOpen, LogOut, Menu, RotateCcw, Search, User } from "lucide-react"
+import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { SearchModal } from "./SearchModal"
 
 export function Header() {
   const { isAuthenticated, logout } = useNextAuth()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const pathname = usePathname()
+
+  const menuItems = [
+    {
+      href: "/dashboard",
+      label: "내 서재",
+      icon: BookOpen,
+      isActive: pathname === "/dashboard",
+    },
+    {
+      label: "검색",
+      icon: Search,
+      onClick: () => setIsSearchOpen(true),
+    },
+    {
+      href: "/review",
+      label: "리마인드",
+      icon: RotateCcw,
+      isActive: pathname === "/review",
+    },
+    {
+      href: "/statistics",
+      label: "통계",
+      icon: BarChart3,
+      isActive: pathname === "/statistics",
+    },
+  ]
 
   // Command+K (Mac) 또는 Ctrl+K (Windows/Linux) 단축키 처리
   useEffect(() => {
@@ -47,7 +78,8 @@ export function Header() {
           </div>
           <span className="font-serif text-xl font-semibold">Booknote</span>
         </div>
-        <nav className="flex items-center gap-6">
+        {/* 데스크톱 네비게이션 */}
+        <nav className="hidden md:flex items-center gap-6">
           <a href="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
             내 서재
           </a>
@@ -78,6 +110,105 @@ export function Header() {
             </Button>
           )}
         </nav>
+
+        {/* 모바일 메뉴 */}
+        <div className="flex md:hidden items-center gap-4">
+          <a
+            href="/profile"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+          >
+            <User className="h-4 w-4" />
+          </a>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">메뉴 열기</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[320px] sm:w-[400px] p-0">
+              <div className="flex flex-col h-full">
+                {/* 헤더 */}
+                <div className="flex items-center gap-3 px-6 py-6 border-b border-border">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+                    <BookOpen className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-serif text-lg font-semibold">Booknote</span>
+                    <span className="text-xs text-muted-foreground">메뉴</span>
+                  </div>
+                </div>
+
+                {/* 메뉴 항목 */}
+                <nav className="flex-1 px-4 py-6 space-y-1">
+                  {menuItems.map((item) => {
+                    const Icon = item.icon
+                    const isActive = item.isActive || false
+
+                    if (item.onClick) {
+                      return (
+                        <button
+                          key={item.label}
+                          onClick={() => {
+                            item.onClick?.()
+                            setIsMobileMenuOpen(false)
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 group"
+                        >
+                          <Icon className="h-5 w-5 transition-transform group-hover:scale-110" />
+                          <span>{item.label}</span>
+                        </button>
+                      )
+                    }
+
+                    return (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all duration-200 group ${
+                          isActive
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                        }`}
+                      >
+                        <Icon
+                          className={`h-5 w-5 transition-transform group-hover:scale-110 ${
+                            isActive ? "text-primary" : ""
+                          }`}
+                        />
+                        <span>{item.label}</span>
+                        {isActive && (
+                          <div className="ml-auto h-2 w-2 rounded-full bg-primary" />
+                        )}
+                      </a>
+                    )
+                  })}
+                </nav>
+
+                {/* 구분선 및 로그아웃 */}
+                {isAuthenticated && (
+                  <>
+                    <Separator className="mx-4" />
+                    <div className="px-4 py-4">
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          handleLogout()
+                          setIsMobileMenuOpen(false)
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200 group justify-start"
+                      >
+                        <LogOut className="h-5 w-5 transition-transform group-hover:scale-110 group-hover:rotate-[-15deg]" />
+                        <span>로그아웃</span>
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
       {/* 검색 모달 */}
       {isSearchOpen && (

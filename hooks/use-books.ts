@@ -127,11 +127,6 @@ export function useAddBook() {
     publisher: string;
     pubdate: string;
   }) => {
-    // 인증 상태 확인
-    if (!isAuthenticated || !(user as any)?.id) {
-      throw new Error('로그인이 필요합니다.');
-    }
-
     console.log('[useAddBook] addBook called with user:', user);
     console.log('[useAddBook] bookData:', bookData);
 
@@ -185,11 +180,6 @@ export function useAddUserBook() {
   
   // 사용자와 기존 책(bookId)을 연결하는 API 호출
   const addUserBook = async (payload: { userId: number; bookId: number }) => {
-    // 인증 상태 확인
-    if (!isAuthenticated || !(user as any)?.id) {
-      throw new Error('로그인이 필요합니다.');
-    }
-
     try {
       const result = await authenticatedApiRequest('/api/v1/user-books', {
         method: 'POST',
@@ -216,11 +206,6 @@ export function useDeleteBook() {
   const { user, isAuthenticated } = useNextAuth();
   
   const deleteBook = async (bookId: number) => {
-    // 인증 상태 확인
-    if (!isAuthenticated || !(user as any)?.id) {
-      throw new Error('로그인이 필요합니다.');
-    }
-
     try {
       await authenticatedApiRequest(`/api/v1/user/books/${bookId}`, {
         method: 'DELETE'
@@ -259,11 +244,6 @@ export function useUpdateBook() {
     publisher?: string;
     isbn?: string;
   }) => {
-    // 인증 상태 확인
-    if (!isAuthenticated || !(user as any)?.id) {
-      throw new Error('로그인이 필요합니다.');
-    }
-
     try {
       const result = await authenticatedApiRequest(`/api/v1/user/books/${bookId}`, {
         method: 'PUT',
@@ -287,16 +267,40 @@ export function useUpdateBook() {
   };
 }
 
+export function useUpdateBookRating() {
+  const { user, isAuthenticated } = useNextAuth();
+  
+  const updateRating = async (bookId: number, rating: number): Promise<number> => {
+    try {
+      const result = await authenticatedApiRequest<number>(`/api/v1/user/books/${bookId}/rating`, {
+        method: 'PATCH',
+        body: JSON.stringify({ rating })
+      });
+      
+      // 책 목록 캐시 무효화하여 새로고침
+      await invalidateBookCache();
+      
+      // result.data는 별점 값 (number)을 반환
+      return result.data;
+    } catch (error) {
+      console.error('Error updating book rating:', error);
+      // authenticatedApiRequest에서 이미 에러 메시지를 던지므로 그대로 전달
+      throw error;
+    }
+  };
+
+  return { 
+    updateRating,
+    isAuthenticated,
+    userId: (user as any)?.id,
+  };
+}
+
 // 책 검색 훅 (외부 API 사용)
 export function useSearchBooks() {
   const { isAuthenticated } = useNextAuth();
   
   const searchBooks = async (query: string) => {
-    // 인증 상태 확인
-    if (!isAuthenticated) {
-      throw new Error('로그인이 필요합니다.');
-    }
-
     if (!query.trim()) {
       throw new Error('검색어를 입력해주세요.');
     }

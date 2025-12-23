@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { BOOK_CATEGORY_IDS, BOOK_CATEGORY_LABELS, BookDetailData } from "@/lib/types/book/book";
-import { ImageIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ImageIcon, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -150,20 +151,6 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
                   <p className="text-sm text-muted-foreground">표지 이미지</p>
                 </div>
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="cover" className="text-sm font-medium">
-                표지 URL
-              </Label>
-              <Input
-                id="cover"
-                type="url"
-                value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
-                placeholder="이미지 URL을 입력하세요"
-                className="mt-1.5"
-              />
             </div>
           </div>
 
@@ -313,18 +300,38 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
                 />
               </div>
               <div>
-                <Label htmlFor="rating" className="text-sm font-medium">
-                  평점 (0-5)
+                <Label className="text-sm font-medium mb-1.5 block">
+                  평점
                 </Label>
-                <Input
-                  id="rating"
-                  type="number"
-                  min={0}
-                  max={5}
-                  value={rating}
-                  onChange={(e) => setRating(Math.min(5, Math.max(0, Number(e.target.value) || 0)))}
-                  className="mt-1.5"
-                />
+                <div className="flex items-center gap-1 mt-1.5">
+                  {[1, 2, 3, 4, 5].map((starValue) => (
+                    <button
+                      key={starValue}
+                      type="button"
+                      onClick={() => setRating(rating === starValue ? 0 : starValue)}
+                      className={cn(
+                        "transition-all duration-150",
+                        "hover:scale-110 active:scale-95",
+                        "h-5 w-5"
+                      )}
+                      aria-label={`${starValue}점`}
+                    >
+                      <Star
+                        className={cn(
+                          "h-5 w-5 transition-colors",
+                          starValue <= rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300 hover:text-yellow-200"
+                        )}
+                      />
+                    </button>
+                  ))}
+                  {rating > 0 && (
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      {rating}점
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>

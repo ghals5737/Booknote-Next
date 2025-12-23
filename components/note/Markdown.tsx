@@ -32,8 +32,28 @@ export const Markdown = ({ content, disableInternalLinks = false }: MarkdownProp
           a: (props) => {
             const { href, children, ...rest } = props;
             
-            // 외부 링크는 항상 <a> 태그로 렌더링
+            // 외부 링크 처리
             if (isExternalLink(href)) {
+              // disableInternalLinks가 true면 <span>으로 렌더링 (중첩 <a> 방지)
+              if (disableInternalLinks) {
+                return (
+                  <span
+                    {...rest}
+                    className={`note-link ${rest.className ?? ""} text-primary underline cursor-pointer`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      if (href) {
+                        window.open(href, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
+                  >
+                    {children}
+                  </span>
+                );
+              }
+              
+              // 일반적으로는 <a> 태그로 렌더링
               return (
                 <a
                   {...rest}
