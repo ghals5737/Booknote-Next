@@ -72,8 +72,11 @@ export default function QuoteAddClient({ bookId }: { bookId: string }) {
               value={newQuote.content}
               onChange={(e) => setNewQuote({ ...newQuote, content: e.target.value })}
               placeholder="인상 깊었던 문장을 입력하세요"
+              maxLength={1000}
             />
-            <div className="mt-2 text-right text-xs text-muted-foreground">0/1000자</div>
+            <div className="mt-2 text-right text-xs text-muted-foreground">
+              {newQuote.content.length}/1000자
+            </div>
           </div>
 
           <div>
@@ -86,8 +89,11 @@ export default function QuoteAddClient({ bookId }: { bookId: string }) {
               value={newQuote.memo}
               onChange={(e) => setNewQuote({ ...newQuote, memo: e.target.value })}
               placeholder="인상 깊었던 문장에 대한 생각을 적어보세요"
+              maxLength={1000}
             />
-            <div className="mt-2 text-right text-xs text-muted-foreground">0/1000자</div>
+            <div className="mt-2 text-right text-xs text-muted-foreground">
+              {newQuote.memo.length}/1000자
+            </div>
           </div>
 
 

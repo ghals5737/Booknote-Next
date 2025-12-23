@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { AddUserBookRequest, BOOK_CATEGORY_IDS, BOOK_CATEGORY_LABELS, SearchBookResponse } from "@/lib/types/book/book";
-import { ArrowLeft, ImageIcon, Loader2, Search } from 'lucide-react';
+import { ArrowLeft, Loader2, Search } from 'lucide-react';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const MANUAL_ISBN_PREFIX = "직접입력용 prefix";
 
@@ -46,13 +46,14 @@ export default function AddBookPage() {
     const [publisher, setPublisher] = useState("");
     const [pubdate, setPubdate] = useState("");
     // 검색 상태
+    const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<SearchBookResponse[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [mode, setMode] = useState<"search" | "manual">("search");
     const [hasSelectedBook, setHasSelectedBook] = useState(false);
-    // 마지막으로 자동완성에서 선택한 책 제목 (선택 후에는 같은 제목으로는 다시 검색 안 함)
-    const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
+    // 마지막으로 검색 결과에서 선택한 검색어 (동일 검색어로는 다시 자동 검색 안 함)
+    const [selectedSearchQuery, setSelectedSearchQuery] = useState<string | null>(null);
     const [popupState, setPopupState] = useState({
         open: false,
         title: "",
@@ -60,6 +61,31 @@ export default function AddBookPage() {
         isSuccess: true,
         bookId: null as number | null,
     });
+
+    // 책 표지 섹션으로 스크롤하기 위한 ref
+    const coverSectionRef = useRef<HTMLDivElement | null>(null);
+
+    // 부드러운 스크롤 유틸 (duration ms 동안 스크롤)
+    const smoothScrollTo = (targetY: number, duration: number) => {
+        if (typeof window === "undefined") return;
+        const startY = window.scrollY;
+        const distance = targetY - startY;
+        const startTime = performance.now();
+
+        const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+        const step = (currentTime: number) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const eased = easeOutCubic(progress);
+            window.scrollTo(0, startY + distance * eased);
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            }
+        };
+
+        requestAnimationFrame(step);
+    };
 
     const searchBooks = useCallback(async (query: string) => {
         if (!query.trim() || query.length < 2) {
@@ -90,20 +116,21 @@ export default function AddBookPage() {
         }
     }, []);
 
-    // 책 제목 변경 시 debounce 적용하여 검색
+    // 검색어 변경 시 debounce 적용하여 검색
     useEffect(() => {
         if (mode !== "search") {
             return;
         }
 
-        // 자동완성에서 선택한 뒤, 제목을 그대로 두고 있을 때는 다시 검색하지 않음
-        if (hasSelectedBook && selectedTitle && title === selectedTitle) {
+        // 자동완성에서 선택한 뒤, 검색어를 그대로 두고 있을 때는 다시 검색하지 않음
+        if (hasSelectedBook && selectedSearchQuery && searchQuery === selectedSearchQuery) {
             setShowSearchResults(false);
             return;
         }
+
         const timeoutId = setTimeout(() => {
-            if (title.trim() && title.length >= 2) {
-                searchBooks(title);
+            if (searchQuery.trim() && searchQuery.length >= 2) {
+                searchBooks(searchQuery);
             } else {
                 setSearchResults([]);
                 setShowSearchResults(false);
@@ -111,10 +138,12 @@ export default function AddBookPage() {
         }, 300); // 300ms 딜레이
 
         return () => clearTimeout(timeoutId);
-    }, [title, searchBooks, mode, hasSelectedBook, selectedTitle]);
+    }, [searchQuery, searchBooks, mode, hasSelectedBook, selectedSearchQuery]);
 
     // 검색 결과에서 책 선택 시 폼 자동 채우기
     const handleSelectBook = (book: SearchBookResponse) => {
+        setSearchQuery(book.title || "");
+        setSelectedSearchQuery(book.title || "");
         setTitle(book.title || "");
         setAuthor(book.author || "");
         setDescription(book.description || "");
@@ -127,7 +156,14 @@ export default function AddBookPage() {
         // 가상의 페이지 수 자동 입력 (실제 API에 맞게 조정 가능)
         setPages((prev) => prev || "300");
         setHasSelectedBook(true);
-        setSelectedTitle(book.title || "");
+
+        // 책 표지 섹션으로 부드럽게 스크롤 (렌더가 끝난 뒤에 실행되도록 지연)
+        setTimeout(() => {
+            if (!coverSectionRef.current) return;
+            const rect = coverSectionRef.current.getBoundingClientRect();
+            const targetY = window.scrollY + rect.top - 16; // 상단에 살짝 여백
+            smoothScrollTo(targetY, 800); // 800ms 동안 천천히 스크롤
+        }, 0);
     }
 
     const handleModeChange = (nextMode: "search" | "manual") => {
@@ -136,10 +172,11 @@ export default function AddBookPage() {
         if (nextMode === "manual") {
             setShowSearchResults(false);
             setSearchResults([]);
+            setSearchQuery("");
+            setSelectedSearchQuery(null);
             const manualIsbn = buildManualIsbn();
             setIsbn(manualIsbn);
             setHasSelectedBook(false);
-            setSelectedTitle(null);
         } else {
             setIsbn("");
         }
@@ -247,210 +284,241 @@ export default function AddBookPage() {
         </Link>
 
         <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">새 책 추가</h1>
+          <h1 className="mb-2 text-3xl font-bold">내 서재에 담기</h1>
           <p className="text-muted-foreground">
             읽고 싶은 책이나 읽고 있는 책을 추가해보세요.
           </p>
         </div>
 
-        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1.1fr_320px]">
-          {/* Right Section - Book Information (모바일에서 상단) */}
+        <div className="flex flex-col gap-8">
+          {/* Main Section - Book Information & Cover */}
           <div className="order-1 space-y-6 rounded-lg border bg-card p-6 lg:order-1">
-            <h2 className="text-lg font-semibold">책 정보</h2>
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="relative">
-                <Label htmlFor="title" className="text-sm font-medium">
-                  책 제목
-                </Label>
-                <div className="relative mt-1.5">
-                  <Input
-                    id="title"
-                    value={title}
-                    onChange={(e) => {
-                      const next = e.target.value;
-                      setTitle(next);
-                      // 이미 선택된 책이 있는데 제목을 수정하기 시작하면
-                      // 다시 검색이 가능하도록 선택 상태를 해제
-                      if (hasSelectedBook && selectedTitle && next !== selectedTitle) {
-                        setHasSelectedBook(false);
-                        setSelectedTitle(null);
-                      }
-                    }}
-                    placeholder={
-                      mode === "search"
-                        ? "책 제목을 입력하세요 (2글자 이상 자동 검색)"
-                        : "책 제목을 직접 입력하세요"
+
+            {/* 통합 검색 인풋 */}
+            <div className="relative">
+             
+              <div className="relative mt-1.5">
+                <Input
+                  id="book-search"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSearchQuery(value);
+                    // 이미 선택된 책이 있는데 검색어를 수정하기 시작하면
+                    // 다시 검색이 가능하도록 선택 상태를 해제
+                    if (hasSelectedBook && selectedSearchQuery && value !== selectedSearchQuery) {
+                      setHasSelectedBook(false);
+                      setSelectedSearchQuery(null);
                     }
-                    className="pr-10"
-                    disabled={mode === "manual" && isSearching}
-                  />
-                  {mode === "search" && isSearching && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    </div>
-                  )}
-                  {mode === "search" && !isSearching && title.length >= 2 && (
-                    <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  )}
-                </div>
-                
-                {/* 검색 결과 플로팅 드롭다운 */}
-                {mode === "search" && showSearchResults && searchResults.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 w-full overflow-y-auto rounded-xl border bg-card/95 shadow-xl backdrop-blur">
-                    {searchResults.map((book, index) => (
-                      <button
-                        type="button"
-                        key={book.isbn || `book-${index}`}
-                        className="flex w-full items-center gap-3 border-b p-3 text-left hover:bg-muted last:border-b-0 focus:bg-muted focus:outline-none"
-                        onClick={() => handleSelectBook(book)}
-                      >
-                        {book.image && (
-                          <img
-                            src={book.image}
-                            alt={book.title}
-                            className="h-14 w-10 flex-shrink-0 rounded object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium text-foreground">
-                            {book.title}
-                          </div>
-                          <div className="truncate text-xs text-muted-foreground">
-                            {book.author}
-                          </div>
-                          {book.publisher && (
-                            <div className="truncate text-[11px] text-muted-foreground/70">
-                              {book.publisher}
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    ))}
+                  }}
+                  placeholder={
+                    mode === "search"
+                      ? "책 제목, 저자, 출판사 등으로 검색하세요 (2글자 이상 자동 검색)"
+                      : "검색은 비활성화되어 있어요. 아래에서 직접 입력해주세요."
+                  }
+                  className="pr-10"
+                  disabled={mode === "manual"}
+                />
+                {mode === "search" && isSearching && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   </div>
                 )}
-                <div className="mt-2 text-xs text-muted-foreground">
-                  {mode === "search" ? (
-                    <>
-                      원하는 책이 보이지 않나요?{" "}
-                      <button
-                        type="button"
-                        className="text-primary font-medium underline-offset-2 hover:underline"
-                        onClick={() => handleModeChange("manual")}
-                      >
-                        책 제목 직접 입력하기
-                      </button>
-                    </>
-                  ) : (
-                    <div className="flex flex-col gap-1">
-                      <span>직접 입력 모드입니다. ISBN은 자동으로 생성됩니다.</span>
-                      <button
-                        type="button"
-                        className="self-start text-primary font-medium underline-offset-2 hover:underline"
-                        onClick={() => handleModeChange("search")}
-                      >
-                        검색 모드로 돌아가기
-                      </button>
-                    </div>
-                  )}
+                {mode === "search" && !isSearching && searchQuery.length >= 2 && (
+                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                )}
+              </div>
+
+              {/* 검색 결과 플로팅 드롭다운 */}
+              {mode === "search" && showSearchResults && searchResults.length > 0 && (
+                <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 w-full overflow-y-auto rounded-xl border bg-card/95 shadow-xl backdrop-blur">
+                  {searchResults.map((book, index) => (
+                    <button
+                      type="button"
+                      key={book.isbn || `book-${index}`}
+                      className="flex w-full items-center gap-3 border-b p-3 text-left hover:bg-muted last:border-b-0 focus:bg-muted focus:outline-none"
+                      onClick={() => handleSelectBook(book)}
+                    >
+                      {book.image && (
+                        <img
+                          src={book.image}
+                          alt={book.title}
+                          className="h-14 w-10 flex-shrink-0 rounded object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-medium text-foreground">
+                          {book.title}
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {book.author}
+                        </div>
+                        {book.publisher && (
+                          <div className="truncate text-[11px] text-muted-foreground/70">
+                            {book.publisher}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="mt-2 text-xs text-muted-foreground">
+                {mode === "search" ? (
+                  <>
+                    원하는 책이 보이지 않나요?{" "}
+                    <button
+                      type="button"
+                      className="text-primary font-medium underline-offset-2 hover:underline"
+                      onClick={() => handleModeChange("manual")}
+                    >
+                      책 정보를 직접 입력할게요
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    <span>직접 입력 모드입니다. ISBN은 자동으로 생성됩니다.</span>
+                    <button
+                      type="button"
+                      className="self-start text-primary font-medium underline-offset-2 hover:underline"
+                      onClick={() => handleModeChange("search")}
+                    >
+                      다시 검색해서 찾을래요
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 표지 + 책 정보 영역: 모바일에서는 세로, PC에서는 좌우 배치 */}
+            <div className="mt-6 space-y-6 lg:mt-8 lg:flex lg:items-stretch lg:gap-8 lg:space-y-0">
+              {/* 모바일: 검색 아래, PC: 왼쪽 세로 표지 카드 */}
+              {coverUrl && (
+                <div
+                  ref={coverSectionRef}
+                  className="flex justify-center lg:w-[260px] lg:flex-shrink-0 lg:justify-start"
+                >
+                  <div
+                    className={`flex items-center justify-center overflow-hidden rounded-lg bg-muted transition-all duration-500 ease-out ${
+                      coverUrl
+                        ? "aspect-[3/4] w-[90%] max-w-[320px] opacity-100 lg:h-full lg:aspect-auto lg:w-full lg:max-w-none"
+                        : "h-32 w-[90%] max-w-[320px] opacity-80 lg:h-full lg:w-full lg:max-w-none"
+                    }`}
+                  >
+                    <img
+                      src={coverUrl}
+                      alt="책 표지"
+                      className="h-full w-full object-cover"
+                      style={{ transform: "rotate(-1deg)" }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 책 정보 폼 (PC에서는 오른쪽 컬럼) */}
+              <div className="flex-1">
+                {/* 선택/입력된 책 정보 필드 */}
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {/* 1순위: 책 제목 - 길이가 길 수 있어서 전체 너비 사용 */}
+                  <div className={hasSelectedBook ? "animate-in fade-in-0 slide-in-from-bottom-2 sm:col-span-2" : "sm:col-span-2"}>
+                    <Label htmlFor="title" className="text-sm font-medium">
+                      책 제목
+                    </Label>
+                    <Input
+                      id="title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="책 제목을 입력하세요"
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  {/* 2순위: 저자 / 3순위: 출판사 - 나란히 배치해도 충분한 길이 */}
+                  <div className={hasSelectedBook ? "animate-in fade-in-0 slide-in-from-bottom-2" : ""}>
+                    <Label htmlFor="author" className="text-sm font-medium">
+                      저자
+                    </Label>
+                    <Input
+                      id="author"
+                      value={author}
+                      onChange={(e) => setAuthor(e.target.value)}
+                      placeholder="저자명을 입력하세요"
+                      className="mt-1.5"
+                    />
+                  </div>
+
+                  <div className={hasSelectedBook ? "animate-in fade-in-0 slide-in-from-bottom-2" : ""}>
+                    <Label htmlFor="publisher" className="text-sm font-medium">
+                      출판사
+                    </Label>
+                    <Input
+                      id="publisher"
+                      value={publisher}
+                      onChange={(e) => setPublisher(e.target.value)}
+                      placeholder="출판사를 입력하세요"
+                      className="mt-1.5"
+                    />
+                  </div>
+                </div>
+
+                <div className={`mt-6 grid gap-6 sm:grid-cols-2 ${hasSelectedBook ? "animate-in fade-in-0 slide-in-from-bottom-2" : ""}`}>
+                  <div>
+                    <Label htmlFor="category" className="text-sm font-medium">
+                      카테고리
+                    </Label>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger className="mt-1.5 w-full">
+                        <SelectValue placeholder="카테고리를 선택하세요" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BOOK_CATEGORY_IDS.map((id) => (
+                          <SelectItem key={id} value={id}>
+                            {BOOK_CATEGORY_LABELS[id]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="pages" className="text-sm font-medium">
+                      총 페이지
+                    </Label>
+                    <Input
+                      id="pages"
+                      type="number"
+                      value={pages}
+                      onChange={(e) => setPages(e.target.value)}
+                      placeholder="총 페이지 수"
+                      className="mt-1.5"
+                    />
+                  </div>
+                </div>
+
+                <div className={hasSelectedBook ? "mt-6 animate-in fade-in-0 slide-in-from-bottom-2" : "mt-6"}>
+                  <Label htmlFor="description" className="text-sm font-medium">
+                    책 설명
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="책에 대한 간단한 설명을 입력하세요"
+                    className="mt-1.5 min-h-[120px] resize-none"
+                    maxLength={500}
+                  />
+                  <p className="mt-1.5 text-sm text-muted-foreground">{description.length}/500자</p>
                 </div>
               </div>
-
-              <div className={hasSelectedBook ? "animate-in fade-in-0 slide-in-from-bottom-2" : ""}>
-                <Label htmlFor="author" className="text-sm font-medium">
-                  저자
-                </Label>
-                <Input
-                  id="author"
-                  value={author}
-                  onChange={(e) => setAuthor(e.target.value)}
-                  placeholder="저자명을 입력하세요"
-                  className="mt-1.5"
-                />
-              </div>
-            </div>
-
-            <div className={`grid gap-6 sm:grid-cols-2 ${hasSelectedBook ? "animate-in fade-in-0 slide-in-from-bottom-2" : ""}`}>
-              <div>
-                <Label htmlFor="category" className="text-sm font-medium">
-                  카테고리
-                </Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="카테고리를 선택하세요" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BOOK_CATEGORY_IDS.map((id) => (
-                      <SelectItem key={id} value={id}>
-                        {BOOK_CATEGORY_LABELS[id]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="pages" className="text-sm font-medium">
-                  총 페이지
-                </Label>
-                <Input
-                  id="pages"
-                  type="number"
-                  value={pages}
-                  onChange={(e) => setPages(e.target.value)}
-                  placeholder="총 페이지 수"
-                  className="mt-1.5"
-                />
-              </div>
-            </div>
-
-            <div className={hasSelectedBook ? "animate-in fade-in-0 slide-in-from-bottom-2" : ""}>
-              <Label htmlFor="description" className="text-sm font-medium">
-                책 설명
-              </Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="책에 대한 간단한 설명을 입력하세요"
-                className="mt-1.5 min-h-[120px] resize-none"
-                maxLength={500}
-              />
-              <p className="mt-1.5 text-sm text-muted-foreground">{description.length}/500자</p>
             </div>
           </div>
           
-          {/* Left Section - Book Cover (모바일에서 제목 아래로 이동) */}
-          <div className="order-2 space-y-4 lg:order-2">
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">책 표지</h2>
-              <div
-                className={`flex items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border bg-muted transition-all duration-500 ease-out ${
-                  coverUrl
-                    ? "aspect-[3/4] w-40 max-w-[260px] opacity-100 sm:w-48 md:w-56 lg:w-full lg:max-w-none"
-                    : "h-32 w-full max-w-[260px] opacity-80"
-                }`}
-              >
-                {coverUrl ? (
-                  <img
-                    src={coverUrl}
-                    alt="책 표지"
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                ) : null}
-                <div className={`text-center ${coverUrl ? "hidden" : ""}`}>
-                  <ImageIcon className="mx-auto mb-2 h-10 w-10 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">검색 후 표지가 자동으로 노출돼요</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Action Buttons */}

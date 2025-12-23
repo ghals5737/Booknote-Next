@@ -9,6 +9,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const body = await request.json().catch(() => null);
     const { id } = await params;
     const session = await getServerSession(authOptions);
     
@@ -29,6 +30,7 @@ export async function POST(
         'Content-Type': 'application/json',
       },
       cache: 'no-store',
+      body: body ? JSON.stringify(body) : undefined,
     });
 
     if (!response.ok) {
