@@ -10,16 +10,18 @@ interface RecentBooksProps {
 }
 
 // 쓰로틀 함수: 스크롤 이벤트 성능 최적화
-function throttle<T extends (...args: any[]) => void>(
+function throttle<T extends (...args: unknown[]) => void>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {
-  let inThrottle: boolean;
-  return function (this: any, ...args: Parameters<T>) {
+  let inThrottle = false;
+  return function (this: unknown, ...args: Parameters<T>) {
     if (!inThrottle) {
       func.apply(this, args);
       inThrottle = true;
-      setTimeout(() => (inThrottle = false), limit);
+      setTimeout(() => {
+        inThrottle = false;
+      }, limit);
     }
   };
 }
@@ -48,17 +50,14 @@ export function RecentBooks({ books }: RecentBooksProps) {
   );
 
   // 스크롤 상태 업데이트 (쓰로틀링 적용)
-  const handleScroll = useCallback(
-    throttle(() => {
-      if (scrollContainerRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-        const threshold = 10; // 스크롤 여유 공간
-        setShowLeftArrow(scrollLeft > threshold);
-        setShowRightArrow(scrollLeft < scrollWidth - clientWidth - threshold);
-      }
-    }, 100),
-    []
-  );
+  const handleScroll = throttle(() => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      const threshold = 10; // 스크롤 여유 공간
+      setShowLeftArrow(scrollLeft > threshold);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - threshold);
+    }
+  }, 100);
 
   // 스크롤 함수 (카드 너비 기반 스크롤)
   const scroll = useCallback(

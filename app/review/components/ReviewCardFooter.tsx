@@ -12,7 +12,7 @@ interface ReviewCardFooterProps {
   item: UIReviewItem
   isLoading: boolean
   stage: ReviewStage
-  selectedAssessment?: AssessmentType
+  selectedAssessment: AssessmentType
   onComplete: (itemId: number) => void
   onAssessment?: (assessment: AssessmentType) => void
 }
