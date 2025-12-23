@@ -58,12 +58,14 @@ export const ANIMATION_CONFIG = {
 
 // 인용구 따옴표 설정
 export const QUOTE_MARK_CONFIG = {
-  fontSize: "96px",
-  opacity: 0.1,
+  // 카드 전체와 텍스트 비율에 맞춘 따옴표 크기/위치
+  fontSize: "72px",
+  opacity: 0.08,
   position: {
-    top: "top-10",
+    // 텍스트를 더 잘 감싸도록 살짝 안쪽으로 배치
+    top: "top-16",
     left: "left-10",
-    bottom: "bottom-10",
+    bottom: "bottom-16",
     right: "right-10",
   },
 } as const

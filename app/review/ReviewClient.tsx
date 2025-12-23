@@ -6,7 +6,7 @@ import { completeReviewItem } from "@/lib/api/review"
 import { UIReviewItem } from "@/lib/types/review/review"
 import { LayoutGrid, LayoutList } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { EmptyState } from "./components/EmptyState"
 import { ReviewCarousel } from "./components/ReviewCarousel"
 import { ReviewListView } from "./components/ReviewListView"
@@ -20,6 +20,32 @@ export default function ReviewClient({ items }: ReviewClientProps) {
   const [mode, setMode] = useState<"carousel" | "list">("carousel")
   const router = useRouter()
   const { toast } = useToast()
+
+  // 페이지 진입 시 헤더 아래 내용이 바로 보이도록 천천히 스크롤
+  useEffect(() => {
+    const headerOffset = 90 // 필요하면 이 값만 조절
+    const startY = window.scrollY
+    const targetY = headerOffset
+    const distance = targetY - startY
+    const duration = 800 // ms, 값 키우면 더 천천히 내려감
+    const startTime = performance.now()
+
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+
+    const step = (currentTime: number) => {
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = easeOutCubic(progress)
+
+      window.scrollTo(0, startY + distance * eased)
+
+      if (progress < 1) {
+        window.requestAnimationFrame(step)
+      }
+    }
+
+    window.requestAnimationFrame(step)
+  }, [])
 
   const handleItemComplete = useCallback(async (itemId: number, isLastItem?: boolean) => {
     try {
@@ -76,7 +102,7 @@ export default function ReviewClient({ items }: ReviewClientProps) {
 
   return (
     <div className="min-h-screen bg-[#F8F7F4]">
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-9 pb-12">
         {/* Carousel Mode */}
         {mode === "carousel" && (
           items.length === 0 ? (
@@ -98,7 +124,7 @@ export default function ReviewClient({ items }: ReviewClientProps) {
               <h1 className="text-2xl font-semibold text-[#2D2D2D]">복습 목록</h1>
               <div className="flex items-center gap-2">
                 <Button
-                  variant={mode === "carousel" ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
                   onClick={() => setMode("carousel")}
                   className="flex items-center gap-2"
@@ -107,7 +133,7 @@ export default function ReviewClient({ items }: ReviewClientProps) {
                   집중 모드
                 </Button>
                 <Button
-                  variant={mode === "list" ? "default" : "outline"}
+                  variant="default"
                   size="sm"
                   onClick={() => setMode("list")}
                   className="flex items-center gap-2"

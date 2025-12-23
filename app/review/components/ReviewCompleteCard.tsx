@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { CheckCircle2, Home, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { CARD_STYLES } from "../constants/review.constants"
 
 interface ReviewCompleteCardProps {
   totalCount: number
@@ -17,8 +18,8 @@ export function ReviewCompleteCard({ totalCount }: ReviewCompleteCardProps) {
   }
 
   return (
-    <Card className="h-[calc(100vh-200px)] md:h-[calc(100vh-180px)] flex flex-col overflow-hidden bg-white rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.05)] border-0">
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center space-y-6">
+    <Card className={CARD_STYLES.base}>
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-6 text-center space-y-5 max-w-3xl mx-auto">
         {/* 축하 아이콘 */}
         <div className="relative">
           <div className="flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-[#6366F1]/20 to-[#6366F1]/10">
