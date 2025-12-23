@@ -260,20 +260,6 @@ export default function AddBookPage() {
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="coverUrl" className="text-sm font-medium">
-                표지 URL
-              </Label>
-              <Input
-                id="coverUrl"
-                type="url"
-                value={coverUrl}
-                onChange={(e) => setCoverUrl(e.target.value)}
-                placeholder="이미지 URL을 입력하세요"
-                className="mt-1.5"
-              />
-            </div>
-
             {/* <Button variant="outline" className="w-full">
               <Sparkles className="mr-2 h-4 w-4" />
               AI로 표지 생성
