@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MonthlyStat } from "@/lib/types/statistics/statistics"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MonthlyStat } from "@/lib/types/statistics/statistics";
 
 interface ActivityTabProps {
   monthlyData: MonthlyStat[];
