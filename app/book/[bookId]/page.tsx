@@ -163,6 +163,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
           quoteCount={initialData.quotesData.totalElements}
           initialNotes={initialData.notesData.content }
           initialQuotes={initialData.quotesData.content}
+          bookDetail={initialData.bookDetail}
         />
 
         <Button size="lg" className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg" aria-label="노트 추가">
