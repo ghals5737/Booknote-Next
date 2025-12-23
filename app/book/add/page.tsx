@@ -50,6 +50,9 @@ export default function AddBookPage() {
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
     const [mode, setMode] = useState<"search" | "manual">("search");
+    const [hasSelectedBook, setHasSelectedBook] = useState(false);
+    // 마지막으로 자동완성에서 선택한 책 제목 (선택 후에는 같은 제목으로는 다시 검색 안 함)
+    const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
     const [popupState, setPopupState] = useState({
         open: false,
         title: "",
@@ -92,6 +95,12 @@ export default function AddBookPage() {
         if (mode !== "search") {
             return;
         }
+
+        // 자동완성에서 선택한 뒤, 제목을 그대로 두고 있을 때는 다시 검색하지 않음
+        if (hasSelectedBook && selectedTitle && title === selectedTitle) {
+            setShowSearchResults(false);
+            return;
+        }
         const timeoutId = setTimeout(() => {
             if (title.trim() && title.length >= 2) {
                 searchBooks(title);
@@ -102,7 +111,7 @@ export default function AddBookPage() {
         }, 300); // 300ms 딜레이
 
         return () => clearTimeout(timeoutId);
-    }, [title, searchBooks, mode]);
+    }, [title, searchBooks, mode, hasSelectedBook, selectedTitle]);
 
     // 검색 결과에서 책 선택 시 폼 자동 채우기
     const handleSelectBook = (book: SearchBookResponse) => {
@@ -115,6 +124,10 @@ export default function AddBookPage() {
         setPublisher(book.publisher || "");
         setPubdate(book.pubdate || "");
         setMode("search");
+        // 가상의 페이지 수 자동 입력 (실제 API에 맞게 조정 가능)
+        setPages((prev) => prev || "300");
+        setHasSelectedBook(true);
+        setSelectedTitle(book.title || "");
     }
 
     const handleModeChange = (nextMode: "search" | "manual") => {
@@ -125,6 +138,8 @@ export default function AddBookPage() {
             setSearchResults([]);
             const manualIsbn = buildManualIsbn();
             setIsbn(manualIsbn);
+            setHasSelectedBook(false);
+            setSelectedTitle(null);
         } else {
             setIsbn("");
         }
@@ -141,6 +156,8 @@ export default function AddBookPage() {
         }
         return isbn;
     };
+    
+    const isFormValid = title.trim().length > 0 && author.trim().length > 0;
     
     const handleAddBook = async () => {
         console.log('handleAddBook');
@@ -236,38 +253,9 @@ export default function AddBookPage() {
           </p>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
-          {/* Left Section - Book Cover */}
-          <div className="space-y-4">
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">책 표지</h2>
-              <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted overflow-hidden">
-                {coverUrl ? (
-                  <img
-                    src={coverUrl}
-                    alt="책 표지"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                ) : null}
-                <div className={`text-center ${coverUrl ? 'hidden' : ''}`}>
-                  <ImageIcon className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">표지 이미지</p>
-                </div>
-              </div>
-            </div>
-
-            {/* <Button variant="outline" className="w-full">
-              <Sparkles className="mr-2 h-4 w-4" />
-              AI로 표지 생성
-            </Button> */}
-          </div>
-
-          {/* Right Section - Book Information */}
-          <div className="space-y-6 rounded-lg border bg-card p-6">
+        <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1.1fr_320px]">
+          {/* Right Section - Book Information (모바일에서 상단) */}
+          <div className="order-1 space-y-6 rounded-lg border bg-card p-6 lg:order-1">
             <h2 className="text-lg font-semibold">책 정보</h2>
             <div className="grid gap-6 sm:grid-cols-2">
               <div className="relative">
@@ -278,7 +266,16 @@ export default function AddBookPage() {
                   <Input
                     id="title"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setTitle(next);
+                      // 이미 선택된 책이 있는데 제목을 수정하기 시작하면
+                      // 다시 검색이 가능하도록 선택 상태를 해제
+                      if (hasSelectedBook && selectedTitle && next !== selectedTitle) {
+                        setHasSelectedBook(false);
+                        setSelectedTitle(null);
+                      }
+                    }}
                     placeholder={
                       mode === "search"
                         ? "책 제목을 입력하세요 (2글자 이상 자동 검색)"
@@ -297,40 +294,38 @@ export default function AddBookPage() {
                   )}
                 </div>
                 
-                {/* 검색 결과 드롭다운 */}
+                {/* 검색 결과 플로팅 드롭다운 */}
                 {mode === "search" && showSearchResults && searchResults.length > 0 && (
-                  <div className="absolute z-50 mt-1 w-full rounded-lg border bg-card shadow-lg max-h-80 overflow-y-auto">
+                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 w-full overflow-y-auto rounded-xl border bg-card/95 shadow-xl backdrop-blur">
                     {searchResults.map((book, index) => (
                       <button
                         type="button"
                         key={book.isbn || `book-${index}`}
-                        className="w-full text-left border-b p-3 hover:bg-muted last:border-b-0 focus:bg-muted focus:outline-none"
+                        className="flex w-full items-center gap-3 border-b p-3 text-left hover:bg-muted last:border-b-0 focus:bg-muted focus:outline-none"
                         onClick={() => handleSelectBook(book)}
                       >
-                        <div className="flex items-center gap-3">
-                          {book.image && (
-                            <img
-                              src={book.image}
-                              alt={book.title}
-                              className="h-12 w-9 object-cover rounded"
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-foreground truncate">
-                              {book.title}
-                            </div>
-                            <div className="text-sm text-muted-foreground truncate">
-                              {book.author}
-                            </div>
-                            {book.publisher && (
-                              <div className="text-xs text-muted-foreground/70 truncate">
-                                {book.publisher}
-                              </div>
-                            )}
+                        {book.image && (
+                          <img
+                            src={book.image}
+                            alt={book.title}
+                            className="h-14 w-10 flex-shrink-0 rounded object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium text-foreground">
+                            {book.title}
                           </div>
+                          <div className="truncate text-xs text-muted-foreground">
+                            {book.author}
+                          </div>
+                          {book.publisher && (
+                            <div className="truncate text-[11px] text-muted-foreground/70">
+                              {book.publisher}
+                            </div>
+                          )}
                         </div>
                       </button>
                     ))}
@@ -363,7 +358,7 @@ export default function AddBookPage() {
                 </div>
               </div>
 
-              <div>
+              <div className={hasSelectedBook ? "animate-in fade-in-0 slide-in-from-bottom-2" : ""}>
                 <Label htmlFor="author" className="text-sm font-medium">
                   저자
                 </Label>
@@ -377,7 +372,7 @@ export default function AddBookPage() {
               </div>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className={`grid gap-6 sm:grid-cols-2 ${hasSelectedBook ? "animate-in fade-in-0 slide-in-from-bottom-2" : ""}`}>
               <div>
                 <Label htmlFor="category" className="text-sm font-medium">
                   카테고리
@@ -411,7 +406,7 @@ export default function AddBookPage() {
               </div>
             </div>
 
-            <div>
+            <div className={hasSelectedBook ? "animate-in fade-in-0 slide-in-from-bottom-2" : ""}>
               <Label htmlFor="description" className="text-sm font-medium">
                 책 설명
               </Label>
@@ -426,6 +421,36 @@ export default function AddBookPage() {
               <p className="mt-1.5 text-sm text-muted-foreground">{description.length}/500자</p>
             </div>
           </div>
+          
+          {/* Left Section - Book Cover (모바일에서 제목 아래로 이동) */}
+          <div className="order-2 space-y-4 lg:order-2">
+            <div>
+              <h2 className="mb-3 text-lg font-semibold">책 표지</h2>
+              <div
+                className={`flex items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-border bg-muted transition-all duration-500 ease-out ${
+                  coverUrl
+                    ? "aspect-[3/4] w-40 max-w-[260px] opacity-100 sm:w-48 md:w-56 lg:w-full lg:max-w-none"
+                    : "h-32 w-full max-w-[260px] opacity-80"
+                }`}
+              >
+                {coverUrl ? (
+                  <img
+                    src={coverUrl}
+                    alt="책 표지"
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <div className={`text-center ${coverUrl ? "hidden" : ""}`}>
+                  <ImageIcon className="mx-auto mb-2 h-10 w-10 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">검색 후 표지가 자동으로 노출돼요</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -433,7 +458,7 @@ export default function AddBookPage() {
           <Button variant="outline" asChild>
             <Link href="/">취소</Link>
           </Button>
-          <Button onClick={handleAddBook}>
+          <Button onClick={handleAddBook} disabled={!isFormValid}>
             <span className="mr-1" aria-hidden="true">+</span>
             <span>책 추가하기</span>
           </Button>
