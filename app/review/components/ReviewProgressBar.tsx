@@ -1,6 +1,7 @@
 "use client"
 
-import { Progress } from "@/components/ui/progress"
+import { X } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 interface ReviewProgressBarProps {
@@ -10,6 +11,7 @@ interface ReviewProgressBarProps {
 
 export function ReviewProgressBar({ completedCount, totalCount }: ReviewProgressBarProps) {
   const [animatedValue, setAnimatedValue] = useState(0)
+  const router = useRouter()
   const targetValue = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   useEffect(() => {
@@ -41,15 +43,35 @@ export function ReviewProgressBar({ completedCount, totalCount }: ReviewProgress
     }
   }, [targetValue, animatedValue])
 
+  const handleClose = () => {
+    router.push('/dashboard')
+  }
+
   return (
-    <div className="mb-4 space-y-2">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">진행률</span>
-        <span className="font-semibold">
-          {completedCount} / {totalCount}
-        </span>
+    <div className="w-full px-6 sm:px-8 pt-4 pb-4">
+      <div className="max-w-5xl mx-auto">
+        {/* 미니멀한 프로그레스 바 - 2px 높이 */}
+        <div className="h-[2px] bg-gray-200 mb-4 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-[#6366F1] transition-all duration-300 ease-out rounded-full"
+            style={{ width: `${animatedValue}%` }}
+          />
+        </div>
+        
+        {/* 상단 정보 */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-[#888] font-medium">
+            {completedCount} / {totalCount}
+          </span>
+          <button
+            onClick={handleClose}
+            className="text-[#888] hover:text-[#2D2D2D] transition-colors p-1"
+            aria-label="복습 종료"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
-      <Progress value={animatedValue} className="h-2 transition-none" />
     </div>
   )
 }

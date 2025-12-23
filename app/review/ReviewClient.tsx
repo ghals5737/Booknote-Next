@@ -75,42 +75,8 @@ export default function ReviewClient({ items }: ReviewClientProps) {
   }, [router, toast])
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-1">복습 관리</h1>
-            <p className="text-muted-foreground text-sm">
-              {mode === "carousel"
-                ? `총 ${items.length}개의 카드가 기다리고 있어요.`
-                : "중요한 노트들을 정기적으로 복습하세요"}
-            </p>
-          </div>
-          
-          {/* Mode Toggle */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant={mode === "carousel" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMode("carousel")}
-              className="flex items-center gap-2"
-            >
-              <LayoutGrid className="h-4 w-4" />
-              집중 모드
-            </Button>
-            <Button
-              variant={mode === "list" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setMode("list")}
-              className="flex items-center gap-2"
-            >
-              <LayoutList className="h-4 w-4" />
-              리스트 모드
-            </Button>
-          </div>
-        </div>
-
+    <div className="min-h-screen bg-[#F8F7F4]">
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-24 pb-12">
         {/* Carousel Mode */}
         {mode === "carousel" && (
           items.length === 0 ? (
@@ -127,11 +93,36 @@ export default function ReviewClient({ items }: ReviewClientProps) {
 
         {/* List Mode */}
         {mode === "list" && (
-          <ReviewListView 
-            items={items} 
-            onItemComplete={handleItemComplete} 
-            onItemPostpone={handleItemPostpone} 
-          />
+          <div className="space-y-4">
+            <div className="mb-6 flex items-center justify-between">
+              <h1 className="text-2xl font-semibold text-[#2D2D2D]">복습 목록</h1>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={mode === "carousel" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMode("carousel")}
+                  className="flex items-center gap-2"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  집중 모드
+                </Button>
+                <Button
+                  variant={mode === "list" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMode("list")}
+                  className="flex items-center gap-2"
+                >
+                  <LayoutList className="h-4 w-4" />
+                  리스트 모드
+                </Button>
+              </div>
+            </div>
+            <ReviewListView 
+              items={items} 
+              onItemComplete={handleItemComplete} 
+              onItemPostpone={handleItemPostpone} 
+            />
+          </div>
         )}
       </main>
     </div>

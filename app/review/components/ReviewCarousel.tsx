@@ -13,6 +13,7 @@ import { useCallback, useState } from "react"
 import { useCarouselKeyboard } from "../hooks/useCarouselKeyboard"
 import { useReviewProgress } from "../hooks/useReviewProgress"
 import { ReviewCarouselItem } from "./ReviewCarouselItem"
+import { ReviewCompleteCard } from "./ReviewCompleteCard"
 import { ReviewProgressBar } from "./ReviewProgressBar"
 import { ReviewStartCard } from "./ReviewStartCard"
 
@@ -24,6 +25,7 @@ interface ReviewCarouselProps {
 export function ReviewCarousel({ items, onItemComplete }: ReviewCarouselProps) {
   const [api, setApi] = useState<CarouselApi>()
   const [isLoading, setIsLoading] = useState(false)
+  const [hasCompletedAll, setHasCompletedAll] = useState(false)
   const { completedCount, totalCount } = useReviewProgress(items)
 
   useCarouselKeyboard(api)
@@ -43,21 +45,42 @@ export function ReviewCarousel({ items, onItemComplete }: ReviewCarouselProps) {
       const isLastItem = remainingItems.length === 0
       
       await onItemComplete(itemId, isLastItem)
+      
+      // 마지막 항목 완료 시 완료 카드 표시 및 자동 이동
+      if (isLastItem) {
+        setHasCompletedAll(true)
+
+        if (api) {
+          // 약간의 지연 후 완료 카드로 이동 (애니메이션 및 상태 업데이트 대기)
+          setTimeout(() => {
+            const totalSlides = items.length + 2 // 시작 카드 + 복습 카드들 + 완료 카드
+            api.scrollTo(totalSlides - 1)
+          }, 300)
+        }
+      }
     } finally {
       setIsLoading(false)
     }
-  }, [onItemComplete, isLoading, items])
+  }, [onItemComplete, isLoading, items, api])
+
+  // 모든 항목이 완료되었는지 확인
+  const allCompletedFromData = completedCount === totalCount && totalCount > 0
+  const showCompleteCard = hasCompletedAll || allCompletedFromData
 
   return (
     <>
       <ReviewProgressBar completedCount={completedCount} totalCount={totalCount} />
 
-      <div className="relative">
+      <div className="relative mt-4">
         <Carousel setApi={setApi} className="w-full" opts={{ align: "start", loop: false }}>
           <CarouselContent className="-ml-2 md:-ml-4">
             {/* 시작 카드 */}
             <CarouselItem className="pl-2 md:pl-4">
-              <ReviewStartCard onStart={handleStart} totalCount={totalCount} />
+              <ReviewStartCard
+                onStart={handleStart}
+                totalCount={totalCount}
+                isAllCompleted={showCompleteCard}
+              />
             </CarouselItem>
             
             {/* 복습 카드들 */}
@@ -70,6 +93,13 @@ export function ReviewCarousel({ items, onItemComplete }: ReviewCarouselProps) {
                 />
               </CarouselItem>
             ))}
+
+            {/* 완료 카드 - 모든 항목이 완료되었을 때 또는 로컬 상태에서 완료로 판단될 때 표시 */}
+            {showCompleteCard && (
+              <CarouselItem className="pl-2 md:pl-4">
+                <ReviewCompleteCard totalCount={totalCount} />
+              </CarouselItem>
+            )}
           </CarouselContent>
 
           <CarouselPrevious className="hidden md:flex -left-12" />

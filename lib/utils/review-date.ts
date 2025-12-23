@@ -121,7 +121,7 @@ export function getReviewCountText(reviewCount: number | undefined): string | nu
     return null
   }
   
-  if (reviewCount === 1) {
+  if (reviewCount === 0 || reviewCount === 1) {
     return "첫 복습"
   } else {
     return `${reviewCount}번째 복습`

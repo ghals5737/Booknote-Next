@@ -2,6 +2,10 @@
 
 import { Card } from "@/components/ui/card"
 import { UIReviewItem } from "@/lib/types/review/review"
+import { motion } from "framer-motion"
+import { useState } from "react"
+import { ANIMATION_CONFIG, CARD_STYLES } from "../constants/review.constants"
+import { AssessmentType } from "../types/review.types"
 import { ReviewCardContent } from "./ReviewCardContent"
 import { ReviewCardFooter } from "./ReviewCardFooter"
 import { ReviewCardHeader } from "./ReviewCardHeader"
@@ -12,23 +16,38 @@ interface ReviewCarouselItemProps {
   onComplete: (itemId: number) => void
 }
 
+const MotionCard = motion(Card)
+
 export function ReviewCarouselItem({ item, isLoading, onComplete }: ReviewCarouselItemProps) {
-  const handleAssessment = () => {
-    // 평가 선택 시 단순 완료 처리 (평가는 저장하지 않음)
+  const [selectedAssessment, setSelectedAssessment] = useState<AssessmentType>(null)
+
+  const handleAssessment = (assessment: AssessmentType) => {
+    setSelectedAssessment(assessment)
+  }
+
+  const handleComplete = () => {
     onComplete(item.id)
   }
 
   return (
-    <Card className="h-[calc(100vh-200px)] md:h-[calc(100vh-180px)] flex flex-col overflow-hidden">
+    <MotionCard
+      layout
+      initial={ANIMATION_CONFIG.card.initial}
+      animate={ANIMATION_CONFIG.card.animate}
+      exit={ANIMATION_CONFIG.card.exit}
+      transition={ANIMATION_CONFIG.card.transition}
+      className={CARD_STYLES.base}
+    >
       <ReviewCardHeader item={item} />
       <ReviewCardContent item={item} />
       <ReviewCardFooter 
         item={item} 
         isLoading={isLoading} 
         stage="revealed"
-        onComplete={onComplete}
+        selectedAssessment={selectedAssessment}
+        onComplete={handleComplete}
         onAssessment={handleAssessment}
       />
-    </Card>
+    </MotionCard>
   )
 }
