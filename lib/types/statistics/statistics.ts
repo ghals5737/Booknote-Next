@@ -21,10 +21,24 @@ export interface CategoryStat {
   count: number;
 }
 
+export interface TagStat {
+  tagName: string;
+  usageCount: number;
+}
+
+export interface ActivityStat {
+  currentStreak: number;
+  maxStreak: number;
+  lastActivityDate: string;
+  totalReadTimeMinutes: number;
+}
+
 export interface StatisticsResponse {
   summary: StatSummary;
   monthly: MonthlyStat[];
   category: CategoryStat[];
+  tag: TagStat[];
+  activity: ActivityStat;
 }
 
 export interface StatisticsApiResponse {

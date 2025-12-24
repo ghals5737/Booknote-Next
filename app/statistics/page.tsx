@@ -30,7 +30,8 @@ async function getStatisticsData(): Promise<StatisticsResponse> {
 
 export default async function StatisticsPage() {
   const statisticsData = await getStatisticsData();
-  
+  console.log("statisticsData");
+  console.log(statisticsData);
   return <StatisticsClient statisticsData={statisticsData} />
 }
 
