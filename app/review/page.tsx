@@ -136,7 +136,6 @@ export default async function ReviewPage() {
 
   const reviews = await getTodayReviews()
   
-  // 모든 review의 items를 평탄화하고 UIReviewItem으로 변환
   const uiItems: UIReviewItem[] = []
   reviews.forEach(review => {
     review.items.forEach(item => {
