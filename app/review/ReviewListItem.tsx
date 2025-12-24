@@ -8,7 +8,7 @@ import { useState } from "react"
 
 interface ReviewListItemProps {
   item: UIReviewItem
-  onComplete: (itemId: number) => Promise<void>
+  onComplete: (itemId: number, assessment?: "forgot" | "hard" | "easy" | null) => Promise<void>
   onPostpone: (itemId: number) => Promise<void>
 }
 
@@ -19,7 +19,7 @@ export function ReviewListItem({ item, onComplete, onPostpone }: ReviewListItemP
     if (isLoading || item.status === "completed") return
     setIsLoading(true)
     try {
-      await onComplete(item.id)
+      await onComplete(item.id, null) // 리스트 뷰에서는 평가 없이 완료 (기본값 NORMAL 사용)
     } finally {
       setIsLoading(false)
     }

@@ -3,15 +3,11 @@ import { useMemo } from "react"
 
 export function useReviewProgress(items: UIReviewItem[]) {
   return useMemo(() => {
-    const today = new Date().toISOString().split('T')[0]
-    const completedTodayCount = items.filter(item => {
-      if (!item.completedTime) return false
-      const completedDate = new Date(item.completedTime).toISOString().split('T')[0]
-      return completedDate === today
-    }).length
+    // status가 "completed"인 항목 수를 카운트
+    const completedCount = items.filter(item => item.status === "completed").length
     
     return {
-      completedCount: completedTodayCount,
+      completedCount,
       totalCount: items.length
     }
   }, [items])

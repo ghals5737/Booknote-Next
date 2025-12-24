@@ -62,11 +62,11 @@ export const QUOTE_MARK_CONFIG = {
   fontSize: "72px",
   opacity: 0.08,
   position: {
-    // 텍스트를 더 잘 감싸도록 살짝 안쪽으로 배치
-    top: "top-16",
-    left: "left-10",
-    bottom: "bottom-16",
-    right: "right-10",
+    // 텍스트를 더 잘 감싸도록 바깥쪽으로 배치
+    top: "top-12",
+    left: "left-4 md:left-6",
+    bottom: "bottom-12",
+    right: "right-2 md:right-4",
   },
 } as const
 

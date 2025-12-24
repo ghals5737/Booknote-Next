@@ -18,13 +18,13 @@ export function ReviewCardContent({ item }: ReviewCardContentProps) {
       : item.content
 
   // 한글 인용문 길이에 맞게 비교적 낮은 기준으로 단계 조절
-  let quoteTextSizeClass = "text-3xl md:text-4xl lg:text-5xl" // 짧은 문장
+  let quoteTextSizeClass = "text-2xl md:text-3xl lg:text-4xl" // 짧은 문장
   if (contentLength > 220) {
     // 아주 긴 문장
-    quoteTextSizeClass = "text-xl md:text-2xl lg:text-3xl"
+    quoteTextSizeClass = "text-lg md:text-xl lg:text-2xl"
   } else if (contentLength > 120) {
     // 중간 이상 길이
-    quoteTextSizeClass = "text-2xl md:text-3xl lg:text-4xl"
+    quoteTextSizeClass = "text-xl md:text-2xl lg:text-3xl"
   }
 
   return (
@@ -55,7 +55,7 @@ export function ReviewCardContent({ item }: ReviewCardContentProps) {
             >
               &rdquo;
             </div>
-            <p className={`text-center leading-relaxed px-8 ${quoteTextSizeClass} font-serif text-[#2D2D2D] relative z-10`}>
+            <p className={`text-center leading-relaxed px-12 md:px-16 lg:px-20 ${quoteTextSizeClass} font-serif text-[#2D2D2D] relative z-10`}>
               {quotePreview}
             </p>
           </div>

@@ -13,7 +13,7 @@ import { ReviewCardHeader } from "./ReviewCardHeader"
 interface ReviewCarouselItemProps {
   item: UIReviewItem
   isLoading: boolean
-  onComplete: (itemId: number) => void
+  onComplete: (itemId: number, assessment?: "forgot" | "hard" | "easy" | null) => void
 }
 
 const MotionCard = motion(Card)
@@ -26,7 +26,7 @@ export function ReviewCarouselItem({ item, isLoading, onComplete }: ReviewCarous
   }
 
   const handleComplete = () => {
-    onComplete(item.id)
+    onComplete(item.id, selectedAssessment)
   }
 
   return (

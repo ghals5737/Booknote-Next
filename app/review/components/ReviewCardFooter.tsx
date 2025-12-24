@@ -13,7 +13,7 @@ interface ReviewCardFooterProps {
   isLoading: boolean
   stage: ReviewStage
   selectedAssessment: AssessmentType
-  onComplete: (itemId: number) => void
+  onComplete: (itemId: number, assessment?: AssessmentType) => void
   onAssessment?: (assessment: AssessmentType) => void
 }
 
@@ -47,7 +47,7 @@ export function ReviewCardFooter({
             <CompleteButton
               isLoading={isLoading}
               isCompleted={item.status === "completed"}
-              onClick={() => onComplete(item.id)}
+              onClick={() => onComplete(item.id, selectedAssessment)}
             />
           )}
         </>
@@ -69,7 +69,7 @@ export function ReviewCardFooter({
             className={`h-12 text-sm bg-[#6366F1] hover:bg-[#6366F1]/90 text-white ${item.bookId ? "flex-1" : "w-full"}`}
             onClick={(e) => {
               e.preventDefault()
-              onComplete(item.id)
+              onComplete(item.id, null)
             }}
             disabled={isLoading || item.status === "completed"}
           >

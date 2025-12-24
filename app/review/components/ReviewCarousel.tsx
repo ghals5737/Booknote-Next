@@ -9,7 +9,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel"
 import { UIReviewItem } from "@/lib/types/review/review"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useCarouselKeyboard } from "../hooks/useCarouselKeyboard"
 import { useReviewProgress } from "../hooks/useReviewProgress"
 import { ReviewCarouselItem } from "./ReviewCarouselItem"
@@ -19,7 +19,7 @@ import { ReviewStartCard } from "./ReviewStartCard"
 
 interface ReviewCarouselProps {
   items: UIReviewItem[]
-  onItemComplete: (itemId: number, isLastItem?: boolean) => Promise<void>
+  onItemComplete: (itemId: number, assessment?: "forgot" | "hard" | "easy" | null, isLastItem?: boolean) => Promise<void>
 }
 
 export function ReviewCarousel({ items, onItemComplete }: ReviewCarouselProps) {
@@ -30,12 +30,26 @@ export function ReviewCarousel({ items, onItemComplete }: ReviewCarouselProps) {
 
   useCarouselKeyboard(api)
 
+  // 모든 항목이 완료되었는지 확인하고 완료 카드 표시
+  useEffect(() => {
+    if (completedCount === totalCount && totalCount > 0) {
+      setHasCompletedAll(true)
+      // 완료 카드로 자동 이동
+      if (api) {
+        setTimeout(() => {
+          const totalSlides = items.length + 2 // 시작 카드 + 복습 카드들 + 완료 카드
+          api.scrollTo(totalSlides - 1)
+        }, 300)
+      }
+    }
+  }, [completedCount, totalCount, api, items.length])
+
   const handleStart = useCallback(() => {
     // 첫 번째 복습 카드로 이동 (인덱스 1, 시작 카드가 0번)
     api?.scrollTo(1)
   }, [api])
 
-  const handleComplete = useCallback(async (itemId: number) => {
+  const handleComplete = useCallback(async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null) => {
     if (isLoading) return
 
     setIsLoading(true)
@@ -44,7 +58,7 @@ export function ReviewCarousel({ items, onItemComplete }: ReviewCarouselProps) {
       const remainingItems = items.filter(item => item.id !== itemId && item.status !== "completed")
       const isLastItem = remainingItems.length === 0
       
-      await onItemComplete(itemId, isLastItem)
+      await onItemComplete(itemId, assessment, isLastItem)
       
       // 마지막 항목 완료 시 완료 카드 표시 및 자동 이동
       if (isLastItem) {
@@ -56,6 +70,12 @@ export function ReviewCarousel({ items, onItemComplete }: ReviewCarouselProps) {
             const totalSlides = items.length + 2 // 시작 카드 + 복습 카드들 + 완료 카드
             api.scrollTo(totalSlides - 1)
           }, 300)
+        }
+      } else {
+        // 마지막 항목이 아니어도 모든 항목이 완료되었는지 확인
+        const allCompleted = items.every(item => item.id === itemId || item.status === "completed")
+        if (allCompleted) {
+          setHasCompletedAll(true)
         }
       }
     } finally {
