@@ -47,9 +47,19 @@ export default function ReviewClient({ items }: ReviewClientProps) {
     window.requestAnimationFrame(step)
   }, [])
 
-  const handleItemComplete = useCallback(async (itemId: number, isLastItem?: boolean) => {
+  const handleItemComplete = useCallback(async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null, isLastItem?: boolean) => {
     try {
-      await completeReviewItem(itemId)
+      // assessment를 ReviewResponseType으로 변환
+      let responseType: "EASY" | "NORMAL" | "DIFFICULT" | "FORGOT" = "NORMAL"
+      if (assessment === "easy") {
+        responseType = "EASY"
+      } else if (assessment === "hard") {
+        responseType = "DIFFICULT"
+      } else if (assessment === "forgot") {
+        responseType = "FORGOT"
+      }
+      
+      await completeReviewItem(itemId, responseType)
       
       // API 호출 성공 후, 현재 상태에서 마지막 항목인지 다시 확인
       const remainingItems = items.filter(item => item.id !== itemId && item.status !== "completed")
@@ -108,12 +118,37 @@ export default function ReviewClient({ items }: ReviewClientProps) {
           items.length === 0 ? (
             <EmptyState />
           ) : (
-            <ReviewCarousel 
-              items={items} 
-              onItemComplete={async (itemId: number, isLastItem?: boolean) => {
-                await handleItemComplete(itemId, isLastItem)
-              }} 
-            />
+            <div className="space-y-4">
+              <div className="mb-6 flex items-center justify-between">
+                <h1 className="text-2xl font-semibold text-[#2D2D2D]">복습하기</h1>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setMode("carousel")}
+                    className="flex items-center gap-2"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                    집중 모드
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setMode("list")}
+                    className="flex items-center gap-2"
+                  >
+                    <LayoutList className="h-4 w-4" />
+                    리스트 모드
+                  </Button>
+                </div>
+              </div>
+              <ReviewCarousel 
+                items={items} 
+                onItemComplete={async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null, isLastItem?: boolean) => {
+                  await handleItemComplete(itemId, assessment, isLastItem)
+                }} 
+              />
+            </div>
           )
         )}
 
@@ -145,7 +180,9 @@ export default function ReviewClient({ items }: ReviewClientProps) {
             </div>
             <ReviewListView 
               items={items} 
-              onItemComplete={handleItemComplete} 
+              onItemComplete={async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null) => {
+                await handleItemComplete(itemId, assessment)
+              }} 
               onItemPostpone={handleItemPostpone} 
             />
           </div>

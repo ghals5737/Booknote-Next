@@ -2,12 +2,13 @@
 
 import { UIReviewItem } from "@/lib/types/review/review"
 import { AlertCircle, Calendar, CheckCircle, StickyNote } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { ReviewListItem } from "../ReviewListItem"
 
 interface ReviewListViewProps {
   items: UIReviewItem[]
-  onItemComplete: (itemId: number) => Promise<void>
+  onItemComplete: (itemId: number, assessment?: "forgot" | "hard" | "easy" | null) => Promise<void>
   onItemPostpone: (itemId: number) => Promise<void>
 }
 
@@ -17,6 +18,7 @@ export function ReviewListView({
   onItemPostpone 
 }: ReviewListViewProps) {
   const [activeTab, setActiveTab] = useState("전체")
+  const router = useRouter()
 
   // 탭별 필터링
   const filteredItems = items.filter((item) => {
@@ -38,10 +40,10 @@ export function ReviewListView({
   ]
 
   const stats = [
-    { icon: Calendar, label: "오늘 복습", count: items.filter((i) => i.status === "pending").length, color: "bg-blue-100 text-blue-600" },
-    { icon: AlertCircle, label: "밀린 복습", count: items.filter((i) => i.status === "overdue").length, color: "bg-red-100 text-red-600" },
-    { icon: CheckCircle, label: "완료된 복습", count: items.filter((i) => i.status === "completed").length, color: "bg-green-100 text-green-600" },
-    { icon: StickyNote, label: "전체 노트", count: items.length, color: "bg-purple-100 text-purple-600" },
+    { icon: Calendar, label: "오늘 복습", count: items.filter((i) => i.status === "pending").length, color: "bg-blue-100 text-blue-600", onClick: null },
+    { icon: AlertCircle, label: "밀린 복습", count: items.filter((i) => i.status === "overdue").length, color: "bg-red-100 text-red-600", onClick: null },
+    { icon: CheckCircle, label: "완료된 복습", count: items.filter((i) => i.status === "completed").length, color: "bg-green-100 text-green-600", onClick: () => router.push('/review/history') },
+    { icon: StickyNote, label: "전체 노트", count: items.length, color: "bg-purple-100 text-purple-600", onClick: null },
   ]
 
   return (
@@ -51,7 +53,10 @@ export function ReviewListView({
         {stats.map((stat, index) => (
           <div
             key={index}
-            className="bg-card border border-border rounded-lg p-6 flex flex-col items-center justify-center gap-3"
+            onClick={stat.onClick || undefined}
+            className={`bg-card border border-border rounded-lg p-6 flex flex-col items-center justify-center gap-3 ${
+              stat.onClick ? "cursor-pointer hover:border-primary hover:shadow-md transition-all" : ""
+            }`}
           >
             <div className={`w-12 h-12 rounded-full ${stat.color} flex items-center justify-center`}>
               <stat.icon className="w-6 h-6" />
