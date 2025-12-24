@@ -26,7 +26,6 @@ export async function POST(
       method: 'POST',
       headers: { 
         'Authorization': `Bearer ${session.accessToken}`,
-        'Content-Type': 'application/json',
       },
       cache: 'no-store',
     });

@@ -9,7 +9,18 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json().catch(() => null);
+    let body = null;
+    try {
+      const requestBody = await request.json();
+      // body가 빈 객체가 아니고 실제 데이터가 있을 때만 사용
+      if (requestBody && Object.keys(requestBody).length > 0) {
+        body = requestBody;
+      }
+    } catch {
+      // body가 없거나 파싱할 수 없으면 null 유지
+      body = null;
+    }
+    
     const { id } = await params;
     const session = await getServerSession(authOptions);
     
@@ -23,15 +34,24 @@ export async function POST(
     const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/review-items/${id}/success`;
     console.log('[proxy] POST review-items success ->', upstreamUrl);
 
-    const response = await fetch(upstreamUrl, {
+    // body가 있을 때만 body와 Content-Type 헤더를 포함
+    const fetchOptions: RequestInit = {
       method: 'POST',
       headers: { 
         'Authorization': `Bearer ${session.accessToken}`,
-        'Content-Type': 'application/json',
       },
       cache: 'no-store',
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    };
+
+    if (body) {
+      fetchOptions.headers = {
+        ...fetchOptions.headers,
+        'Content-Type': 'application/json',
+      };
+      fetchOptions.body = JSON.stringify(body);
+    }
+
+    const response = await fetch(upstreamUrl, fetchOptions);
 
     if (!response.ok) {
       const text = await response.text().catch(() => '');
