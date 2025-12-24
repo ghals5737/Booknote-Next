@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { CheckCircle2, History, Home, Sparkles } from "lucide-react"
+import { CheckCircle2, Home, Sparkles } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { CARD_STYLES } from "../constants/review.constants"
 
@@ -17,14 +17,9 @@ export function ReviewCompleteCard({ totalCount }: ReviewCompleteCardProps) {
     router.push('/dashboard')
   }
 
-  const handleGoToHistory = () => {
-    router.push('/review/history')
-  }
-
   return (
     <Card 
-      className={`${CARD_STYLES.base} cursor-pointer hover:shadow-lg transition-shadow`}
-      onClick={handleGoToHistory}
+      className={CARD_STYLES.base}
     >
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-6 text-center space-y-5 max-w-3xl mx-auto">
         {/* 축하 아이콘 */}
@@ -57,30 +52,13 @@ export function ReviewCompleteCard({ totalCount }: ReviewCompleteCardProps) {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full max-w-md">
+        <div className="mt-8 w-full max-w-xs">
           <Button
-            size="lg"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleGoToHistory()
-            }}
-            variant="default"
-            className="flex-1 px-8 py-6 text-lg bg-[#6366F1] hover:bg-[#6366F1]/90 text-white"
+            onClick={handleGoToDashboard}
+            className="w-full h-12 bg-[#6366F1] hover:bg-[#6366F1]/90 text-white shadow-sm hover:shadow-md transition-all duration-200 font-medium"
           >
-            <History className="mr-2 h-5 w-5" />
-            복습 히스토리
-          </Button>
-          <Button
-            size="lg"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleGoToDashboard()
-            }}
-            variant="outline"
-            className="flex-1 px-8 py-6 text-lg"
-          >
-            <Home className="mr-2 h-5 w-5" />
-            대시보드
+            <Home className="mr-2 h-4 w-4" />
+            대시보드로 돌아가기
           </Button>
         </div>
       </div>
