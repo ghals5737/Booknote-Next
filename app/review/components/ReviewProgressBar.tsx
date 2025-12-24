@@ -1,7 +1,5 @@
 "use client"
 
-import { X } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 interface ReviewProgressBarProps {
@@ -11,7 +9,6 @@ interface ReviewProgressBarProps {
 
 export function ReviewProgressBar({ completedCount, totalCount }: ReviewProgressBarProps) {
   const [animatedValue, setAnimatedValue] = useState(0)
-  const router = useRouter()
   const targetValue = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   useEffect(() => {
@@ -43,10 +40,6 @@ export function ReviewProgressBar({ completedCount, totalCount }: ReviewProgress
     }
   }, [targetValue, animatedValue])
 
-  const handleClose = () => {
-    router.push('/dashboard')
-  }
-
   return (
     <div className="w-full px-6 sm:px-8 pt-4 pb-4">
       <div className="max-w-5xl mx-auto">
@@ -59,17 +52,10 @@ export function ReviewProgressBar({ completedCount, totalCount }: ReviewProgress
         </div>
         
         {/* 상단 정보 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-start">
           <span className="text-sm text-[#888] font-medium">
             {completedCount} / {totalCount}
           </span>
-          <button
-            onClick={handleClose}
-            className="text-[#888] hover:text-[#2D2D2D] transition-colors p-1"
-            aria-label="복습 종료"
-          >
-            <X className="h-5 w-5" />
-          </button>
         </div>
       </div>
     </div>
