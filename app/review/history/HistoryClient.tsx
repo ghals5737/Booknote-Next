@@ -11,6 +11,8 @@ import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
 import useSWR from "swr"
 import useSWRInfinite from "swr/infinite"
+import { NoteResponse } from "../../../lib/types/note/note"
+import { QuoteResponse } from "../../../lib/types/quote/quote"
 import { ReviewListItem } from "../ReviewListItem"
 
 // 히스토리 API 응답 타입
@@ -21,8 +23,8 @@ interface ReviewHistoryItem {
   itemId: number
   completed: boolean
   completedTime: string | null
-  note: any | null
-  quote: any | null
+  note: NoteResponse | null
+  quote: QuoteResponse | null
   bookTitle: string | null
   lastReviewTime?: string | null
   reviewCount?: number
@@ -70,7 +72,7 @@ function convertToUIReviewItem(
   reviewItem: ReviewItem,
   review: Review
 ): UIReviewItem {
-  const status: "completed" = "completed"
+  const status: "completed" = "completed" as const;
   
   if (reviewItem.itemType === "NOTE" && reviewItem.note) {
     const note = reviewItem.note
