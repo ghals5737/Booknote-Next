@@ -3,8 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { authenticatedApiRequest } from "@/lib/api/nextauth-api"
-import { Review, ReviewItem, UIReviewItem } from "@/lib/types/review/review"
 import { PageResponse } from "@/lib/types/pagenation/pagenation"
+import { Review, ReviewItem, UIReviewItem } from "@/lib/types/review/review"
 import { getLastReviewDate, getLastReviewText } from "@/lib/utils/review-date"
 import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
@@ -294,82 +294,86 @@ export default function HistoryClient() {
 
   return (
     <div className="min-h-screen bg-[#F8F7F4]">
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-9 pb-12">
+      <main className={`mx-auto max-w-5xl ${isMobile ? 'px-4 pb-6' : 'px-4 sm:px-6 lg:px-8'} pt-4 sm:pt-9 pb-12`}>
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
+        <div className="mb-4 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
             <Link href="/review">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-muted-foreground hover:text-foreground h-10 w-10 sm:h-9 sm:w-9"
+              >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-[#2D2D2D]">복습 히스토리</h1>
-              <p className="text-sm text-muted-foreground mt-1">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#2D2D2D]">복습 히스토리</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
                 완료된 복습을 날짜별로 확인할 수 있습니다
               </p>
             </div>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-card border border-border rounded-lg p-6 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6" />
+          {/* Stats Cards - 모바일: 컴팩트, PC: 가로 배치 */}
+          <div className={`grid ${isMobile ? 'grid-cols-3 gap-2' : 'grid-cols-1 sm:grid-cols-3 gap-4'} mb-4 sm:mb-6`}>
+            <div className={`bg-card border border-border rounded-lg ${isMobile ? 'p-3' : 'p-6'} flex ${isMobile ? 'flex-col items-center text-center' : 'items-center gap-4'}`}>
+              <div className={`${isMobile ? 'w-10 h-10 mb-2' : 'w-12 h-12'} rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0`}>
+                <CheckCircle2 className={isMobile ? "w-5 h-5" : "w-6 h-6"} />
               </div>
-              <div>
-                <div className="text-2xl font-bold">{stats.total}</div>
-                <div className="text-sm text-muted-foreground">전체 완료</div>
-              </div>
-            </div>
-            <div className="bg-card border border-border rounded-lg p-6 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <div>
-                <div className="text-2xl font-bold">{stats.notes}</div>
-                <div className="text-sm text-muted-foreground">노트</div>
+              <div className={isMobile ? "w-full" : ""}>
+                <div className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold`}>{stats.total}</div>
+                <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground ${isMobile ? 'mt-0.5' : ''}`}>전체 완료</div>
               </div>
             </div>
-            <div className="bg-card border border-border rounded-lg p-6 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                <Calendar className="w-6 h-6" />
+            <div className={`bg-card border border-border rounded-lg ${isMobile ? 'p-3' : 'p-6'} flex ${isMobile ? 'flex-col items-center text-center' : 'items-center gap-4'}`}>
+              <div className={`${isMobile ? 'w-10 h-10 mb-2' : 'w-12 h-12'} rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0`}>
+                <Calendar className={isMobile ? "w-5 h-5" : "w-6 h-6"} />
               </div>
-              <div>
-                <div className="text-2xl font-bold">{stats.quotes}</div>
-                <div className="text-sm text-muted-foreground">인용구</div>
+              <div className={isMobile ? "w-full" : ""}>
+                <div className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold`}>{stats.notes}</div>
+                <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground ${isMobile ? 'mt-0.5' : ''}`}>노트</div>
+              </div>
+            </div>
+            <div className={`bg-card border border-border rounded-lg ${isMobile ? 'p-3' : 'p-6'} flex ${isMobile ? 'flex-col items-center text-center' : 'items-center gap-4'}`}>
+              <div className={`${isMobile ? 'w-10 h-10 mb-2' : 'w-12 h-12'} rounded-full bg-green-100 text-green-600 flex items-center justify-center flex-shrink-0`}>
+                <Calendar className={isMobile ? "w-5 h-5" : "w-6 h-6"} />
+              </div>
+              <div className={isMobile ? "w-full" : ""}>
+                <div className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold`}>{stats.quotes}</div>
+                <div className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground ${isMobile ? 'mt-0.5' : ''}`}>인용구</div>
               </div>
             </div>
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex gap-2 mb-6">
+          {/* Filter Tabs - 모바일: 가로 스크롤 가능 */}
+          <div className={`flex ${isMobile ? 'gap-2 overflow-x-auto pb-2 -mx-4 px-4' : 'gap-2'} mb-4 sm:mb-6 scrollbar-hide`}>
             <button
               onClick={() => setFilter("all")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`${isMobile ? 'px-4 py-2.5 min-w-[80px]' : 'px-4 py-2'} rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                 filter === "all"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "bg-card text-muted-foreground active:bg-accent active:text-foreground"
               }`}
             >
               전체 ({stats.total})
             </button>
             <button
               onClick={() => setFilter("note")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`${isMobile ? 'px-4 py-2.5 min-w-[80px]' : 'px-4 py-2'} rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                 filter === "note"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "bg-card text-muted-foreground active:bg-accent active:text-foreground"
               }`}
             >
               노트 ({stats.notes})
             </button>
             <button
               onClick={() => setFilter("quote")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`${isMobile ? 'px-4 py-2.5 min-w-[80px]' : 'px-4 py-2'} rounded-full text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                 filter === "quote"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "bg-card text-muted-foreground active:bg-accent active:text-foreground"
               }`}
             >
               인용구 ({stats.quotes})
@@ -379,50 +383,68 @@ export default function HistoryClient() {
 
         {/* Loading State */}
         {isLoading && groupedByDate.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">로딩 중...</p>
+          <div className="space-y-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-card border border-border rounded-lg p-4 sm:p-6 animate-pulse">
+                <div className="h-5 bg-muted rounded w-32 mb-4" />
+                <div className="space-y-3">
+                  <div className="h-20 bg-muted rounded" />
+                  <div className="h-20 bg-muted rounded" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {/* Error State */}
         {error && (
-          <div className="bg-card border border-border rounded-lg p-12 text-center">
-            <p className="text-destructive">데이터를 불러오는데 실패했습니다.</p>
+          <div className="bg-card border border-border rounded-lg p-8 sm:p-12 text-center">
+            <p className={`${isMobile ? 'text-sm' : 'text-base'} text-destructive mb-4`}>
+              데이터를 불러오는데 실패했습니다.
+            </p>
+            <Button 
+              variant="outline" 
+              size={isMobile ? "default" : "sm"}
+              onClick={() => window.location.reload()}
+            >
+              다시 시도
+            </Button>
           </div>
         )}
 
         {/* Review Items by Date */}
         {!isLoading && !error && groupedByDate.length === 0 && (
-          <div className="bg-card border border-border rounded-lg p-12 text-center">
-            <CheckCircle2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">완료된 복습이 없습니다</h3>
-            <p className="text-muted-foreground mb-6">
+          <div className="bg-card border border-border rounded-lg p-8 sm:p-12 text-center">
+            <CheckCircle2 className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} text-muted-foreground mx-auto mb-4`} />
+            <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold mb-2`}>완료된 복습이 없습니다</h3>
+            <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground mb-6`}>
               복습을 완료하면 여기에 기록됩니다
             </p>
             <Link href="/review">
-              <Button>복습하러 가기</Button>
+              <Button size={isMobile ? "default" : "lg"}>복습하러 가기</Button>
             </Link>
           </div>
         )}
 
         {!isLoading && !error && groupedByDate.length > 0 && (
           <>
-            <div className="space-y-8">
+            <div className={isMobile ? "space-y-6" : "space-y-8"}>
               {groupedByDate.map(([date, items]) => (
                 <div key={date}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <h2 className="text-xl font-semibold text-[#2D2D2D]">{date}</h2>
-                    <span className="text-sm text-muted-foreground">
+                  <div className={`flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 ${isMobile ? 'sticky top-0 bg-[#F8F7F4] py-2 -mx-4 px-4 z-10 backdrop-blur-sm' : ''}`}>
+                    <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-[#2D2D2D]`}>{date}</h2>
+                    <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
                       ({items.length}개)
                     </span>
                   </div>
-                  <div className="space-y-4">
+                  <div className={isMobile ? "space-y-3" : "space-y-4"}>
                     {items.map((item) => (
                       <ReviewListItem 
                         key={item.id} 
                         item={item} 
                         onComplete={async () => {}} 
                         onPostpone={async () => {}} 
+                        hideActions={true}
                       />
                     ))}
                   </div>
@@ -432,12 +454,15 @@ export default function HistoryClient() {
 
             {/* 모바일: 무한 스크롤 로더 */}
             {isMobile && (
-              <div ref={loadMoreRef} className="py-8 text-center">
+              <div ref={loadMoreRef} className="py-6 sm:py-8 text-center">
                 {isValidating && (
-                  <p className="text-muted-foreground">더 불러오는 중...</p>
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm text-muted-foreground">더 불러오는 중...</p>
+                  </div>
                 )}
                 {!hasMore && mobileData && mobileData.length > 0 && (
-                  <p className="text-muted-foreground">모든 데이터를 불러왔습니다</p>
+                  <p className="text-sm text-muted-foreground">모든 데이터를 불러왔습니다</p>
                 )}
               </div>
             )}
