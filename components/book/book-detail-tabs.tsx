@@ -134,39 +134,45 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, in
       {activeTab === "highlights" && (
         <div className="space-y-4">
           {quotes.map((quote) => (
-            <Card key={quote.id} className="p-6 transition-shadow hover:shadow-md">
-              <div className="mb-3 flex items-start justify-between">
-              <div>
-              {quote.isImportant && (
-                <div className="mb-3 flex items-center gap-2 text-sm text-yellow-600">
-                  <Star className="h-4 w-4 fill-yellow-600" />
-                  <span className="font-medium">중요 인용구</span>
+            <Link key={quote.id} href={`/book/${bookId}/quote/${quote.id}`}>
+              <Card className="p-6 transition-shadow hover:shadow-md cursor-pointer">
+                <div className="mb-3 flex items-start justify-between">
+                <div>
+                {quote.isImportant && (
+                  <div className="mb-3 flex items-center gap-2 text-sm text-yellow-600">
+                    <Star className="h-4 w-4 fill-yellow-600" />
+                    <span className="font-medium">중요 인용구</span>
+                  </div>
+                )}
                 </div>
-              )}
-              </div>
-               <button
-                  onClick={(e) => handleDeleteQuote(e, quote.id)}
-                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
-                  aria-label="인용구 삭제"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <blockquote className="mb-4 border-l-4 border-muted pl-4 text-base leading-relaxed">
-                {quote.content}
-              </blockquote>
-             
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{quote.page}페이지</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {/* {quote.tagList.map((tag) => (
-                  <span key={tag} className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                    {tag}
-                  </span>
-                ))} */}
-              </div>
-            </Card>
+                 <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleDeleteQuote(e, quote.id)
+                    }}
+                    className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
+                    aria-label="인용구 삭제"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                <blockquote className="mb-4 border-l-4 border-muted pl-4 text-base leading-relaxed">
+                  {quote.content}
+                </blockquote>
+               
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">{quote.page}페이지</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {/* {quote.tagList.map((tag) => (
+                    <span key={tag} className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+                      {tag}
+                    </span>
+                  ))} */}
+                </div>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
