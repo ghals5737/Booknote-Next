@@ -40,17 +40,44 @@ export const authenticatedApiRequest = async <T>(
   console.log('[authenticatedApiRequest] URL:', url)
   console.log('[authenticatedApiRequest] Headers:', headers)
   
-  const response = await fetch(url, {
-    ...options,
-    headers,
-    credentials: 'include', // 쿠키 포함 (Next.js API 라우트용)
-  })
+  let response: Response
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include', // 쿠키 포함 (Next.js API 라우트용)
+    })
+  } catch (error) {
+    // 네트워크 오류 등 fetch 자체가 실패한 경우
+    console.error('[authenticatedApiRequest] 네트워크 오류:', error)
+    throw new Error('서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.')
+  }
   
-  const data = await response.json()
+  // Content-Type 확인 - 서버는 항상 JSON을 반환해야 함
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await response.text().catch(() => '')
+    console.error('[authenticatedApiRequest] JSON이 아닌 응답:', {
+      status: response.status,
+      contentType,
+      url,
+      text: text.substring(0, 200)
+    })
+    throw new Error(`서버가 JSON이 아닌 응답을 반환했습니다. (${response.status})`)
+  }
+  
+  // JSON 파싱
+  let data: any
+  try {
+    data = await response.json()
+  } catch (error) {
+    console.error('[authenticatedApiRequest] JSON 파싱 실패:', error)
+    throw new Error('서버 응답을 파싱할 수 없습니다.')
+  }
   
   if (!response.ok) {
     // 에러 응답 형식이 다를 수 있음 (code, message, status 형식 또는 success, message 형식)
-    const errorMessage = data.message || data.code || 'API 요청 실패'
+    const errorMessage = data?.message || data?.code || `API 요청 실패 (${response.status})`
     throw new Error(errorMessage)
   }
   
@@ -76,15 +103,42 @@ export const apiRequest = async <T>(
   console.log('[apiRequest] URL:', url)
   console.log('[apiRequest] Headers:', headers)
   
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  })
+  let response: Response
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    })
+  } catch (error) {
+    // 네트워크 오류 등 fetch 자체가 실패한 경우
+    console.error('[apiRequest] 네트워크 오류:', error)
+    throw new Error('서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.')
+  }
   
-  const data = await response.json()
+  // Content-Type 확인 - 서버는 항상 JSON을 반환해야 함
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('application/json')) {
+    const text = await response.text().catch(() => '')
+    console.error('[apiRequest] JSON이 아닌 응답:', {
+      status: response.status,
+      contentType,
+      url,
+      text: text.substring(0, 200)
+    })
+    throw new Error(`서버가 JSON이 아닌 응답을 반환했습니다. (${response.status})`)
+  }
+  
+  // JSON 파싱
+  let data: any
+  try {
+    data = await response.json()
+  } catch (error) {
+    console.error('[apiRequest] JSON 파싱 실패:', error)
+    throw new Error('서버 응답을 파싱할 수 없습니다.')
+  }
   
   if (!response.ok) {
-    throw new Error(data.message || 'API 요청 실패')
+    throw new Error(data?.message || `API 요청 실패 (${response.status})`)
   }
   
   return data

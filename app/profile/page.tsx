@@ -1,8 +1,7 @@
 "use client"
 
-import { authenticatedApiRequest } from "@/lib/api/nextauth-api"
-import { UserProfileResponse } from "@/lib/types/user/profile"
 import { ArrowLeft, BookOpen, Calendar, FileText, Quote } from "lucide-react"
+import { getSession } from "next-auth/react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ProfileHeaderCard } from "./ProfileHeaderCard"
@@ -75,9 +74,33 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         setIsLoadingProfile(true)
-        const response = await authenticatedApiRequest<UserProfileResponse>("/api/v1/users/profile")
         
-        const { user, stats: profileStats } = response.data
+        const session = await getSession()
+        if (!session?.accessToken) {
+          console.error("[ProfilePage] 인증 토큰이 없습니다.")
+          return
+        }
+
+        const response = await fetch("/api/v1/users/profile", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${session.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          credentials: 'include',
+        })
+
+        if (!response.ok) {
+          throw new Error(`프로필 조회 실패: ${response.status}`)
+        }
+
+        const contentType = response.headers.get("content-type")
+        if (!contentType?.includes("application/json")) {
+          throw new Error("서버가 JSON이 아닌 응답을 반환했습니다.")
+        }
+
+        const result = await response.json()
+        const { user, stats: profileStats } = result.data
         
         // 프로필 정보 설정
         setProfile({
@@ -129,8 +152,32 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchNotificationSettings = async () => {
       try {
-        const response = await authenticatedApiRequest<NotificationSettings>("/api/v1/users/notification")
-        const data = response.data
+        const session = await getSession()
+        if (!session?.accessToken) {
+          console.error("[ProfilePage] 인증 토큰이 없습니다.")
+          return
+        }
+
+        const response = await fetch("/api/v1/users/notification", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${session.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          credentials: 'include',
+        })
+
+        if (!response.ok) {
+          throw new Error(`알림 설정 조회 실패: ${response.status}`)
+        }
+
+        const contentType = response.headers.get("content-type")
+        if (!contentType?.includes("application/json")) {
+          throw new Error("서버가 JSON이 아닌 응답을 반환했습니다.")
+        }
+
+        const result = await response.json()
+        const data = result.data as NotificationSettings
 
         const enabled = data.enabledYn === "Y"
         
@@ -163,16 +210,38 @@ export default function ProfilePage() {
 
   const updateNotificationSettings = async (enabled: boolean, time: string) => {
     try {
+      const session = await getSession()
+      if (!session?.accessToken) {
+        console.error("[ProfilePage] 인증 토큰이 없습니다.")
+        return
+      }
+
       const [hourStr] = time.split(":")
       const hour = parseInt(hourStr, 10)
 
-      await authenticatedApiRequest("/api/v1/users/notification", {
+      const response = await fetch("/api/v1/users/notification", {
         method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${session.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        credentials: 'include',
         body: JSON.stringify({
           enabledYn: enabled ? "Y" : "N",
           notificationTime: hour,
         }),
       })
+
+      if (!response.ok) {
+        throw new Error(`알림 설정 업데이트 실패: ${response.status}`)
+      }
+
+      const contentType = response.headers.get("content-type")
+      if (!contentType?.includes("application/json")) {
+        throw new Error("서버가 JSON이 아닌 응답을 반환했습니다.")
+      }
+
+      await response.json()
     } catch (error) {
       console.error("[ProfilePage] 알림 설정 업데이트 실패:", error)
     }
