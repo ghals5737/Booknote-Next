@@ -11,7 +11,7 @@ export interface ReviewItemSuccessResponse {
   timestamp: string | null
 }
 
-export interface ReviewItemPostponeResponse {
+export interface ReviewItemSnoozeResponse {
   success: boolean
   status: number
   message: string
@@ -41,12 +41,12 @@ export async function completeReviewItem(
  * 복습 항목 연기 처리
  * @param reviewItemId 복습 항목 ID
  */
-export async function postponeReviewItem(reviewItemId: number): Promise<ReviewItemPostponeResponse> {
-  return authenticatedApiRequest<ReviewItemPostponeResponse['data']>(
-    `/api/v1/review-items/${reviewItemId}/postpone`,
+export async function snoozeReviewItem(reviewItemId: number): Promise<ReviewItemSnoozeResponse> {
+  return authenticatedApiRequest<ReviewItemSnoozeResponse['data']>(
+    `/api/v1/review-items/${reviewItemId}/snooze`,
     {
       method: 'POST',
     }
-  ) as Promise<ReviewItemPostponeResponse>
+  ) as Promise<ReviewItemSnoozeResponse>
 }
 

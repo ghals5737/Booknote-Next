@@ -13,22 +13,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 테스트 토큰인 경우 테스트 사용자 정보 반환
+    // 테스트 토큰인 경우 테스트 알림 설정 반환
     if (authHeader.includes('test-access-token')) {
       return NextResponse.json({
         success: true,
         data: {
           id: 1,
-          email: 'ttt@ttt',
-          name: '테스트 사용자'
+          enabledYn: 'Y',
+          notificationTime: '08:00:00'
         },
         status: 200,
-        message: '사용자 정보 조회 성공'
+        message: '알림 설정 조회 성공'
       });
     }
 
     // 백엔드 API로 프록시
-    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/users/profile`;
+    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/users/notification`;
 
     let response: Response;
     try {
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         cache: 'no-store',
       });
     } catch (error) {
-      console.error('[proxy] profile upstream 연결 실패:', error);
+      console.error('[proxy] notification upstream 연결 실패:', error);
       return NextResponse.json(
         { success: false, message: '백엔드 서버에 연결할 수 없습니다.' },
         { status: 503 }
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
       const text = await response.text().catch(() => '');
-      console.error('[proxy] profile non-JSON response:', {
+      console.error('[proxy] notification non-JSON response:', {
         status: response.status,
         contentType,
         url: upstreamUrl,
@@ -68,12 +68,12 @@ export async function GET(request: NextRequest) {
       try {
         const errorData = await response.json();
         return NextResponse.json(
-          { success: false, message: errorData.message || 'Failed to fetch profile' },
+          { success: false, message: errorData.message || 'Failed to fetch notification settings' },
           { status: response.status }
         );
       } catch {
         return NextResponse.json(
-          { success: false, message: 'Failed to fetch profile' },
+          { success: false, message: 'Failed to fetch notification settings' },
           { status: response.status }
         );
       }
@@ -82,15 +82,15 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Profile GET proxy error:', error);
+    console.error('Notification GET proxy error:', error);
     return NextResponse.json(
-      { success: false, message: 'Profile proxy error' },
+      { success: false, message: 'Notification proxy error' },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(request: NextRequest) {
+export async function PATCH(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
     
@@ -116,30 +116,22 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({
         success: true,
         data: {
-          user: {
-            id: 1,
-            email: 'ttt@ttt',
-            name: (body.name as string) || '테스트 사용자',
-            nickname: (body.nickname as string | null) || null,
-            bio: (body.bio as string | null) || null,
-            profileImage: (body.profileImgUrl as string | null) || null,
-            provider: 'email',
-            createdAt: new Date().toISOString(),
-            lastLoginAt: null
-          }
+          id: 1,
+          enabledYn: (body.enabledYn as string) || 'Y',
+          notificationTime: body.notificationTime ? `${String(body.notificationTime).padStart(2, '0')}:00:00` : '08:00:00'
         },
         status: 200,
-        message: '프로필이 업데이트되었습니다.'
+        message: '알림 설정이 업데이트되었습니다.'
       });
     }
 
     // 백엔드 API로 프록시
-    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/users/profile`;
+    const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/users/notification`;
 
     let response: Response;
     try {
       response = await fetch(upstreamUrl, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 
           'Authorization': authHeader,
           'Content-Type': 'application/json',
@@ -148,7 +140,7 @@ export async function PUT(request: NextRequest) {
         cache: 'no-store',
       });
     } catch (error) {
-      console.error('[proxy] profile update upstream 연결 실패:', error);
+      console.error('[proxy] notification update upstream 연결 실패:', error);
       return NextResponse.json(
         { success: false, message: '백엔드 서버에 연결할 수 없습니다.' },
         { status: 503 }
@@ -159,7 +151,7 @@ export async function PUT(request: NextRequest) {
     const contentType = response.headers.get('content-type') || '';
     if (!contentType.includes('application/json')) {
       const text = await response.text().catch(() => '');
-      console.error('[proxy] profile update non-JSON response:', {
+      console.error('[proxy] notification update non-JSON response:', {
         status: response.status,
         contentType,
         url: upstreamUrl,
@@ -175,12 +167,12 @@ export async function PUT(request: NextRequest) {
       try {
         const errorData = await response.json();
         return NextResponse.json(
-          { success: false, message: errorData.message || 'Failed to update profile' },
+          { success: false, message: errorData.message || 'Failed to update notification settings' },
           { status: response.status }
         );
       } catch {
         return NextResponse.json(
-          { success: false, message: 'Failed to update profile' },
+          { success: false, message: 'Failed to update notification settings' },
           { status: response.status }
         );
       }
@@ -189,10 +181,11 @@ export async function PUT(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Profile PUT proxy error:', error);
+    console.error('Notification PATCH proxy error:', error);
     return NextResponse.json(
-      { success: false, message: 'Profile update proxy error' },
+      { success: false, message: 'Notification update proxy error' },
       { status: 500 }
     );
   }
 }
+
