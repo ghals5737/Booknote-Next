@@ -101,10 +101,10 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    let body: any;
+    let body: Record<string, unknown>;
     try {
-      body = await request.json();
-    } catch (error) {
+      body = await request.json() as Record<string, unknown>;
+    } catch {
       return NextResponse.json(
         { success: false, message: 'Invalid request body' },
         { status: 400 }
@@ -117,8 +117,8 @@ export async function PATCH(request: NextRequest) {
         success: true,
         data: {
           id: 1,
-          enabledYn: body.enabledYn || 'Y',
-          notificationTime: body.notificationTime ? `${body.notificationTime.toString().padStart(2, '0')}:00:00` : '08:00:00'
+          enabledYn: (body.enabledYn as string) || 'Y',
+          notificationTime: body.notificationTime ? `${String(body.notificationTime).padStart(2, '0')}:00:00` : '08:00:00'
         },
         status: 200,
         message: '알림 설정이 업데이트되었습니다.'

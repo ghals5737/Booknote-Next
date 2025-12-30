@@ -445,7 +445,7 @@ export default function HistoryClient() {
                         key={item.id} 
                         item={item} 
                         onComplete={async () => {}} 
-                        onPostpone={async () => {}} 
+                        onSnooze={async () => {}} 
                         hideActions={true}
                       />
                     ))}

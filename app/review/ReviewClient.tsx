@@ -90,10 +90,10 @@ export default function ReviewClient({ items }: ReviewClientProps) {
     }
   }, [router, toast, items])
 
-  const handleItemPostpone = useCallback(async (itemId: number) => {
+  const handleItemSnooze = useCallback(async (itemId: number) => {
     try {
-      const { postponeReviewItem } = await import("@/lib/api/review")
-      await postponeReviewItem(itemId)
+      const { snoozeReviewItem } = await import("@/lib/api/review")
+      await snoozeReviewItem(itemId)
       toast({
         title: "복습 연기",
         description: "복습 항목이 연기 처리되었습니다.",
@@ -113,79 +113,56 @@ export default function ReviewClient({ items }: ReviewClientProps) {
   return (
     <div className="min-h-screen bg-[#F8F7F4]">
       <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-9 pb-12">
+        {/* Header - 항상 표시 */}
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-[#2D2D2D]">
+            {mode === "carousel" ? "복습하기" : "복습 목록"}
+          </h1>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={mode === "carousel" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMode("carousel")}
+              className="flex items-center gap-2"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              집중 모드
+            </Button>
+            <Button
+              variant={mode === "list" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMode("list")}
+              className="flex items-center gap-2"
+            >
+              <LayoutList className="h-4 w-4" />
+              리스트 모드
+            </Button>
+          </div>
+        </div>
+
         {/* Carousel Mode */}
         {mode === "carousel" && (
           items.length === 0 ? (
             <EmptyState />
           ) : (
-            <div className="space-y-4">
-              <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-semibold text-[#2D2D2D]">복습하기</h1>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => setMode("carousel")}
-                    className="flex items-center gap-2"
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                    집중 모드
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setMode("list")}
-                    className="flex items-center gap-2"
-                  >
-                    <LayoutList className="h-4 w-4" />
-                    리스트 모드
-                  </Button>
-                </div>
-              </div>
-              <ReviewCarousel 
-                items={items} 
-                onItemComplete={async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null, isLastItem?: boolean) => {
-                  await handleItemComplete(itemId, assessment, isLastItem)
-                }} 
-              />
-            </div>
+            <ReviewCarousel 
+              items={items} 
+              onItemComplete={async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null, isLastItem?: boolean) => {
+                await handleItemComplete(itemId, assessment, isLastItem)
+              }} 
+            />
           )
         )}
 
         {/* List Mode */}
         {mode === "list" && (
-          <div className="space-y-4">
-            <div className="mb-6 flex items-center justify-between">
-              <h1 className="text-2xl font-semibold text-[#2D2D2D]">복습 목록</h1>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMode("carousel")}
-                  className="flex items-center gap-2"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                  집중 모드
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => setMode("list")}
-                  className="flex items-center gap-2"
-                >
-                  <LayoutList className="h-4 w-4" />
-                  리스트 모드
-                </Button>
-              </div>
-            </div>
-            <ReviewListView 
-              items={items} 
-              onItemComplete={async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null) => {
-                await handleItemComplete(itemId, assessment)
-              }} 
-              onItemPostpone={handleItemPostpone} 
-            />
-          </div>
+          <ReviewListView 
+            items={items} 
+            onItemComplete={async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null) => {
+              await handleItemComplete(itemId, assessment)
+            }} 
+            onItemSnooze={handleItemSnooze} 
+          />
         )}
       </main>
     </div>

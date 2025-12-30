@@ -9,13 +9,13 @@ import { ReviewListItem } from "../ReviewListItem"
 interface ReviewListViewProps {
   items: UIReviewItem[]
   onItemComplete: (itemId: number, assessment?: "forgot" | "hard" | "easy" | null) => Promise<void>
-  onItemPostpone: (itemId: number) => Promise<void>
+  onItemSnooze: (itemId: number) => Promise<void>
 }
 
 export function ReviewListView({ 
   items, 
   onItemComplete, 
-  onItemPostpone 
+  onItemSnooze 
 }: ReviewListViewProps) {
   const [activeTab, setActiveTab] = useState("전체")
   const router = useRouter()
@@ -88,14 +88,30 @@ export function ReviewListView({
 
       {/* Review Items */}
       <div className="space-y-4">
-        {filteredItems.map((item) => (
-          <ReviewListItem 
-            key={item.id} 
-            item={item} 
-            onComplete={onItemComplete}
-            onPostpone={onItemPostpone}
-          />
-        ))}
+        {filteredItems.length === 0 ? (
+          <div className="bg-card border border-border rounded-lg p-12 text-center">
+            <p className="text-muted-foreground">
+              {activeTab === "전체" && "복습할 항목이 없습니다."}
+              {activeTab === "오늘" && "오늘 복습할 항목이 없습니다."}
+              {activeTab === "밀린 복습" && "밀린 복습 항목이 없습니다."}
+              {activeTab === "완료" && "완료된 복습 항목이 없습니다."}
+            </p>
+            {activeTab === "전체" && items.length === 0 && (
+              <p className="text-sm text-muted-foreground mt-2">
+                새로운 노트나 인용구를 추가하면 복습 목록에 추가됩니다.
+              </p>
+            )}
+          </div>
+        ) : (
+          filteredItems.map((item) => (
+            <ReviewListItem 
+              key={item.id} 
+              item={item} 
+              onComplete={onItemComplete}
+              onSnooze={onItemSnooze}
+            />
+          ))
+        )}
       </div>
     </>
   )

@@ -101,10 +101,10 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    let body: any;
+    let body: Record<string, unknown>;
     try {
-      body = await request.json();
-    } catch (error) {
+      body = await request.json() as Record<string, unknown>;
+    } catch {
       return NextResponse.json(
         { success: false, message: 'Invalid request body' },
         { status: 400 }
@@ -119,10 +119,10 @@ export async function PUT(request: NextRequest) {
           user: {
             id: 1,
             email: 'ttt@ttt',
-            name: body.name || '테스트 사용자',
-            nickname: body.nickname || null,
-            bio: body.bio || null,
-            profileImage: body.profileImgUrl || null,
+            name: (body.name as string) || '테스트 사용자',
+            nickname: (body.nickname as string | null) || null,
+            bio: (body.bio as string | null) || null,
+            profileImage: (body.profileImgUrl as string | null) || null,
             provider: 'email',
             createdAt: new Date().toISOString(),
             lastLoginAt: null

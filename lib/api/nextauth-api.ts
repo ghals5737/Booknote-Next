@@ -67,9 +67,9 @@ export const authenticatedApiRequest = async <T>(
   }
   
   // JSON 파싱
-  let data: any
+  let parsedData: unknown
   try {
-    data = await response.json()
+    parsedData = await response.json()
   } catch (error) {
     console.error('[authenticatedApiRequest] JSON 파싱 실패:', error)
     throw new Error('서버 응답을 파싱할 수 없습니다.')
@@ -77,11 +77,12 @@ export const authenticatedApiRequest = async <T>(
   
   if (!response.ok) {
     // 에러 응답 형식이 다를 수 있음 (code, message, status 형식 또는 success, message 형식)
-    const errorMessage = data?.message || data?.code || `API 요청 실패 (${response.status})`
+    const errorData = parsedData as Record<string, unknown>
+    const errorMessage = (errorData?.message as string) || (errorData?.code as string) || `API 요청 실패 (${response.status})`
     throw new Error(errorMessage)
   }
   
-  return data
+  return parsedData as ApiResponse<T>
 }
 
 // 인증이 필요하지 않은 API 요청
@@ -129,19 +130,21 @@ export const apiRequest = async <T>(
   }
   
   // JSON 파싱
-  let data: any
+  let parsedData: unknown
   try {
-    data = await response.json()
+    parsedData = await response.json()
   } catch (error) {
     console.error('[apiRequest] JSON 파싱 실패:', error)
     throw new Error('서버 응답을 파싱할 수 없습니다.')
   }
   
   if (!response.ok) {
-    throw new Error(data?.message || `API 요청 실패 (${response.status})`)
+    const errorData = parsedData as Record<string, unknown>
+    const errorMessage = (errorData?.message as string) || `API 요청 실패 (${response.status})`
+    throw new Error(errorMessage)
   }
   
-  return data
+  return parsedData as ApiResponse<T>
 }
 
 // NextAuth.js 세션에서 토큰을 가져오는 헬퍼

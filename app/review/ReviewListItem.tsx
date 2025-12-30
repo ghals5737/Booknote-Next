@@ -10,11 +10,11 @@ import { useState } from "react"
 interface ReviewListItemProps {
   item: UIReviewItem
   onComplete: (itemId: number, assessment?: "forgot" | "hard" | "easy" | null) => Promise<void>
-  onPostpone: (itemId: number) => Promise<void>
+  onSnooze: (itemId: number) => Promise<void>
   hideActions?: boolean // 히스토리 페이지에서 액션 버튼 숨기기
 }
 
-export function ReviewListItem({ item, onComplete, onPostpone, hideActions = false }: ReviewListItemProps) {
+export function ReviewListItem({ item, onComplete, onSnooze, hideActions = false }: ReviewListItemProps) {
   const [isLoading, setIsLoading] = useState(false)
   const isMobile = useIsMobile()
 
@@ -28,11 +28,11 @@ export function ReviewListItem({ item, onComplete, onPostpone, hideActions = fal
     }
   }
 
-  const handlePostpone = async () => {
+  const handleSnooze = async () => {
     if (isLoading) return
     setIsLoading(true)
     try {
-      await onPostpone(item.id)
+      await onSnooze(item.id)
     } finally {
       setIsLoading(false)
     }
@@ -99,7 +99,7 @@ export function ReviewListItem({ item, onComplete, onPostpone, hideActions = fal
                 variant="ghost" 
                 size="icon" 
                 className="text-muted-foreground hover:text-yellow-600 active:bg-yellow-50 h-10 w-10 sm:h-9 sm:w-9"
-                onClick={handlePostpone}
+                onClick={handleSnooze}
                 disabled={isLoading || item.status === "completed"}
                 title="복습 연기"
               >
