@@ -57,7 +57,7 @@ export function ReviewCardFooter({
       {!showAssessment && (
         <div className="flex gap-3">
           {item.bookId && (
-            <Button variant="outline" size="lg" className="flex-1 h-12 text-sm border-[#2D2D2D]/20 text-[#2D2D2D] hover:bg-[#2D2D2D]/5" asChild>
+            <Button variant="outline" size="lg" className="flex-1 h-12 text-sm border-[#2D2D2D]/20 text-[#2D2D2D] hover:bg-[#2D2D2D]/5" asChild title="책 상세 페이지로 이동">
               <Link href={`/book/${item.bookId}`}>
                 <ExternalLink className="mr-2 h-4 w-4" />
                 자세히 보기
@@ -72,9 +72,10 @@ export function ReviewCardFooter({
               onComplete(item.id, null)
             }}
             disabled={isLoading || item.status === "completed"}
+            title={item.status === "completed" ? "이미 완료됨" : "복습 완료"}
           >
             <Check className="mr-2 h-4 w-4" />
-            {isLoading ? "처리 중..." : item.status === "completed" ? "완료됨" : "완료"}
+            {isLoading ? "처리 중..." : item.status === "completed" ? "완료됨" : "복습 완료"}
           </Button>
         </div>
       )}
