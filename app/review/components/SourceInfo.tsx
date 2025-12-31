@@ -11,7 +11,7 @@ export function SourceInfo({ source, page, date }: SourceInfoProps) {
         {source}
       </div>
       <div className="flex items-center gap-2.5 text-sm text-[#888]">
-        {page && page > 0 && (
+        {page != null && page > 0 && (
           <>
             <span>{page}p</span>
             <span>·</span>

@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
         );
       }
       const upstreamUrl = `${PUBLIC_API_BASE_URL}/api/v1/quotes`;
+      console.log('[proxy] POST quote ->', upstreamUrl, body);
   
       const response = await fetch(upstreamUrl, {
         method: 'POST',
@@ -28,19 +29,30 @@ export async function POST(request: NextRequest) {
   
       if (!response.ok) {
         const text = await response.text().catch(() => '');
-        console.error('[proxy] notes upstream error', response.status, text);
+        console.error('[proxy] quotes upstream error', response.status, text);
+        
+        // 백엔드 응답이 JSON인 경우 파싱 시도
+        let errorData: Record<string, unknown> = { message: 'Failed to create quote', details: text };
+        try {
+          const parsed = JSON.parse(text) as Record<string, unknown>;
+          errorData = parsed;
+        } catch {
+          // JSON이 아니면 텍스트를 details로 사용
+          errorData = { message: 'Failed to create quote', details: text || `HTTP ${response.status}` };
+        }
+        
         return NextResponse.json(
-          { success: false, message: 'Failed to create note', details: text },
+          { success: false, ...errorData },
           { status: response.status }
         );
       }
   
       const data = await response.json();
       return NextResponse.json(data);
-    } catch (error) {
-      console.error('Notes POST proxy error:', error);
+    } catch (error: unknown) {
+      console.error('Quotes POST proxy error:', error);
       return NextResponse.json(
-        { success: false, message: 'Notes POST proxy error' },
+        { success: false, message: 'Quotes POST proxy error' },
         { status: 500 }
       );
     }
@@ -76,10 +88,10 @@ export async function DELETE(request: NextRequest) {
       }
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
-    console.error('Notes POST proxy error:', error);
+  } catch (error: unknown) {
+    console.error('Quotes DELETE proxy error:', error);
     return NextResponse.json(
-      { success: false, message: 'Notes POST proxy error' },
+      { success: false, message: 'Quotes DELETE proxy error' },
       { status: 500 }
     );
   }

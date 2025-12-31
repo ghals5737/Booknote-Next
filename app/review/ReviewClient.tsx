@@ -49,6 +49,12 @@ export default function ReviewClient({ items }: ReviewClientProps) {
 
   const handleItemComplete = useCallback(async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null, isLastItem?: boolean) => {
     try {
+      // 해당 item 찾기
+      const item = items.find(i => i.id === itemId)
+      if (!item) {
+        throw new Error('복습 항목을 찾을 수 없습니다.')
+      }
+
       // assessment를 ReviewResponseType으로 변환
       let responseType: "EASY" | "NORMAL" | "DIFFICULT" | "FORGOT" = "NORMAL"
       if (assessment === "easy") {
@@ -59,7 +65,7 @@ export default function ReviewClient({ items }: ReviewClientProps) {
         responseType = "FORGOT"
       }
       
-      await completeReviewItem(itemId, responseType)
+      await completeReviewItem(item.reviewId, itemId, responseType)
       
       // API 호출 성공 후, 현재 상태에서 마지막 항목인지 다시 확인
       const remainingItems = items.filter(item => item.id !== itemId && item.status !== "completed")
@@ -92,8 +98,14 @@ export default function ReviewClient({ items }: ReviewClientProps) {
 
   const handleItemSnooze = useCallback(async (itemId: number) => {
     try {
+      // 해당 item 찾기
+      const item = items.find(i => i.id === itemId)
+      if (!item) {
+        throw new Error('복습 항목을 찾을 수 없습니다.')
+      }
+
       const { snoozeReviewItem } = await import("@/lib/api/review")
-      await snoozeReviewItem(itemId)
+      await snoozeReviewItem(item.reviewId, itemId)
       toast({
         title: "복습 연기",
         description: "복습 항목이 연기 처리되었습니다.",
@@ -108,7 +120,7 @@ export default function ReviewClient({ items }: ReviewClientProps) {
         variant: "destructive",
       })
     }
-  }, [router, toast])
+  }, [router, toast, items])
 
   return (
     <div className="min-h-screen bg-[#F8F7F4]">

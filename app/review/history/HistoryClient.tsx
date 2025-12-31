@@ -82,6 +82,7 @@ function convertToUIReviewItem(
     
     return {
       id: reviewItem.id,
+      reviewId: review.id,
       type: "NOTE",
       content: note.content || note.title || "",
       source: reviewItem.bookTitle || "알 수 없음",
@@ -109,6 +110,7 @@ function convertToUIReviewItem(
     
     return {
       id: reviewItem.id,
+      reviewId: review.id,
       type: "QUOTE",
       content: quote.content || "",
       source: reviewItem.bookTitle || "알 수 없음",
@@ -134,6 +136,7 @@ function convertToUIReviewItem(
   
   return {
     id: reviewItem.id,
+    reviewId: review.id,
     type: reviewItem.itemType,
     content: `${reviewItem.itemType === "NOTE" ? "노트" : "인용구"} #${reviewItem.itemId}`,
     source: "알 수 없음",
