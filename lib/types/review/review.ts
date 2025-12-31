@@ -37,6 +37,7 @@ export interface ReviewTodayResponse {
 // UI에서 사용하는 ReviewItem 타입 (기존 구조와 호환)
 export interface UIReviewItem {
   id: number;
+  reviewId: number;               // 복습 ID
   type: ReviewItemType;
   content: string;
   source: string;
