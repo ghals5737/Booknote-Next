@@ -1,3 +1,5 @@
+import { authOptions } from '@/lib/auth';
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
@@ -13,9 +15,9 @@ export async function GET(
     const size = searchParams.get('size') || '100';
     const sort = searchParams.get('sort') || 'created_at';
     
-    // Authorization 헤더 확인
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // 세션에서 토큰 가져오기
+    const session = await getServerSession(authOptions);
+    if (!session?.accessToken) {
       return NextResponse.json(
         { success: false, message: 'Authorization header with Bearer token is required' },
         { status: 401 }
@@ -36,7 +38,7 @@ export async function GET(
       const response = await fetch(upstreamUrl, {
         method: 'GET',
         headers: { 
-          'Authorization': authHeader,
+          'Authorization': `Bearer ${session.accessToken}`,
           'Content-Type': 'application/json',
         },
         cache: 'no-store',
@@ -155,9 +157,9 @@ export async function POST(
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
     
-    // Authorization 헤더 확인
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // 세션에서 토큰 가져오기
+    const session = await getServerSession(authOptions);
+    if (!session?.accessToken) {
       return NextResponse.json(
         { success: false, message: 'Authorization header with Bearer token is required' },
         { status: 401 }
@@ -170,7 +172,7 @@ export async function POST(
     const response = await fetch(upstreamUrl, {
       method: 'POST',
       headers: { 
-        'Authorization': authHeader,
+        'Authorization': `Bearer ${session.accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
