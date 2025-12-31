@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { UIReviewItem } from "@/lib/types/review/review"
 import { Calendar, Check, Clock, Eye } from "lucide-react"
@@ -87,6 +88,7 @@ export function ReviewListItem({ item, onComplete, onSnooze, hideActions = false
               size="icon" 
               className="text-muted-foreground hover:text-foreground h-10 w-10 sm:h-9 sm:w-9" 
               asChild
+              title="자세히 보기"
             >
               <Link href={`/book/${item.bookId}`}>
                 <Eye className="w-5 h-5" />
@@ -95,26 +97,42 @@ export function ReviewListItem({ item, onComplete, onSnooze, hideActions = false
           )}
           {!hideActions && (
             <>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-muted-foreground hover:text-yellow-600 active:bg-yellow-50 h-10 w-10 sm:h-9 sm:w-9"
-                onClick={handleSnooze}
-                disabled={isLoading || item.status === "completed"}
-                title="복습 연기"
-              >
-                <Clock className="w-5 h-5" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-muted-foreground hover:text-green-600 active:bg-green-50 h-10 w-10 sm:h-9 sm:w-9"
-                onClick={handleComplete}
-                disabled={isLoading || item.status === "completed"}
-                title={item.status === "completed" ? "이미 완료됨" : "복습 완료"}
-              >
-                <Check className="w-5 h-5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-muted-foreground hover:text-yellow-600 active:bg-yellow-50 h-10 w-10 sm:h-9 sm:w-9"
+                      onClick={handleSnooze}
+                      disabled={isLoading || item.status === "completed"}
+                    >
+                      <Clock className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isLoading || item.status === "completed" ? "이미 완료된 항목은 연기할 수 없습니다" : "복습 연기"}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-muted-foreground hover:text-green-600 active:bg-green-50 h-10 w-10 sm:h-9 sm:w-9"
+                      onClick={handleComplete}
+                      disabled={isLoading || item.status === "completed"}
+                    >
+                      <Check className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{item.status === "completed" ? "이미 완료됨" : isLoading ? "처리 중..." : "복습 완료"}</p>
+                </TooltipContent>
+              </Tooltip>
             </>
           )}
         </div>
