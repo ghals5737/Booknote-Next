@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { BOOK_CATEGORY_IDS, BOOK_CATEGORY_LABELS, BookDetailData } from "@/lib/types/book/book";
 import { cn } from "@/lib/utils";
 import { ImageIcon, Star } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -31,6 +32,7 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
   const [description, setDescription] = useState(initialData.description || "");
   const [publisher, setPublisher] = useState(initialData.publisher || "");
   const [coverImage] = useState(initialData.coverImage || "");
+  const [imageError, setImageError] = useState(false);
   const [totalPages, setTotalPages] = useState(initialData.totalPages || 0);
   const [currentPage, setCurrentPage] = useState(initialData.currentPage || 0);
   const [progress, setProgress] = useState(initialData.progress || 0);
@@ -134,19 +136,18 @@ export function BookUpdateClient({ bookId, initialData }: BookUpdateClientProps)
           {/* Left Section - Book Cover */}
           <div className="space-y-4">
             <div>
-              <div className="flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted overflow-hidden">
-                {coverImage ? (
-                  <img
+              <div className="relative flex aspect-[3/4] items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted overflow-hidden">
+                {coverImage && !imageError ? (
+                  <Image
                     src={coverImage}
                     alt="책 표지"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                    }}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 300px"
+                    className="object-cover"
+                    onError={() => setImageError(true)}
                   />
                 ) : null}
-                <div className={`text-center ${coverImage ? 'hidden' : ''}`}>
+                <div className={`text-center placeholder ${coverImage && !imageError ? 'hidden' : ''}`}>
                   <ImageIcon className="mx-auto mb-2 h-12 w-12 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">표지 이미지</p>
                 </div>

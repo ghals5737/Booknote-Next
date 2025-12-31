@@ -1,19 +1,33 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { BookDetailData } from "@/lib/types/book/book"
+import { BOOK_CATEGORY_LABELS, BookDetailData } from "@/lib/types/book/book"
 import { NoteResponse } from "@/lib/types/note/note"
 import { QuoteResponse } from "@/lib/types/quote/quote"
-import { BOOK_CATEGORY_LABELS } from "@/lib/types/book/book"
 import { formatDateYMD } from "@/lib/utils"
 import { Star, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { Markdown } from "../note/Markdown"
 
 
 export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, initialQuotes, bookDetail }: { bookId: number, noteCount: number, quoteCount: number, initialNotes: NoteResponse[], initialQuotes: QuoteResponse[], bookDetail: BookDetailData }) {
-  const [activeTab, setActiveTab] = useState<"notes" | "highlights" | "info">("notes")
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  
+  const getInitialTab = (param: string | null): "notes" | "highlights" | "info" => {
+    if (param === "highlights" || param === "quotes") return "highlights"
+    if (param === "info") return "info"
+    return "notes"
+  }
+  
+  const [activeTab, setActiveTab] = useState<"notes" | "highlights" | "info">(getInitialTab(tabParam))
+  
+  // URL 파라미터가 변경되면 탭 업데이트
+  useEffect(() => {
+    setActiveTab(getInitialTab(tabParam))
+  }, [tabParam])
   const [notes, setNotes] = useState<NoteResponse[]>(initialNotes)
   const [quotes, setQuotes] = useState<QuoteResponse[]>(initialQuotes)
   const handleDeleteNote = async (e: React.MouseEvent, noteId: number) => {

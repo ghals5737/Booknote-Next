@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { AddUserBookRequest, BOOK_CATEGORY_IDS, BOOK_CATEGORY_LABELS, SearchBookResponse } from "@/lib/types/book/book";
 import { ArrowLeft, Loader2, Search } from 'lucide-react';
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -340,7 +341,7 @@ export default function AddBookPage() {
                       onClick={() => handleSelectBook(book)}
                     >
                       {book.image && (
-                        <img
+                        <Image
                           src={book.image}
                           alt={book.title}
                           className="h-14 w-10 flex-shrink-0 rounded object-cover"
@@ -408,7 +409,7 @@ export default function AddBookPage() {
                         : "h-32 w-[90%] max-w-[320px] opacity-80 lg:h-full lg:w-full lg:max-w-none"
                     }`}
                   >
-                    <img
+                    <Image
                       src={coverUrl}
                       alt="책 표지"
                       className="h-full w-full object-cover"
