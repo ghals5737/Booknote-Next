@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth';
 import { UserBookResponsePage } from '@/lib/types/book/book';
+import { GoalsResponse } from '@/lib/types/goal/goal';
 import { StatisticsResponse } from '@/lib/types/statistics/statistics';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
@@ -71,6 +72,43 @@ async function getStatisticsData(): Promise<StatisticsResponse | null> {
     }
 }
 
+async function getGoalsData(): Promise<GoalsResponse | null> {
+    try {
+        const session = await getServerSession(authOptions);
+        
+        if (!session?.accessToken) {
+            return null;
+        }
+        
+        // 서버 컴포넌트에서 직접 백엔드 API 호출
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
+        const response = await fetch(`${baseUrl}/api/v1/goals`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session.accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+          }
+        );
+
+        if (!response.ok) {
+            // 404는 목표가 없는 경우이므로 null 반환 (에러 아님)
+            if (response.status === 404) {
+                return null;
+            }
+            console.error('Failed to fetch goals data:', response.status, response.statusText);
+            return null;
+        }
+
+        const result = await response.json();
+        return result.data;
+    } catch (error) {
+        console.error('Error fetching goals data:', error);
+        return null;
+    }
+}
+
 export default async function Dashboard() {
   const session = await getServerSession(authOptions);
   
@@ -80,6 +118,7 @@ export default async function Dashboard() {
 
   const booksData = await getBooksData();
   const statisticsData = await getStatisticsData();
+  const goalsData = await getGoalsData();
   
   if (!booksData) {
     // 기본값으로 빈 데이터 제공
@@ -111,9 +150,9 @@ export default async function Dashboard() {
         unsorted: true,
       },
     };
-    return <DashboardClient booksData={emptyData} statisticsData={statisticsData} />;
+    return <DashboardClient booksData={emptyData} statisticsData={statisticsData} goalsData={goalsData} />;
   }
   
   console.log('booksData', booksData);    
-  return <DashboardClient booksData={booksData} statisticsData={statisticsData} />
+  return <DashboardClient booksData={booksData} statisticsData={statisticsData} goalsData={goalsData} />
 }
