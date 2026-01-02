@@ -5,7 +5,7 @@
  */
 
 /* 폰트 및 Tailwind CSS 코어 임포트 */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;700&family=Pretendard:wght@400;500;700&display=swap');
 @import "tailwindcss"; /* v4에서는 이것만으로 preflight, utilities 모두 포함 */
 @import "tw-animate-css"; /* 외부 라이브러리 (필요시) */
 
@@ -16,74 +16,77 @@
 
 @layer base {
   :root {
-    /* Core Color Palette - Clean and Minimal */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 20%;
+    /* Warm Minimalist Theme - Booknote Design System */
+    /* Backgrounds */
+    --background: 30 8% 95%; /* #F4F2F0 - appCanvas */
+    --foreground: 20 12% 15%; /* #2C2622 - heading */
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
+    --card: 0 0% 100%; /* #FFFFFF - surfacePrimary */
+    --card-foreground: 20 12% 15%; /* #2C2622 - heading */
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 20 12% 15%;
 
-    /* Primary - Deep Blue */
-    --primary: 220 47% 49%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 220 47% 44%;
-    --primary-muted: 220 47% 95%;
+    /* Primary - Warm Brown (#4E4036) */
+    --primary: 20 20% 28%; /* #4E4036 */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF - inverse */
+    --primary-hover: 20 25% 20%; /* #3A3029 */
+    --primary-muted: 30 15% 92%; /* #E6DCCA - accent */
 
-    /* Secondary - Soft Sky Blue */
-    --secondary: 210 100% 85%;
-    --secondary-foreground: 0 0% 20%;
+    /* Secondary - Warm Accent */
+    --secondary: 30 15% 92%; /* #E6DCCA - accent */
+    --secondary-foreground: 20 12% 15%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 0 0% 98%; /* #FAFAFA - surfaceSecondary */
+    --muted-foreground: 0 0% 55%; /* #8C8C8C - muted */
 
-    --accent: 220 47% 49%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 30 15% 92%; /* #E6DCCA */
+    --accent-foreground: 20 12% 15%;
 
-    /* Semantic colors for knowledge management */
-    --highlight-yellow: 48 100% 88%;
+    /* Semantic colors - Warm tones */
+    --highlight-yellow: 16 100% 66%; /* #FF7F50 - highlight */
     --highlight-blue: 210 29% 90%;
-    --highlight-green: 142 76% 90%;
-    --highlight-pink: 25 100% 88%;
+    --highlight-green: 60 30% 50%; /* #6B8E23 - success */
+    --highlight-pink: 43 70% 50%; /* #DAA520 - warning */
 
     /* Reading-optimized colors */
-    --reading-bg: 0 0% 100%;
-    --reading-text: 0 0% 20%;
-    --sidebar-bg: 0 0% 98%;
+    --reading-bg: 0 0% 100%; /* #FFFFFF */
+    --reading-text: 0 0% 29%; /* #4A4A4A - body */
+    --sidebar-bg: 30 8% 95%; /* #F4F2F0 */
 
     --destructive: 0 75% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 210 29% 78%;
+    /* Borders */
+    --border: 0 0% 92%; /* #EAEAEA - subtle */
+    --input: 0 0% 92%; /* #EAEAEA */
+    --ring: 20 20% 28%; /* #4E4036 - focus */
 
-    --radius: 0.75rem;
+    --radius: 0.5rem; /* 8px - matches searchBar borderRadius */
 
-    /* Advanced gradients for clean visualization */
-    --gradient-primary: linear-gradient(135deg, hsl(220 47% 49%), hsl(220 47% 44%));
-    --gradient-warm: linear-gradient(135deg, hsl(210 100% 90%), hsl(210 100% 85%));
-    --gradient-knowledge: linear-gradient(135deg, hsl(220 47% 95%), hsl(210 100% 95%));
+    /* Warm gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(20 20% 28%), hsl(20 25% 20%));
+    --gradient-warm: linear-gradient(135deg, hsl(30 15% 92%), hsl(30 8% 95%));
+    --gradient-knowledge: linear-gradient(135deg, hsl(30 8% 95%), hsl(0 0% 100%));
 
-    /* Shadows for subtle depth */
-    --shadow-soft: 0 2px 8px -2px hsl(0 0% 88% / 0.4);
-    --shadow-medium: 0 4px 16px -4px hsl(0 0% 88% / 0.6);
-    --shadow-knowledge: 0 8px 32px -8px hsl(220 47% 49% / 0.15);
+    /* Shadows - subtle and warm */
+    --shadow-soft: 0 2px 8px -2px rgba(44, 38, 34, 0.03);
+    --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.03); /* dashboardCard */
+    --shadow-knowledge: 0 4px 8px rgba(0, 0, 0, 0.15); /* bookCover */
 
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 210 29% 78%;
-    --sidebar-primary-foreground: 0 0% 20%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 20%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 210 29% 78%;
+    /* Sidebar */
+    --sidebar-background: 30 8% 95%; /* #F4F2F0 */
+    --sidebar-foreground: 20 12% 15%; /* #2C2622 */
+    --sidebar-primary: 20 20% 28%; /* #4E4036 */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 15% 92%; /* #E6DCCA */
+    --sidebar-accent-foreground: 20 12% 15%;
+    --sidebar-border: 0 0% 92%; /* #EAEAEA */
+    --sidebar-ring: 20 20% 28%; /* #4E4036 */
   }
 
   .dark {
@@ -173,12 +176,15 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inter antialiased;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Pretendard', 'San Francisco', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
-  /* Typography optimized for reading */
+  /* Typography optimized for reading - Warm Minimalist */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-inter font-semibold tracking-tight;
+    font-family: 'Noto Serif KR', 'Times New Roman', serif;
+    @apply font-semibold tracking-tight;
+    color: hsl(20 12% 15%); /* heading color */
   }
 
   /* Code and markdown */
@@ -193,9 +199,10 @@
 }
 
 @layer components {
-  /* Knowledge Management Components */
+  /* Knowledge Management Components - Warm Minimalist */
   .knowledge-card {
-    @apply bg-card rounded-lg border shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-medium)] transition-[var(--transition-smooth)];
+    @apply bg-card rounded-xl border shadow-[var(--shadow-medium)] hover:shadow-[var(--shadow-knowledge)] transition-[var(--transition-smooth)];
+    padding: 24px; /* dashboardCard padding */
   }
 
   .note-link {

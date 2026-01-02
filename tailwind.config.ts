@@ -78,7 +78,8 @@ export default {
 				}
 			},
 			fontFamily: {
-				inter: ['Inter', 'sans-serif'],
+				sans: ['Pretendard', 'San Francisco', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+				serif: ['Noto Serif KR', 'Times New Roman', 'serif'],
 				mono: ['JetBrains Mono', 'monospace']
 			},
 			backgroundImage: {
