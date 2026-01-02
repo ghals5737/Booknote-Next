@@ -4,13 +4,13 @@ import { Greeting } from "@/components/dashboard/greeting";
 import { MyLibrarySection } from "@/components/dashboard/my-library-section";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { QuoteOfTheDay } from "@/components/dashboard/quote-of-the-day";
-import { ReadingBooksSection } from "@/components/dashboard/reading-books-section";
 import { ReadingTimer } from "@/components/dashboard/reading-timer";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedApiRequest } from "@/lib/api/nextauth-api";
 import { UserBookResponsePage } from "@/lib/types/book/book";
+import { GoalsResponse } from "@/lib/types/goal/goal";
 import { StatisticsResponse } from "@/lib/types/statistics/statistics";
 import { CurrentTimerResponse, StartTimerRequest, StartTimerResponse } from "@/lib/types/timer/timer";
 import { getReadingBooks } from "@/lib/utils/dashboard-utils";
@@ -20,16 +20,25 @@ import { useEffect, useMemo, useState } from "react";
 interface DashboardClientProps {
     booksData: UserBookResponsePage;
     statisticsData: StatisticsResponse | null;
+    goalsData: GoalsResponse | null;
 }
 
-export default function DashboardClient({ booksData, statisticsData }: DashboardClientProps) {
+export default function DashboardClient({ booksData, statisticsData, goalsData }: DashboardClientProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [isStartingTimer, setIsStartingTimer] = useState(false);
     const [currentTimer, setCurrentTimer] = useState<CurrentTimerResponse | null>(null);
     const [isLoadingTimer, setIsLoadingTimer] = useState(true);
+    const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
 
     const readingBooks = useMemo(() => getReadingBooks(booksData.content), [booksData.content]);
+    
+    // 선택된 책이 없으면 첫 번째 읽고 있는 책을 기본값으로 설정
+    useEffect(() => {
+        if (selectedBookId === null && readingBooks.length > 0) {
+            setSelectedBookId(readingBooks[0].id);
+        }
+    }, [readingBooks, selectedBookId]);
 
     // 현재 실행 중인 타이머 조회
     useEffect(() => {
@@ -142,10 +151,26 @@ export default function DashboardClient({ booksData, statisticsData }: Dashboard
     };
 
     // QuickActions 핸들러들
-    const handleContinueReading = () => {
-        const firstReadingBook = readingBooks[0];
-        if (firstReadingBook) {
-            router.push(`/book/${firstReadingBook.id}`);
+    const handleContinueReading = (bookId?: number) => {
+        // 타이머가 실행 중이면 책 변경 불가
+        if (currentTimer) {
+            toast({
+                title: '알림',
+                description: '타이머가 실행 중일 때는 책을 변경할 수 없습니다.',
+                variant: 'default',
+            });
+            return;
+        }
+
+        if (bookId) {
+            // 선택한 책으로 변경만 (타이머 시작하지 않음)
+            setSelectedBookId(bookId);
+        } else {
+            // bookId가 없으면 현재 선택된 책 또는 첫 번째 책으로 책 상세 페이지로 이동
+            const targetBookId = selectedBookId || readingBooks[0]?.id;
+            if (targetBookId) {
+                router.push(`/book/${targetBookId}`);
+            }
         }
     };
 
@@ -162,6 +187,7 @@ export default function DashboardClient({ booksData, statisticsData }: Dashboard
     const handleStartTimer = async () => {
         console.log('[타이머] 버튼 클릭됨', { 
             isStartingTimer, 
+            selectedBookId,
             readingBooksCount: readingBooks.length,
             readingBooks: readingBooks.map(b => ({ id: b.id, title: b.title, progress: b.progress }))
         });
@@ -171,10 +197,12 @@ export default function DashboardClient({ booksData, statisticsData }: Dashboard
             return;
         }
         
-        const firstReadingBook = readingBooks[0];
-        if (firstReadingBook) {
-            console.log('[타이머] 책 찾음:', firstReadingBook.id, firstReadingBook.title);
-            await handleStartTimerForBook(firstReadingBook.id);
+        // 선택된 책이 있으면 그 책으로, 없으면 첫 번째 책으로 타이머 시작
+        const targetBookId = selectedBookId || readingBooks[0]?.id;
+        if (targetBookId) {
+            const targetBook = readingBooks.find(b => b.id === targetBookId);
+            console.log('[타이머] 책 찾음:', targetBookId, targetBook?.title);
+            await handleStartTimerForBook(targetBookId);
         } else {
             console.log('[타이머] 읽고 있는 책 없음');
             toast({
@@ -195,6 +223,8 @@ export default function DashboardClient({ booksData, statisticsData }: Dashboard
         setCurrentTimer(null);
         // 타이머 종료 시 interval은 자동으로 중지됨 (fetchCurrentTimer에서 404 처리)
     };
+    
+    // 타이머가 종료되면 선택된 책은 유지 (변경하지 않음)
 
     // 타이머 시작 시 interval 재시작을 위한 effect
     useEffect(() => {
@@ -229,10 +259,15 @@ export default function DashboardClient({ booksData, statisticsData }: Dashboard
 
         return () => clearInterval(intervalId);
     }, [currentTimer]);
-    const currentBook = readingBooks.length > 0 ? {
-        title: readingBooks[0].title,
-        progress: readingBooks[0].progress
-    } : undefined;
+    // 현재 선택된 책 정보
+    const currentBook = useMemo(() => {
+        if (selectedBookId === null) return undefined;
+        const book = readingBooks.find(b => b.id === selectedBookId);
+        return book ? {
+            title: book.title,
+            progress: book.progress
+        } : undefined;
+    }, [selectedBookId, readingBooks]);
 
     // 오늘의 인용구 (목업 데이터 - 추후 API로 교체)
     const todayQuote = useMemo(() => {
@@ -276,7 +311,7 @@ export default function DashboardClient({ booksData, statisticsData }: Dashboard
             <Greeting userName="독서가" />
 
             {/* 통계 카드 섹션 */}
-            <StatsCards statisticsData={statisticsData} />
+            <StatsCards statisticsData={statisticsData} goalsData={goalsData} />
 
             {/* 실행 중인 타이머 */}
             {!isLoadingTimer && currentTimer && (
@@ -293,14 +328,15 @@ export default function DashboardClient({ booksData, statisticsData }: Dashboard
                     onStartTimer={handleStartTimer}
                     onPlayMusic={handlePlayMusic}
                     currentBook={currentBook}
+                    readingBooks={readingBooks.map(book => ({
+                        id: book.id,
+                        title: book.title,
+                        progress: book.progress
+                    }))}
+                    isTimerRunning={!!currentTimer}
+                    selectedBookId={selectedBookId}
                 />
             </div>
-
-            {/* 지금 읽던 책 이어서 읽기 섹션 */}
-            <ReadingBooksSection 
-                books={readingBooks} 
-                onStartTimer={handleStartTimerForBook}
-            />
 
             {/* 오늘의 문학 인용구 */}
             <div className="mb-12">
