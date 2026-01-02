@@ -5,124 +5,139 @@
  */
 
 /* 폰트 및 Tailwind CSS 코어 임포트 */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* 세리프 폰트 - 책 제목용 */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&display=swap');
+
+/* 산세리프 폰트 - 본문 및 UI */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
 @import "tailwindcss"; /* v4에서는 이것만으로 preflight, utilities 모두 포함 */
 @import "tw-animate-css"; /* 외부 라이브러리 (필요시) */
 
 /* tailwind.config.ts 파일 설정 가져오기 */
-/* CSS-First를 완전히 따른다면 @config는 제거하거나, content 경로 설정만 포함하는 최소한의 config만 사용합니다. */
-/* 여기서는 tailwind.config.ts가 content 경로만 남긴다고 가정하고 이 라인은 유지합니다. */
 @config "../tailwind.config.ts";
 
-@layer base {
-  :root {
-    /* Core Color Palette - Clean and Minimal */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 20%;
+@custom-variant dark (&:is(.dark *));
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
+:root {
+  --font-size: 16px;
+  --font-serif: 'Crimson Text', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --background: #FAF8F5; /* 따뜻한 아이보리 톤 */
+  --foreground: #2C2416; /* 어두운 브라운 */
+  --card: #FFFEF9; /* 약간 더 밝은 아이보리 (종이 느낌) */
+  --card-foreground: #2C2416;
+  --popover: #FFFEF9;
+  --popover-foreground: #2C2416;
+  --primary: #5E4B3C; /* 따뜻한 갈색 */
+  --primary-foreground: #FFFEF9;
+  --secondary: #E8E2D8; /* 베이지 */
+  --secondary-foreground: #2C2416;
+  --muted: #E8E2D8;
+  --muted-foreground: #6B5D4F; /* 연한 갈색 */
+  --accent: #D4C5B0; /* 샌드 톤 */
+  --accent-foreground: #2C2416;
+  --destructive: #C84B31;
+  --destructive-foreground: #FFFEF9;
+  --border: rgba(92, 75, 60, 0.15); /* 반투명 갈색 */
+  --input: transparent;
+  --input-background: #F5F0E8; /* 따뜻한 배경 */
+  --switch-background: #D4C5B0;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: #5E4B3C;
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.5rem; /* 부드러운 모서리 */
+  --sidebar: #F5F0E8;
+  --sidebar-foreground: #2C2416;
+  --sidebar-primary: #5E4B3C;
+  --sidebar-primary-foreground: #FFFEF9;
+  --sidebar-accent: #E8E2D8;
+  --sidebar-accent-foreground: #2C2416;
+  --sidebar-border: rgba(92, 75, 60, 0.15);
+  --sidebar-ring: #5E4B3C;
+}
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
 
-    /* Primary - Deep Blue */
-    --primary: 220 47% 49%;
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 220 47% 44%;
-    --primary-muted: 220 47% 95%;
-
-    /* Secondary - Soft Sky Blue */
-    --secondary: 210 100% 85%;
-    --secondary-foreground: 0 0% 20%;
-
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-
-    --accent: 220 47% 49%;
-    --accent-foreground: 0 0% 100%;
-
-    /* Semantic colors for knowledge management */
-    --highlight-yellow: 48 100% 88%;
-    --highlight-blue: 210 29% 90%;
-    --highlight-green: 142 76% 90%;
-    --highlight-pink: 25 100% 88%;
-
-    /* Reading-optimized colors */
-    --reading-bg: 0 0% 100%;
-    --reading-text: 0 0% 20%;
-    --sidebar-bg: 0 0% 98%;
-
-    --destructive: 0 75% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 210 29% 78%;
-
-    --radius: 0.75rem;
-
-    /* Advanced gradients for clean visualization */
-    --gradient-primary: linear-gradient(135deg, hsl(220 47% 49%), hsl(220 47% 44%));
-    --gradient-warm: linear-gradient(135deg, hsl(210 100% 90%), hsl(210 100% 85%));
-    --gradient-knowledge: linear-gradient(135deg, hsl(220 47% 95%), hsl(210 100% 95%));
-
-    /* Shadows for subtle depth */
-    --shadow-soft: 0 2px 8px -2px hsl(0 0% 88% / 0.4);
-    --shadow-medium: 0 4px 16px -4px hsl(0 0% 88% / 0.6);
-    --shadow-knowledge: 0 8px 32px -8px hsl(220 47% 49% / 0.15);
-
-    /* Transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 210 29% 78%;
-    --sidebar-primary-foreground: 0 0% 20%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 20%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 210 29% 78%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 #root {
   max-width: 1280px;
@@ -169,16 +184,63 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
 
   body {
-    @apply bg-background text-foreground font-inter antialiased;
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
 
-  /* Typography optimized for reading */
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-inter font-semibold tracking-tight;
+  /**
+  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
+  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  */
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  label {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  button {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  input {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.5;
   }
 
   /* Code and markdown */
@@ -190,6 +252,10 @@
   *:focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2;
   }
+}
+
+.font-serif {
+  font-family: var(--font-serif);
 }
 
 @layer components {
