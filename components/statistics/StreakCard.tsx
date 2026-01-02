@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { Flame } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card";
+import { Infinity } from "lucide-react";
 
 interface StreakCardProps {
   streakDays: number;
@@ -9,17 +9,17 @@ interface StreakCardProps {
 
 export function StreakCard({ streakDays }: StreakCardProps) {
   return (
-    <Card className="bg-gradient-to-br from-purple-500 to-purple-700 border-0">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-white/80 text-sm font-medium mb-2">연속 독서 기록</p>
-            <p className="text-white text-4xl font-bold">{streakDays}일</p>
-          </div>
-          <div className="flex items-center justify-center w-16 h-16 rounded-full bg-white/20">
-            <Flame className="h-8 w-8 text-white" />
+    <Card className="bg-gradient-to-br from-[#5E4B3C] to-[#4A3A2E] border-0">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Infinity className="h-5 w-5 text-white/80" />
+            <p className="text-white/80 text-sm font-medium">연속 독서</p>
           </div>
         </div>
+        <p className="text-2xl font-bold text-white">
+          {streakDays} 일째 🔥
+        </p>
       </CardContent>
     </Card>
   )
