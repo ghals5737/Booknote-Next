@@ -9,7 +9,10 @@ export interface ReviewItemSuccessResponse {
   success: boolean
   status: number
   message: string
-  data: string
+  data: string | {
+    message: string
+    nextReviewDate?: string  // 다음 복습 예정일 (ISO 8601 형식)
+  }
   timestamp: string | null
 }
 

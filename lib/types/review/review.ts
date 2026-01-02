@@ -24,13 +24,14 @@ export interface Review {
   plannedTime: string; 
   completedTime: string | null;
   items: ReviewItem[];
+  nextReviewDate?: string;  // 다음 복습 예정일 (YYYY-MM-DD 형식)
 }
 
 export interface ReviewTodayResponse {
   success: boolean;
   status: number;
   message: string;
-  data: Review[];
+  data: Review;  // 배열에서 단일 객체로 변경
   timestamp: string | null;
 }
 
