@@ -2,11 +2,23 @@ import { UserBookResponse } from "@/lib/types/book/book";
 import { StatisticsResponse } from "@/lib/types/statistics/statistics";
 
 /**
- * 읽고 있는 책 필터링 (progress > 0 && progress < 100)
+ * 읽고 있는 책 필터링 
+ * - progress가 0보다 크고 100보다 작은 책
+ * - 또는 progress가 0이지만 시작일(startDate)이 있는 책 (읽기 시작했지만 아직 진행률이 0인 경우)
  */
 export function getReadingBooks(books: UserBookResponse[]) {
   return books.filter(
-    (book) => book.progress > 0 && book.progress < 100
+    (book) => {
+      // 진행률이 0보다 크고 100보다 작은 경우
+      if (book.progress > 0 && book.progress < 100) {
+        return true;
+      }
+      // 진행률이 0이지만 시작일이 있는 경우 (읽기 시작한 책)
+      if (book.progress === 0 && book.startDate) {
+        return true;
+      }
+      return false;
+    }
   );
 }
 

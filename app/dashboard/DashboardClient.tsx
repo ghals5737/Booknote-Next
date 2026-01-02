@@ -5,13 +5,17 @@ import { MyLibrarySection } from "@/components/dashboard/my-library-section";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { QuoteOfTheDay } from "@/components/dashboard/quote-of-the-day";
 import { ReadingBooksSection } from "@/components/dashboard/reading-books-section";
+import { ReadingTimer } from "@/components/dashboard/reading-timer";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 import { StatsCards } from "@/components/dashboard/stats-cards";
+import { useToast } from "@/hooks/use-toast";
+import { authenticatedApiRequest } from "@/lib/api/nextauth-api";
 import { UserBookResponsePage } from "@/lib/types/book/book";
 import { StatisticsResponse } from "@/lib/types/statistics/statistics";
+import { CurrentTimerResponse, StartTimerRequest, StartTimerResponse } from "@/lib/types/timer/timer";
 import { getReadingBooks } from "@/lib/utils/dashboard-utils";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 interface DashboardClientProps {
     booksData: UserBookResponsePage;
@@ -20,12 +24,121 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ booksData, statisticsData }: DashboardClientProps) {
     const router = useRouter();
+    const { toast } = useToast();
+    const [isStartingTimer, setIsStartingTimer] = useState(false);
+    const [currentTimer, setCurrentTimer] = useState<CurrentTimerResponse | null>(null);
+    const [isLoadingTimer, setIsLoadingTimer] = useState(true);
+
+    const readingBooks = useMemo(() => getReadingBooks(booksData.content), [booksData.content]);
+
+    // 현재 실행 중인 타이머 조회
+    useEffect(() => {
+        let intervalId: NodeJS.Timeout | null = null;
+
+        const fetchCurrentTimer = async () => {
+            try {
+                setIsLoadingTimer(true);
+                const result = await authenticatedApiRequest<CurrentTimerResponse | null>('/api/v1/timer/current');
+                
+                if (result.data) {
+                    setCurrentTimer(result.data);
+                    // 타이머가 있으면 5초마다 갱신 (interval이 없을 때만 시작)
+                    if (!intervalId) {
+                        intervalId = setInterval(fetchCurrentTimer, 5000);
+                    }
+                } else {
+                    setCurrentTimer(null);
+                    // 타이머가 없으면 interval 중지
+                    if (intervalId) {
+                        clearInterval(intervalId);
+                        intervalId = null;
+                    }
+                }
+            } catch (error) {
+                // 404는 정상 (실행 중인 타이머가 없는 경우)
+                if (error instanceof Error) {
+                    const isNotFound = (error as any).isNotFound || 
+                                      (error as any).status === 404 ||
+                                      error.message.includes('404') || 
+                                      error.message.includes('실행 중인 타이머가 없습니다');
+                    
+                    if (isNotFound) {
+                        setCurrentTimer(null);
+                        // 타이머가 없으면 interval 중지
+                        if (intervalId) {
+                            clearInterval(intervalId);
+                            intervalId = null;
+                        }
+                        // 404는 정상 케이스이므로 로그를 남기지 않음
+                        setIsLoadingTimer(false);
+                        return;
+                    }
+                }
+                
+                // 404가 아닌 다른 에러만 로그에 남김
+                console.error('현재 타이머 조회 오류:', error);
+            } finally {
+                setIsLoadingTimer(false);
+            }
+        };
+
+        // 초기 조회 (타이머가 없으면 interval을 시작하지 않음)
+        fetchCurrentTimer();
+        
+        return () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, []);
 
     // 독서 타이머 시작 핸들러 (bookId 받는 버전)
-    const handleStartTimerForBook = (bookId: number) => {
-        // TODO: 독서 타이머 기능 구현
-        console.log('독서 타이머 시작:', bookId);
-        // 예: router.push(`/book/${bookId}?timer=true`);
+    const handleStartTimerForBook = async (bookId: number) => {
+        if (isStartingTimer) return;
+        
+        try {
+            setIsStartingTimer(true);
+            console.log('[타이머] 시작 API 호출:', bookId);
+            
+            const requestBody: StartTimerRequest = {
+                bookId,
+            };
+
+            const result = await authenticatedApiRequest<StartTimerResponse>('/api/v1/timer/start', {
+                method: 'POST',
+                body: JSON.stringify(requestBody),
+            });
+            
+            console.log('[타이머] 시작 성공:', result);
+            
+            // 현재 타이머 상태 업데이트
+            // StartTimerResponse에는 bookCover가 없으므로 readingBooks에서 찾아서 추가
+            const book = readingBooks.find(b => b.id === result.data.bookId);
+            setCurrentTimer({
+                timerId: result.data.timerId,
+                bookId: result.data.bookId,
+                bookTitle: result.data.bookTitle,
+                bookCover: book?.coverImage || undefined,
+                startTime: result.data.startTime,
+                targetMinutes: result.data.targetMinutes,
+                elapsedMinutes: 0,
+                status: result.data.status,
+            });
+            
+            toast({
+                title: '타이머 시작',
+                description: `${result.data.bookTitle}의 독서 타이머를 시작했습니다.`,
+            });
+        } catch (error) {
+            console.error('[타이머] 시작 오류:', error);
+            toast({
+                title: '오류',
+                description: error instanceof Error ? error.message : '타이머 시작에 실패했습니다.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsStartingTimer(false);
+        }
     };
 
     // QuickActions 핸들러들
@@ -46,12 +159,29 @@ export default function DashboardClient({ booksData, statisticsData }: Dashboard
         }
     };
 
-    const handleStartTimer = () => {
+    const handleStartTimer = async () => {
+        console.log('[타이머] 버튼 클릭됨', { 
+            isStartingTimer, 
+            readingBooksCount: readingBooks.length,
+            readingBooks: readingBooks.map(b => ({ id: b.id, title: b.title, progress: b.progress }))
+        });
+        
+        if (isStartingTimer) {
+            console.log('[타이머] 이미 시작 중...');
+            return;
+        }
+        
         const firstReadingBook = readingBooks[0];
         if (firstReadingBook) {
-            handleStartTimerForBook(firstReadingBook.id);
+            console.log('[타이머] 책 찾음:', firstReadingBook.id, firstReadingBook.title);
+            await handleStartTimerForBook(firstReadingBook.id);
         } else {
-            console.log('독서 타이머 시작 (책 없음)');
+            console.log('[타이머] 읽고 있는 책 없음');
+            toast({
+                title: '알림',
+                description: '읽고 있는 책이 없습니다. 먼저 책을 추가해주세요.',
+                variant: 'default',
+            });
         }
     };
 
@@ -60,7 +190,45 @@ export default function DashboardClient({ booksData, statisticsData }: Dashboard
         console.log('독서 분위기 음악 재생');
     };
 
-    const readingBooks = useMemo(() => getReadingBooks(booksData.content), [booksData.content]);
+    // 타이머 종료 후 콜백
+    const handleTimerStop = () => {
+        setCurrentTimer(null);
+        // 타이머 종료 시 interval은 자동으로 중지됨 (fetchCurrentTimer에서 404 처리)
+    };
+
+    // 타이머 시작 시 interval 재시작을 위한 effect
+    useEffect(() => {
+        if (!currentTimer) return;
+
+        // 타이머가 시작되면 5초마다 갱신
+        const intervalId = setInterval(async () => {
+            try {
+                const result = await authenticatedApiRequest<CurrentTimerResponse | null>('/api/v1/timer/current');
+                
+                if (result.data) {
+                    setCurrentTimer(result.data);
+                } else {
+                    setCurrentTimer(null);
+                }
+            } catch (error) {
+                // 404는 정상 (타이머가 종료된 경우)
+                if (error instanceof Error) {
+                    const isNotFound = (error as any).isNotFound || 
+                                      (error as any).status === 404 ||
+                                      error.message.includes('404') || 
+                                      error.message.includes('실행 중인 타이머가 없습니다');
+                    
+                    if (isNotFound) {
+                        setCurrentTimer(null);
+                        return;
+                    }
+                }
+                console.error('타이머 갱신 오류:', error);
+            }
+        }, 5000);
+
+        return () => clearInterval(intervalId);
+    }, [currentTimer]);
     const currentBook = readingBooks.length > 0 ? {
         title: readingBooks[0].title,
         progress: readingBooks[0].progress
@@ -109,6 +277,13 @@ export default function DashboardClient({ booksData, statisticsData }: Dashboard
 
             {/* 통계 카드 섹션 */}
             <StatsCards statisticsData={statisticsData} />
+
+            {/* 실행 중인 타이머 */}
+            {!isLoadingTimer && currentTimer && (
+                <div className="mb-8">
+                    <ReadingTimer timer={currentTimer} onStop={handleTimerStop} />
+                </div>
+            )}
 
             {/* QuickActions 섹션 */}
             <div className="mb-8">

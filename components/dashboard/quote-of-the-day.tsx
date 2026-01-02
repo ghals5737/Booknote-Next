@@ -16,7 +16,7 @@ export function QuoteOfTheDay({ quote, author, bookTitle }: QuoteOfTheDayProps) 
       
       <div className="relative z-10">
         <p className="mb-3 text-lg leading-relaxed text-foreground">
-          "{quote}"
+          &ldquo;{quote}&rdquo;
         </p>
         <div className="text-sm text-muted-foreground">
           <span>— {author}</span>

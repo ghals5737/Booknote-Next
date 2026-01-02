@@ -34,13 +34,13 @@ interface OverdueReviewItem {
   reviewCount?: number
 }
 
-interface OverdueReviewResponse {
-  success: boolean
-  status: number
-  message: string
-  data: OverdueReviewItem[]
-  timestamp: string | null
-}
+// interface OverdueReviewResponse {
+//   success: boolean
+//   status: number
+//   message: string
+//   data: OverdueReviewItem[]
+//   timestamp: string | null
+// }
 
 // 완료된 복습 API 응답 타입
 interface ReviewHistoryItem {
@@ -342,7 +342,7 @@ export function ReviewListView({
           day: 'numeric'
         })
       }
-    } catch (error) {
+    } catch {
       return ""
     }
   }

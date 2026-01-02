@@ -99,7 +99,7 @@ export function RecentActivity({ activities }: RecentActivityProps) {
               {/* 노트 내용 스니펫 */}
               {activity.content && (
                 <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                  "{activity.content}"
+                  &ldquo;{activity.content}&rdquo;
                 </p>
               )}
             </div>

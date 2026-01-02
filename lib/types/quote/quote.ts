@@ -29,3 +29,23 @@ export type QuoteResponsePage = {
     numberOfElements: number;
     empty: boolean;
 }
+
+// 오늘의 인용구 API 타입 정의
+export interface QuoteOfTheDayResponse {
+    id: number;
+    quote: string;
+    author: string;
+    bookTitle: string;
+    bookId: number;
+    bookCover: string;
+    page?: number;
+    createdAt: string;
+}
+
+export interface QuoteOfTheDayApiResponse {
+    success: boolean;
+    status: number;
+    message: string;
+    data: QuoteOfTheDayResponse | null;
+    timestamp: string;
+}

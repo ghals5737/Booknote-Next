@@ -44,7 +44,7 @@ export function ReviewCompleteCard({ totalCount, nextReviewDate }: ReviewComplet
           day: 'numeric'
         })
       }
-    } catch (error) {
+    } catch {
       return ""
     }
   }

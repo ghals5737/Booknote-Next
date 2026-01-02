@@ -13,14 +13,15 @@ async function getBooksData(): Promise<UserBookResponsePage | null> {
             return null;
         }
         
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9500';
-        console.log('baseUrl', baseUrl);
-        console.log('session.accessToken', session.accessToken);
+        // 서버 컴포넌트에서 직접 백엔드 API 호출
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
         const response = await fetch(`${baseUrl}/api/v1/user/books?page=0&size=10`,
           {
             headers: {
               'Authorization': `Bearer ${session.accessToken}`,
+              'Content-Type': 'application/json',
             },
+            cache: 'no-store',
           }
         );
 
@@ -45,11 +46,13 @@ async function getStatisticsData(): Promise<StatisticsResponse | null> {
             return null;
         }
         
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:9500';
+        // 서버 컴포넌트에서 직접 백엔드 API 호출
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
         const response = await fetch(`${baseUrl}/api/v1/stats/me`,
           {
             headers: {
               'Authorization': `Bearer ${session.accessToken}`,
+              'Content-Type': 'application/json',
             },
             cache: 'no-store',
           }
