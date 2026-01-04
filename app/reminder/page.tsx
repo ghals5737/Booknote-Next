@@ -1,9 +1,9 @@
 import { authOptions } from "@/lib/auth"
-import { ReviewTodayResponse } from "@/lib/types/review/review"
+import { Review, ReviewTodayResponse } from "@/lib/types/review/review"
 import { getServerSession } from "next-auth"
 import ReminderClient from "./ReminderClient"
 
-async function getTodayReviews(): Promise<ReviewTodayResponse['data']> {
+async function getTodayReviews(): Promise<Review[]> {
   const session = await getServerSession(authOptions)
   
   if (!session?.accessToken) {
@@ -24,7 +24,9 @@ async function getTodayReviews(): Promise<ReviewTodayResponse['data']> {
   }
 
   const result: ReviewTodayResponse = await response.json()
-  return result.data || []
+  // data가 단일 Review 객체인 경우 배열로 변환
+  const reviewData = result.data
+  return reviewData ? [reviewData] : []
 }
 
 export default async function ReminderPage() {
