@@ -69,8 +69,9 @@ export default function DashboardClient({ booksData, statisticsData, goalsData, 
             } catch (error) {
                 // 404는 정상 (실행 중인 타이머가 없는 경우)
                 if (error instanceof Error) {
-                    const isNotFound = (error as any).isNotFound || 
-                                      (error as any).status === 404 ||
+                    const errorWithStatus = error as Error & { status?: number; isNotFound?: boolean }
+                    const isNotFound = errorWithStatus.isNotFound || 
+                                      errorWithStatus.status === 404 ||
                                       error.message.includes('404') || 
                                       error.message.includes('실행 중인 타이머가 없습니다');
                     
@@ -245,8 +246,9 @@ export default function DashboardClient({ booksData, statisticsData, goalsData, 
             } catch (error) {
                 // 404는 정상 (타이머가 종료된 경우)
                 if (error instanceof Error) {
-                    const isNotFound = (error as any).isNotFound || 
-                                      (error as any).status === 404 ||
+                    const errorWithStatus = error as Error & { status?: number; isNotFound?: boolean }
+                    const isNotFound = errorWithStatus.isNotFound || 
+                                      errorWithStatus.status === 404 ||
                                       error.message.includes('404') || 
                                       error.message.includes('실행 중인 타이머가 없습니다');
                     

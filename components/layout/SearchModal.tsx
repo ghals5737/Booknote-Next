@@ -170,7 +170,7 @@ export function SearchModal({ onClose }: SearchModalProps) {
         };
 
         fetchSearchResults();
-    }, [debouncedQuery]);
+    }, [debouncedQuery, saveRecentSearch]);
 
     // API 응답을 컴포넌트 타입에 맞게 변환
     const transformedBooks = useMemo(

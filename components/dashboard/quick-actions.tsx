@@ -19,7 +19,7 @@ interface QuickActionsProps {
   onContinueReading: (bookId?: number) => void;
   onWriteNote: () => void;
   onStartTimer: () => void;
-  onPlayMusic: () => void;
+  onPlayMusic?: () => void; // 선택적 prop으로 변경 (현재 사용하지 않음)
   currentBook?: {
     title: string;
     progress: number;
@@ -33,7 +33,8 @@ export function QuickActions({
   onContinueReading, 
   onWriteNote, 
   onStartTimer,
-  onPlayMusic,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onPlayMusic: _onPlayMusic, // 사용하지 않는 prop (향후 사용 예정)
   currentBook,
   readingBooks = [],
   isTimerRunning = false,

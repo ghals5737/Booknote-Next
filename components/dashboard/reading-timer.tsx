@@ -61,7 +61,7 @@ export function ReadingTimer({ timer, onStop }: ReadingTimerProps) {
         timerId: timer.timerId,
       };
 
-      const result = await authenticatedApiRequest('/api/v1/timer/stop', {
+      await authenticatedApiRequest('/api/v1/timer/stop', {
         method: 'POST',
         body: JSON.stringify(requestBody),
       });

@@ -82,9 +82,9 @@ export const authenticatedApiRequest = async <T>(
     
     // 404 에러는 특별한 에러 객체로 던져서 구분 가능하게 함
     if (response.status === 404) {
-      const notFoundError = new Error(errorMessage)
-      ;(notFoundError as any).status = 404
-      ;(notFoundError as any).isNotFound = true
+      const notFoundError = new Error(errorMessage) as Error & { status: number; isNotFound: boolean }
+      notFoundError.status = 404
+      notFoundError.isNotFound = true
       throw notFoundError
     }
     
