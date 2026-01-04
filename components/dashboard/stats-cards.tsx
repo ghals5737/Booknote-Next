@@ -163,7 +163,25 @@ export function StatsCards({ statisticsData, goalsData }: StatsCardsProps) {
                 <p className="text-muted-foreground text-sm font-medium">올해 읽은 책</p>
               </div>
             </div>
-            <p className="text-2xl font-bold">{thisYearReadCount} 권</p>
+            <p className="text-2xl font-bold mb-3">{thisYearReadCount} 권</p>
+            {/* 책 아이콘 시각화 (최대 10개) */}
+            {thisYearReadCount > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {Array.from({ length: Math.min(thisYearReadCount, 10) }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-primary"
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                  </div>
+                ))}
+                {thisYearReadCount > 10 && (
+                  <span className="text-xs text-muted-foreground ml-1">
+                    +{thisYearReadCount - 10}
+                  </span>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

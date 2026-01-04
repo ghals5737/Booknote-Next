@@ -10,6 +10,7 @@ import { StatsCards } from "@/components/dashboard/stats-cards";
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedApiRequest } from "@/lib/api/nextauth-api";
 import { UserBookResponsePage } from "@/lib/types/book/book";
+import { ActivityResponse } from "@/lib/types/dashboard/dashboard";
 import { GoalsResponse } from "@/lib/types/goal/goal";
 import { StatisticsResponse } from "@/lib/types/statistics/statistics";
 import { CurrentTimerResponse, StartTimerRequest, StartTimerResponse } from "@/lib/types/timer/timer";
@@ -21,9 +22,11 @@ interface DashboardClientProps {
     booksData: UserBookResponsePage;
     statisticsData: StatisticsResponse | null;
     goalsData: GoalsResponse | null;
+    recentActivities: ActivityResponse[];
+    userName?: string | null;
 }
 
-export default function DashboardClient({ booksData, statisticsData, goalsData }: DashboardClientProps) {
+export default function DashboardClient({ booksData, statisticsData, goalsData, recentActivities, userName }: DashboardClientProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [isStartingTimer, setIsStartingTimer] = useState(false);
@@ -163,7 +166,6 @@ export default function DashboardClient({ booksData, statisticsData, goalsData }
         }
 
         if (bookId) {
-            // 선택한 책으로 변경만 (타이머 시작하지 않음)
             setSelectedBookId(bookId);
         } else {
             // bookId가 없으면 현재 선택된 책 또는 첫 번째 책으로 책 상세 페이지로 이동
@@ -279,36 +281,12 @@ export default function DashboardClient({ booksData, statisticsData, goalsData }
         };
     }, []);
 
-    // 최근 활동 데이터 변환 (목업 데이터 - 추후 API로 교체)
-    const recentActivities = useMemo(() => {
-        // booksData에서 최근 활동 생성 (실제로는 API에서 가져와야 함)
-        const activities = booksData.content
-            .slice(0, 5)
-            .map((book, index) => {
-                const activityTypes: Array<'note' | 'reading' | 'finished'> = ['note', 'reading', 'finished'];
-                const type = activityTypes[index % activityTypes.length];
-                
-                return {
-                    id: book.id,
-                    type,
-                    bookTitle: book.title,
-                    bookCover: book.coverImage || '',
-                    content: type === 'note' ? '독서 노트를 작성했습니다.' : undefined,
-                    pages: type === 'reading' ? Math.floor(Math.random() * 50) + 10 : undefined,
-                    timestamp: book.updateDate || book.startDate || new Date().toISOString()
-                };
-            });
-
-        return activities.sort((a, b) => 
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
-    }, [booksData.content]);
 
 
     return (
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             {/* 인사말 섹션 */}
-            <Greeting userName="독서가" />
+            <Greeting userName={userName || undefined} />
 
             {/* 통계 카드 섹션 */}
             <StatsCards statisticsData={statisticsData} goalsData={goalsData} />
@@ -347,8 +325,11 @@ export default function DashboardClient({ booksData, statisticsData, goalsData }
             <section className="mb-16">
                 <div className="mb-6 flex items-center justify-between">
                     <h2 className="text-2xl">최근 활동</h2>
-                    <button className="text-sm text-primary hover:underline">
-                        전체보기
+                    <button 
+                        onClick={() => router.push('/dashboard/activities')}
+                        className="text-sm text-primary hover:underline transition-colors"
+                    >
+                        전체 활동 보기
                     </button>
                 </div>
                 <RecentActivity activities={recentActivities} />

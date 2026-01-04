@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { BookOpen, ChevronDown, Edit3, Music, Timer } from 'lucide-react';
+import { BookOpen, ChevronDown, Edit3, Timer } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface ReadingBook {
@@ -126,7 +126,7 @@ export function QuickActions({
       {/* 노트 작성 */}
       <button
         onClick={onWriteNote}
-        className="flex flex-col justify-between rounded-lg border border-border bg-card p-4 text-left shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md"
+        className="flex flex-col justify-between rounded-lg border-2 border-border bg-secondary/30 p-4 text-left shadow-sm transition-all duration-200 hover:border-primary hover:bg-secondary/50 hover:shadow-md"
       >
         <Edit3 className="mb-2 h-5 w-5 text-primary" />
         <div>
@@ -138,7 +138,7 @@ export function QuickActions({
       {/* 독서 타이머 */}
       <button
         onClick={onStartTimer}
-        className="flex flex-col justify-between rounded-lg border border-border bg-card p-4 text-left shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md"
+        className="flex flex-col justify-between rounded-lg border-2 border-border bg-secondary/30 p-4 text-left shadow-sm transition-all duration-200 hover:border-primary hover:bg-secondary/50 hover:shadow-md"
       >
         <Timer className="mb-2 h-5 w-5 text-primary" />
         <div>
@@ -148,9 +148,9 @@ export function QuickActions({
       </button>
 
       {/* 분위기 음악 (선택적) */}
-      <button
+      {/* <button
         onClick={onPlayMusic}
-        className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-left shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md sm:col-span-2 lg:col-span-4"
+        className="flex items-center gap-3 rounded-lg border-2 border-border bg-secondary/30 p-4 text-left shadow-sm transition-all duration-200 hover:border-primary hover:bg-secondary/50 hover:shadow-md sm:col-span-2 lg:col-span-4"
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
           <Music className="h-5 w-5 text-primary" />
@@ -159,7 +159,7 @@ export function QuickActions({
           <div className="text-sm text-muted-foreground">독서 분위기 조성</div>
           <div className="font-medium">잔잔한 클래식 음악 재생</div>
         </div>
-      </button>
+      </button> */}
     </div>
   );
 }

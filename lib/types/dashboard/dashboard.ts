@@ -45,7 +45,7 @@ export interface RecentNoteItem {
   }
 
   // 최근 활동 API 타입 정의
-  export type ActivityType = 'note' | 'reading' | 'finished';
+  export type ActivityType = 'note' | 'reading' | 'finished' | 'quote';
 
   export interface ActivityResponse {
     id: number;

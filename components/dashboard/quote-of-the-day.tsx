@@ -10,7 +10,7 @@ interface QuoteOfTheDayProps {
 
 export function QuoteOfTheDay({ quote, author, bookTitle }: QuoteOfTheDayProps) {
   return (
-    <div className="relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-card to-secondary/30 p-6 shadow-sm">
+    <div className="relative overflow-hidden rounded-lg border-2 border-border bg-gradient-to-br from-card to-secondary/30 p-6 shadow-md">
       {/* 장식용 따옴표 */}
       <Quote className="absolute right-4 top-4 h-16 w-16 text-border/50" />
       

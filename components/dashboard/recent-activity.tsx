@@ -5,12 +5,13 @@ import Image from 'next/image';
 
 interface Activity {
   id: number;
-  type: 'note' | 'reading' | 'finished';
+  type: 'note' | 'reading' | 'finished' | 'quote';
   bookTitle: string;
   bookCover: string;
   content?: string;
   pages?: number;
   timestamp: string;
+  bookId?: number;
 }
 
 interface RecentActivityProps {
@@ -26,6 +27,8 @@ export function RecentActivity({ activities }: RecentActivityProps) {
         return <BookOpen className="h-5 w-5 text-primary" />;
       case 'finished':
         return <BookOpen className="h-5 w-5 text-primary" />;
+        case 'quote':
+          return <FileText className="h-5 w-5 text-primary" />;
     }
   };
 
@@ -34,9 +37,11 @@ export function RecentActivity({ activities }: RecentActivityProps) {
       case 'note':
         return '노트 작성';
       case 'reading':
-        return `${activity.pages}페이지 읽음`;
+        return activity.pages != null ? `${activity.pages}페이지 읽음` : '읽음';
       case 'finished':
         return '완독';
+        case 'quote':
+          return '인용구';
     }
   };
 
@@ -56,11 +61,11 @@ export function RecentActivity({ activities }: RecentActivityProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {activities.map((activity) => (
         <div 
           key={activity.id}
-          className="group relative rounded-lg border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md"
+          className="group relative rounded-lg border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md"
         >
           <div className="flex gap-4">
             {/* 책 표지 썸네일 */}
