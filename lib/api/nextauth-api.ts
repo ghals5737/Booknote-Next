@@ -79,6 +79,15 @@ export const authenticatedApiRequest = async <T>(
     // 에러 응답 형식이 다를 수 있음 (code, message, status 형식 또는 success, message 형식)
     const errorData = parsedData as Record<string, unknown>
     const errorMessage = (errorData?.message as string) || (errorData?.code as string) || `API 요청 실패 (${response.status})`
+    
+    // 404 에러는 특별한 에러 객체로 던져서 구분 가능하게 함
+    if (response.status === 404) {
+      const notFoundError = new Error(errorMessage) as Error & { status: number; isNotFound: boolean }
+      notFoundError.status = 404
+      notFoundError.isNotFound = true
+      throw notFoundError
+    }
+    
     throw new Error(errorMessage)
   }
   

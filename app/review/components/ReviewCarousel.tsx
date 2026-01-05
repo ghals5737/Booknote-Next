@@ -20,9 +20,10 @@ import { ReviewStartCard } from "./ReviewStartCard"
 interface ReviewCarouselProps {
   items: UIReviewItem[]
   onItemComplete: (itemId: number, assessment?: "forgot" | "hard" | "easy" | null, isLastItem?: boolean) => Promise<void>
+  nextReviewDate?: string  // 다음 복습 예정일
 }
 
-export function ReviewCarousel({ items, onItemComplete }: ReviewCarouselProps) {
+export function ReviewCarousel({ items, onItemComplete, nextReviewDate }: ReviewCarouselProps) {
   const [api, setApi] = useState<CarouselApi>()
   const [isLoading, setIsLoading] = useState(false)
   const [hasCompletedAll, setHasCompletedAll] = useState(false)
@@ -117,7 +118,7 @@ export function ReviewCarousel({ items, onItemComplete }: ReviewCarouselProps) {
             {/* 완료 카드 - 모든 항목이 완료되었을 때 또는 로컬 상태에서 완료로 판단될 때 표시 */}
             {showCompleteCard && (
               <CarouselItem className="pl-2 md:pl-4">
-                <ReviewCompleteCard totalCount={totalCount} />
+                <ReviewCompleteCard totalCount={totalCount} nextReviewDate={nextReviewDate} />
               </CarouselItem>
             )}
           </CarouselContent>

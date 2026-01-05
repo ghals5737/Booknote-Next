@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { NoteResponse } from "@/lib/types/note/note";
 import {
   ArrowLeft,
+  BookOpen,
   Eye,
   EyeOff,
   Save,
@@ -23,9 +24,10 @@ interface NoteEditorProps {
   initialNote?: NoteResponse;
   isEditMode?: boolean;
   bookId?: string;
+  bookTitle?: string;
 }
 
-const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {  
+const NoteEditor = ({ initialNote, isEditMode, bookId, bookTitle }: NoteEditorProps) => {  
   const router = useRouter();  
   
   const [title, setTitle] = useState(initialNote?.title || "새로운 노트");
@@ -326,8 +328,14 @@ const NoteEditor = ({ initialNote, isEditMode, bookId }: NoteEditorProps) => {
                 <Card className="knowledge-card">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center space-x-2">                        
+                      <CardTitle className="flex items-center gap-3">                        
                         <span className="text-2xl font-semibold">새로운 노트 작성</span>
+                        {bookTitle && (
+                          <Badge variant="secondary" className="text-sm">
+                            <BookOpen className="h-3 w-3" />
+                            {bookTitle}
+                          </Badge>
+                        )}
                       </CardTitle>
                      
                     </div>

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import type { UnifiedSearchResponse } from "@/lib/types/search/unified";
 import { transformBooks, transformNotes, transformQuotes } from "@/lib/utils/search-transform";
-import { Loader2, Search, X } from "lucide-react";
+import { Clock, Loader2, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BookSearchSection } from "./search/BookSearchSection";
@@ -20,6 +20,9 @@ type SearchableItem = {
     bookId?: string;
 };
 
+const RECENT_SEARCHES_KEY = "booknote_recent_searches";
+const MAX_RECENT_SEARCHES = 10;
+
 export function SearchModal({ onClose }: SearchModalProps) {
     const router = useRouter();
     const [query, setQuery] = useState("");
@@ -28,7 +31,59 @@ export function SearchModal({ onClose }: SearchModalProps) {
     const [error, setError] = useState<string | null>(null);
     const [searchResults, setSearchResults] = useState<UnifiedSearchResponse["data"] | null>(null);
     const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const resultsContainerRef = useRef<HTMLDivElement>(null);
+
+    // 최근 검색어 로드
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            try {
+                const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    setRecentSearches(Array.isArray(parsed) ? parsed : []);
+                }
+            } catch (err) {
+                console.error("Failed to load recent searches:", err);
+            }
+        }
+    }, []);
+
+    // 최근 검색어 저장 (ref를 사용하여 최신 상태 참조)
+    const recentSearchesRef = useRef<string[]>(recentSearches);
+    
+    useEffect(() => {
+        recentSearchesRef.current = recentSearches;
+    }, [recentSearches]);
+
+    const saveRecentSearch = useCallback((searchTerm: string) => {
+        if (!searchTerm.trim() || searchTerm.length < 2) return;
+
+        if (typeof window === "undefined") return;
+
+        try {
+            const trimmed = searchTerm.trim();
+            const current = recentSearchesRef.current.filter((s) => s !== trimmed);
+            const updated = [trimmed, ...current].slice(0, MAX_RECENT_SEARCHES);
+            localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+            setRecentSearches(updated);
+        } catch (err) {
+            console.error("Failed to save recent search:", err);
+        }
+    }, []);
+
+    // 최근 검색어 삭제
+    const removeRecentSearch = useCallback((searchTerm: string) => {
+        if (typeof window === "undefined") return;
+
+        try {
+            const updated = recentSearches.filter((s) => s !== searchTerm);
+            localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+            setRecentSearches(updated);
+        } catch (err) {
+            console.error("Failed to remove recent search:", err);
+        }
+    }, [recentSearches]);
 
     // Debounce 검색어 (300ms)
     useEffect(() => {
@@ -73,14 +128,30 @@ export function SearchModal({ onClose }: SearchModalProps) {
 
                 const data: UnifiedSearchResponse = await response.json();
 
+                console.log("[SearchModal] API 응답:", {
+                    success: data.success,
+                    hasData: !!data.data,
+                    booksCount: data.data?.books?.length || 0,
+                    notesCount: data.data?.notes?.length || 0,
+                    quotesCount: data.data?.quotes?.length || 0,
+                    data: data.data
+                });
+
                 if (!response.ok) {
                     setError(data.message || "검색 중 오류가 발생했습니다.");
                     setSearchResults(null);
                     return;
                 }
 
-                if (data.success && data.data) {
-                    setSearchResults(data.data);
+                if (data.success) {
+                    // data가 없어도 빈 배열로 설정하여 결과가 없다는 것을 표시
+                    setSearchResults({
+                        books: data.data?.books || [],
+                        notes: data.data?.notes || [],
+                        quotes: data.data?.quotes || []
+                    });
+                    // 검색 성공 시 최근 검색어에 추가
+                    saveRecentSearch(debouncedQuery);
                 } else {
                     setError(data.message || "검색 중 오류가 발생했습니다.");
                     setSearchResults(null);
@@ -99,7 +170,7 @@ export function SearchModal({ onClose }: SearchModalProps) {
         };
 
         fetchSearchResults();
-    }, [debouncedQuery]);
+    }, [debouncedQuery, saveRecentSearch]);
 
     // API 응답을 컴포넌트 타입에 맞게 변환
     const transformedBooks = useMemo(
@@ -247,19 +318,53 @@ export function SearchModal({ onClose }: SearchModalProps) {
                 {/* 본문: 결과 영역 틀 */}
                 <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 space-y-3 sm:space-y-4 min-h-0">
                     {!query && (
-                        <div className="text-center py-8 sm:py-12">
-                            <div className="flex justify-center mb-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                                    <Search className="h-6 w-6 text-primary" />
+                        <>
+                            <div className="text-center py-8 sm:py-12">
+                                <div className="flex justify-center mb-3">
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                                        <Search className="h-6 w-6 text-primary" />
+                                    </div>
                                 </div>
+                                <p className="text-sm sm:text-base text-muted-foreground">
+                                    검색어를 입력하면 내 책, 노트, 인용구를 한 번에 보여드려요.
+                                </p>
+                                <p className="mt-2 text-xs text-muted-foreground hidden sm:block">
+                                    ⌘K 또는 Ctrl+K로 빠르게 검색할 수 있어요
+                                </p>
                             </div>
-                            <p className="text-sm sm:text-base text-muted-foreground">
-                                검색어를 입력하면 내 책, 노트, 인용구를 한 번에 보여줄게요.
-                            </p>
-                            <p className="mt-2 text-xs text-muted-foreground hidden sm:block">
-                                ⌘K 또는 Ctrl+K로 빠르게 검색할 수 있어요
-                            </p>
-                        </div>
+                            
+                            {/* 최근 검색어 섹션 */}
+                            {recentSearches.length > 0 && (
+                                <div className="mt-auto pt-4 border-t border-border">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <Clock className="w-4 h-4 text-muted-foreground" />
+                                        <h3 className="text-sm font-medium text-foreground">최근 검색</h3>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {recentSearches.map((searchTerm, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                onClick={() => setQuery(searchTerm)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                                            >
+                                                <span>{searchTerm}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        removeRecentSearch(searchTerm);
+                                                    }}
+                                                    className="ml-1 hover:text-destructive transition-colors"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
 
                     {query && query.length < 2 && (
@@ -284,48 +389,53 @@ export function SearchModal({ onClose }: SearchModalProps) {
                     )}
 
                     {query && query.length >= 2 && !isLoading && !error && searchResults && (
-                        <div ref={resultsContainerRef} className="space-y-4">
-                            <BookSearchSection
-                                items={transformedBooks}
-                                query={debouncedQuery}
-                                selectedIndex={selectedIndex}
-                                indexRange={getBookIndexRange()}
-                                onItemClick={handleItemClick}
-                            />
-                            <NoteSearchSection
-                                items={transformedNotes}
-                                query={debouncedQuery}
-                                selectedIndex={selectedIndex}
-                                indexRange={getNoteIndexRange()}
-                                onItemClick={handleItemClick}
-                            />
-                            <QuoteSearchSection
-                                items={transformedQuotes}
-                                query={debouncedQuery}
-                                selectedIndex={selectedIndex}
-                                indexRange={getQuoteIndexRange()}
-                                onItemClick={handleItemClick}
-                            />
-                        </div>
-                    )}
-
-                    {query && query.length >= 2 && !isLoading && !error && searchResults && 
-                     !searchResults.books?.length && 
-                     !searchResults.notes?.length && 
-                     !searchResults.quotes?.length && (
-                        <div className="text-center py-12 sm:py-16">
-                            <div className="flex justify-center mb-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                                    <Search className="h-6 w-6 text-muted-foreground" />
+                        <>
+                            {/* 결과가 있는 경우 */}
+                            {(transformedBooks.length > 0 || transformedNotes.length > 0 || transformedQuotes.length > 0) && (
+                                <div ref={resultsContainerRef} className="space-y-4">
+                                    <BookSearchSection
+                                        items={transformedBooks}
+                                        query={debouncedQuery}
+                                        selectedIndex={selectedIndex}
+                                        indexRange={getBookIndexRange()}
+                                        onItemClick={handleItemClick}
+                                    />
+                                    <NoteSearchSection
+                                        items={transformedNotes}
+                                        query={debouncedQuery}
+                                        selectedIndex={selectedIndex}
+                                        indexRange={getNoteIndexRange()}
+                                        onItemClick={handleItemClick}
+                                    />
+                                    <QuoteSearchSection
+                                        items={transformedQuotes}
+                                        query={debouncedQuery}
+                                        selectedIndex={selectedIndex}
+                                        indexRange={getQuoteIndexRange()}
+                                        onItemClick={handleItemClick}
+                                    />
                                 </div>
-                            </div>
-                            <p className="text-sm sm:text-base text-muted-foreground">
-                                &apos;<span className="font-medium text-foreground">{query}</span>&apos;에 대한 검색 결과가 없습니다.
-                            </p>
-                            <p className="mt-2 text-xs text-muted-foreground">
-                                다른 검색어를 시도해보세요
-                            </p>
-                        </div>
+                            )}
+                            
+                            {/* 결과가 없는 경우 */}
+                            {transformedBooks.length === 0 && 
+                             transformedNotes.length === 0 && 
+                             transformedQuotes.length === 0 && (
+                                <div className="text-center py-12 sm:py-16">
+                                    <div className="flex justify-center mb-3">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                                            <Search className="h-6 w-6 text-muted-foreground" />
+                                        </div>
+                                    </div>
+                                    <p className="text-sm sm:text-base text-muted-foreground">
+                                        &apos;<span className="font-medium text-foreground">{query}</span>&apos;에 대한 검색 결과가 없습니다.
+                                    </p>
+                                    <p className="mt-2 text-xs text-muted-foreground">
+                                        다른 검색어를 시도해보세요
+                                    </p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 

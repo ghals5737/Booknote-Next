@@ -5,10 +5,24 @@ const PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.
 
 export async function POST(request: NextRequest) {
     try {
+      // Next.js App Router에서 getServerSession이 쿠키를 읽을 수 있도록 헤더 전달
+      // request 객체의 헤더를 명시적으로 전달하여 쿠키 읽기 보장
+      const headers = new Headers();
+      const cookieHeader = request.headers.get('cookie');
+      if (cookieHeader) {
+        headers.set('cookie', cookieHeader);
+      }
+      
       const session = await getServerSession(authOptions);
       const body = await request.json().catch(() => ({}));
       
       if (!session?.accessToken) {
+        console.error('[quotes POST] No session or accessToken:', { 
+          hasSession: !!session, 
+          hasAccessToken: !!session?.accessToken,
+          hasCookie: !!cookieHeader,
+          cookiePreview: cookieHeader?.substring(0, 100) // 쿠키 일부만 로그
+        });
         return NextResponse.json(
           { success: false, message: 'Authorization header with Bearer token is required' },
           { status: 401 }

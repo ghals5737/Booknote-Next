@@ -11,6 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BookActionButtons } from "./BookActionButtons";
 import { BookmarkButton } from "./BookmarkButton";
+import { CompleteBookButton } from "./CompleteBookButton";
 import { StarRatingWrapper } from "./StarRatingWrapper";
 
 async function getBookDetailData(bookId: string): Promise<{
@@ -134,24 +135,34 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <Link href={`/book/${bookId}/note/new`} className="flex-1">
-                  <Button className="w-full">
-                    <Plus className="mr-2 h-4 w-4" />
-                    노트 추가
+              <div className="flex flex-col gap-2">
+                {/* 완독 버튼 (진행률이 100% 미만일 때만 표시) */}
+                {initialData.bookDetail.progress < 100 && (
+                  <CompleteBookButton
+                    bookId={bookId}
+                    bookDetail={initialData.bookDetail}
+                  />
+                )}
+                
+                <div className="flex gap-2">
+                  <Link href={`/book/${bookId}/note/new`} className="flex-1">
+                    <Button className="w-full">
+                      <Plus className="mr-2 h-4 w-4" />
+                      노트 추가
+                    </Button>
+                  </Link>
+                  <Link href={`/book/${bookId}/quote/new`} className="flex-1">
+                    <Button className="w-full">
+                      <Plus className="mr-2 h-4 w-4" />
+                      인용구 추가
+                    </Button>
+                  </Link>
+                  <BookmarkButton bookId={bookId} isBookmarked={initialData.bookDetail.isBookmarked || false} />
+                  <Button variant="outline">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    공유
                   </Button>
-                </Link>
-                <Link href={`/book/${bookId}/quote/new`} className="flex-1">
-                  <Button className="w-full">
-                    <Plus className="mr-2 h-4 w-4" />
-                    인용구 추가
-                  </Button>
-                </Link>
-                <BookmarkButton bookId={bookId} isBookmarked={initialData.bookDetail.isBookmarked || false} />
-                <Button variant="outline">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  공유
-                </Button>
+                </div>
               </div>
             </div>
           </div>

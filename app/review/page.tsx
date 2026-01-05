@@ -4,7 +4,10 @@ import { getLastReviewDate, getLastReviewText } from "@/lib/utils/review-date"
 import { getServerSession } from "next-auth"
 import ReviewClient from "./ReviewClient"
 
-async function getTodayReviews(): Promise<ReviewTodayResponse['data']> {
+async function getTodayReviews(): Promise<{
+  review: Review
+  nextReviewDate?: string
+}> {
   const session = await getServerSession(authOptions)
   
   if (!session?.accessToken) {
@@ -21,28 +24,32 @@ async function getTodayReviews(): Promise<ReviewTodayResponse['data']> {
   })
 
   if (!response.ok) {
+    const errorText = await response.text().catch(() => '')
+    console.error('[getTodayReviews] API 호출 실패:', response.status, errorText)
     throw new Error('오늘의 복습 데이터를 가져오는데 실패했습니다.')
   }
 
   const result: ReviewTodayResponse = await response.json()
-  return result.data || []
+  const review = result.data
+  
+  // 서버에서 이미 계산된 nextReviewDate 사용
+  const nextReviewDate = review?.nextReviewDate
+  
+  console.log('[getTodayReviews] 전체 응답:', JSON.stringify(result, null, 2))
+  console.log('[getTodayReviews] review:', review)
+  console.log('[getTodayReviews] nextReviewDate:', nextReviewDate)
+  
+  return {
+    review,
+    nextReviewDate
+  }
 }
 
 function convertToUIReviewItem(
   reviewItem: ReviewItem,
   review: Review
 ): UIReviewItem {
-  const now = new Date()
-  const plannedTime = new Date(review.plannedTime)
-  const isOverdue = plannedTime < now && !reviewItem.completed
-  const isCompleted = reviewItem.completed || false
-
-  let status: "overdue" | "pending" | "completed" = "pending"
-  if (isCompleted) {
-    status = "completed"
-  } else if (isOverdue) {
-    status = "overdue"
-  }
+  // /api/v1/reviews/today API는 오늘 복습할 항목만 반환하므로 status는 항상 "pending"
   
   // NOTE 타입인 경우
   if (reviewItem.itemType === "NOTE" && reviewItem.note) {
@@ -67,7 +74,6 @@ function convertToUIReviewItem(
       title: note.title,
       dueDate: review.plannedTime,
       frequency: undefined,
-      status,
       itemId: reviewItem.itemId,
       bookId: note.bookId > 0 ? note.bookId : undefined,
       completedTime: reviewItem.completedTime,
@@ -97,7 +103,6 @@ function convertToUIReviewItem(
       title: undefined,
       dueDate: review.plannedTime,
       frequency: undefined,
-      status,
       itemId: reviewItem.itemId,
       bookId: quote.bookId,
       completedTime: reviewItem.completedTime,
@@ -121,7 +126,6 @@ function convertToUIReviewItem(
     date: new Date().toISOString().split('T')[0],
     tags: [],
     dueDate: review.plannedTime,
-    status,
     itemId: reviewItem.itemId,
     completedTime: reviewItem.completedTime,
     lastReviewTime: lastReviewDate?.toISOString() || null,
@@ -131,20 +135,17 @@ function convertToUIReviewItem(
 }
 
 export default async function ReviewPage() {
-  const session = await getServerSession(authOptions)
+  const { review, nextReviewDate } = await getTodayReviews()
   
-  if (!session?.accessToken) {
-    throw new Error('인증이 필요합니다.')
-  }
-
-  const reviews = await getTodayReviews()
+  console.log('[ReviewPage] nextReviewDate:', nextReviewDate)
+  console.log('[ReviewPage] review:', { id: review.id, nextReviewDate: review.nextReviewDate })
   
   const uiItems: UIReviewItem[] = []
-  reviews.forEach(review => {
+  if (review?.items) {
     review.items.forEach(item => {
       uiItems.push(convertToUIReviewItem(item, review))
     })
-  })
+  }
 
-  return <ReviewClient items={uiItems} />
+  return <ReviewClient items={uiItems} nextReviewDate={nextReviewDate} />
 }
