@@ -14,7 +14,7 @@ export function StreakCard({ streakDays }: StreakCardProps) {
   const hasMore = streakDays > maxDays;
 
   return (
-    <Card className="bg-gradient-to-br from-[#5E4B3C] to-[#4A3A2E] border-0">
+    <Card className="bg-gradient-to-br from-[#C17767] to-[#B06858] border-0">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">

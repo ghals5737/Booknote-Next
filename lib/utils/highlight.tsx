@@ -26,7 +26,7 @@ export function highlightText(text: string, query: string): React.ReactNode {
       return (
         <mark
           key={index}
-          className="bg-yellow-200 dark:bg-yellow-900/50 text-foreground rounded px-0.5"
+          className="bg-primary/20 text-foreground font-semibold rounded px-0.5"
         >
           {part}
         </mark>

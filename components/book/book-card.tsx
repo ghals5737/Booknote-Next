@@ -26,7 +26,7 @@ export function BookCard({ book }: BookCardProps) {
     <Card className="overflow-hidden transition-all hover:shadow-lg p-0 h-full flex flex-col">
       <div className="flex gap-4 p-4 flex-1">
         <div className="relative h-32 w-24 flex-shrink-0 overflow-hidden rounded-md">
-          <Image src={book.cover || "/placeholder.svg"} alt={book.title} fill className="object-cover" />
+          <Image src={book.cover || "/placeholder.svg"} alt={book.title} fill sizes="96px" className="object-cover" />
         </div>
         <div className="flex flex-1 flex-col justify-between min-w-0">
           <div className="min-h-[3.5rem]">

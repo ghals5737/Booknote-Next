@@ -110,6 +110,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
                   src={initialData.bookDetail.coverImage || "/placeholder.svg"} 
                   alt={initialData.bookDetail.title} 
                   fill 
+                  sizes="240px"
                   className="object-cover" 
                 />
               </div>

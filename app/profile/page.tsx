@@ -38,30 +38,30 @@ export default function ProfilePage() {
     nickname: "",
     profileImgUrl: "",
   })
-  const [stats, setStats] = useState([
+  const [, setStats] = useState([
     {
       icon: BookOpen,
       label: "읽은 책",
       value: 0,
-      color: "bg-blue-100 text-blue-600",
+      color: "bg-[#7A9B8E]/10 text-[#7A9B8E]",
     },
     {
       icon: FileText,
       label: "작성한 노트",
       value: 0,
-      color: "bg-green-100 text-green-600",
+      color: "bg-[#8B7355]/10 text-[#8B7355]",
     },
     {
       icon: Quote,
       label: "저장한 인용구",
       value: 0,
-      color: "bg-purple-100 text-purple-600",
+      color: "bg-[#D4A574]/10 text-[#D4A574]",
     },
     {
       icon: Calendar,
       label: "연속 독서",
       value: "0일",
-      color: "bg-orange-100 text-orange-600",
+      color: "bg-[#C17767]/10 text-[#C17767]",
     },
   ])
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
@@ -116,25 +116,25 @@ export default function ProfilePage() {
             icon: BookOpen,
             label: "읽은 책",
             value: profileStats.totalBooks,
-            color: "bg-blue-100 text-blue-600",
+            color: "bg-[#7A9B8E]/10 text-[#7A9B8E]",
           },
           {
             icon: FileText,
             label: "작성한 노트",
             value: profileStats.totalNotes,
-            color: "bg-green-100 text-green-600",
+            color: "bg-[#8B7355]/10 text-[#8B7355]",
           },
           {
             icon: Quote,
             label: "저장한 인용구",
             value: profileStats.totalQuotes,
-            color: "bg-purple-100 text-purple-600",
+            color: "bg-[#D4A574]/10 text-[#D4A574]",
           },
           {
             icon: Calendar,
             label: "연속 독서",
             value: `${profileStats.readingStreak}일`,
-            color: "bg-orange-100 text-orange-600",
+            color: "bg-[#C17767]/10 text-[#C17767]",
           },
         ])
       } catch (error) {

@@ -3,6 +3,7 @@
 import { authenticatedApiRequest } from "@/lib/api/nextauth-api"
 import { UserInfo } from "@/lib/types/user/profile"
 import { Camera } from "lucide-react"
+import Image from "next/image"
 import { useState } from "react"
 
 type Profile = {
@@ -67,7 +68,7 @@ export function ProfileHeaderCard({ value, onChange, onUpdate }: ProfileHeaderCa
             <div className="group relative shrink-0">
               <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-secondary/30 transition-all">
                 {value.profileImgUrl ? (
-                  <img
+                  <Image
                     src={value.profileImgUrl}
                     alt={value.name}
                     className="h-full w-full object-cover"
@@ -158,7 +159,7 @@ export function ProfileHeaderCard({ value, onChange, onUpdate }: ProfileHeaderCa
             <div className="shrink-0">
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-secondary/30">
                 {value.profileImgUrl ? (
-                  <img
+                  <Image
                     src={value.profileImgUrl}
                     alt={value.name}
                     className="h-full w-full object-cover"

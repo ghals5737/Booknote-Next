@@ -28,6 +28,7 @@ export function ReadingBooksSection({ books, onStartTimer }: ReadingBooksSection
                     src={book.coverImage}
                     alt={book.title}
                     fill
+                    sizes="64px"
                     className="object-cover"
                   />
                 ) : (

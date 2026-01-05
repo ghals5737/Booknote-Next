@@ -106,7 +106,7 @@ export default function QuoteAddClient({ bookId }: { bookId: string }) {
         {/* <Card className="mb-6 p-4">
           <div className="flex items-center gap-4">
             <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded bg-muted">
-              <Image src={book.cover || "/placeholder.svg"} alt={book.title} fill className="object-cover" />
+              <Image src={book.cover || "/placeholder.svg"} alt={book.title} fill sizes="56px" className="object-cover" />
             </div>
             <div>
               <h3 className="mb-1 font-semibold">{book.title}</h3>

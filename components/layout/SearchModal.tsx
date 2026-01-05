@@ -3,9 +3,11 @@
 import { Button } from "@/components/ui/button";
 import {
     deleteRecentSearch,
-    getRecentSearches
+    getRecentSearches,
+    saveRecentSearch
 } from "@/lib/api/search-recent";
 import type { RecentSearchListItem } from "@/lib/types/search/recent";
+import type { SearchSuggestionsResponse } from "@/lib/types/search/search";
 import type { UnifiedSearchResponse } from "@/lib/types/search/unified";
 import { transformBooks, transformNotes, transformQuotes } from "@/lib/utils/search-transform";
 import { Clock, Loader2, Search, X } from "lucide-react";
@@ -14,6 +16,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BookSearchSection } from "./search/BookSearchSection";
 import { NoteSearchSection } from "./search/NoteSearchSection";
 import { QuoteSearchSection } from "./search/QuoteSearchSection";
+
+const MAX_RECENT_SEARCHES = 6;
 
 type SearchModalProps = {
     onClose: () => void;
@@ -35,7 +39,10 @@ export function SearchModal({ onClose }: SearchModalProps) {
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [recentSearches, setRecentSearches] = useState<RecentSearchListItem[]>([]);
     const [isLoadingRecentSearches, setIsLoadingRecentSearches] = useState(false);
+    const [suggestions, setSuggestions] = useState<string[]>([]);
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const resultsContainerRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     // 최근 검색어 로드 (서버에서)
     useEffect(() => {
@@ -68,8 +75,10 @@ export function SearchModal({ onClose }: SearchModalProps) {
         const loadRecentSearches = async () => {
             setIsLoadingRecentSearches(true);
             try {
-                const response = await getRecentSearches(10, 'all');
-                setRecentSearches(response.data.recentSearches || []);
+                const response = await getRecentSearches(MAX_RECENT_SEARCHES, 'all');
+                // 최대 6개로 제한하고 최신순 정렬
+                const searches = (response.data.recentSearches || []).slice(0, MAX_RECENT_SEARCHES);
+                setRecentSearches(searches);
             } catch (err) {
                 console.warn("Failed to load recent searches (backend may not be implemented yet):", err);
                 setRecentSearches([]);
@@ -81,6 +90,11 @@ export function SearchModal({ onClose }: SearchModalProps) {
         loadRecentSearches();
     }, []);
 
+    // 자동 포커스
+    useEffect(() => {
+        inputRef.current?.focus();
+    }, []);
+
     // 최근 검색어는 unified search API에서 결과가 있을 때 서버에서 자동으로 저장됨
     // 프론트엔드에서는 별도로 저장하지 않음
 
@@ -89,8 +103,9 @@ export function SearchModal({ onClose }: SearchModalProps) {
         try {
             await deleteRecentSearch(searchId);
             // 삭제 후 최근 검색어 목록 다시 로드
-            const response = await getRecentSearches(10, 'all');
-            setRecentSearches(response.data.recentSearches || []);
+            const response = await getRecentSearches(MAX_RECENT_SEARCHES, 'all');
+            const searches = (response.data.recentSearches || []).slice(0, MAX_RECENT_SEARCHES);
+            setRecentSearches(searches);
         } catch (err) {
             // 백엔드가 아직 구현되지 않았거나 에러가 발생해도 조용히 처리
             console.warn("Failed to remove recent search (backend may not be implemented yet):", err);
@@ -106,6 +121,50 @@ export function SearchModal({ onClose }: SearchModalProps) {
         }, 300);
 
         return () => clearTimeout(timer);
+    }, [query]);
+
+    // 검색어 추천 (자동완성) - 서버에서 가져오기
+    useEffect(() => {
+        if (!query.trim() || query.length < 1) {
+            setSuggestions([]);
+            return;
+        }
+
+        const fetchSuggestions = async () => {
+            setIsLoadingSuggestions(true);
+            try {
+                const params = new URLSearchParams({
+                    query: query.trim(),
+                    limit: "3",
+                });
+
+                const response = await fetch(`/api/v1/search/suggestions?${params}`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    credentials: "include",
+                    cache: "no-store",
+                });
+
+                const data: SearchSuggestionsResponse = await response.json();
+
+                if (response.ok && data.success) {
+                    // 서버에서 받은 추천 검색어를 텍스트 배열로 변환
+                    const suggestionTexts = (data.data?.suggestions || []).map(s => s.text);
+                    setSuggestions(suggestionTexts);
+                } else {
+                    setSuggestions([]);
+                }
+            } catch (err) {
+                console.warn("Failed to fetch suggestions:", err);
+                setSuggestions([]);
+            } finally {
+                setIsLoadingSuggestions(false);
+            }
+        };
+
+        fetchSuggestions();
     }, [query]);
 
     // API 호출
@@ -174,8 +233,9 @@ export function SearchModal({ onClose }: SearchModalProps) {
                     if (hasResults) {
                         // 서버에서 자동 저장되었으므로 목록만 다시 로드
                         try {
-                            const response = await getRecentSearches(10, 'all');
-                            setRecentSearches(response.data.recentSearches || []);
+                            const response = await getRecentSearches(MAX_RECENT_SEARCHES, 'all');
+                            const searches = (response.data.recentSearches || []).slice(0, MAX_RECENT_SEARCHES);
+                            setRecentSearches(searches);
                         } catch (err) {
                             // 조용히 실패 처리 (백엔드가 아직 구현되지 않았을 수 있음)
                             console.warn("Failed to reload recent searches:", err);
@@ -267,10 +327,29 @@ export function SearchModal({ onClose }: SearchModalProps) {
             } else if (e.key === "ArrowUp") {
                 e.preventDefault();
                 setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
-            } else if (e.key === "Enter" && selectedIndex >= 0) {
-                e.preventDefault();
-                const selectedItem = allItems[selectedIndex];
-                handleItemClick(selectedItem);
+            } else if (e.key === "Enter") {
+                if (selectedIndex >= 0) {
+                    e.preventDefault();
+                    const selectedItem = allItems[selectedIndex];
+                    handleItemClick(selectedItem);
+                } else if (query.trim().length >= 2) {
+                    // Enter 키로 검색어 히스토리 추가
+                    e.preventDefault();
+                    const trimmedQuery = query.trim();
+                    // 서버에 저장 시도
+                    saveRecentSearch(trimmedQuery, 'all')
+                        .then(() => {
+                            // 저장 성공 후 최근 검색어 목록 다시 로드
+                            return getRecentSearches(MAX_RECENT_SEARCHES, 'all');
+                        })
+                        .then((response) => {
+                            const searches = (response.data.recentSearches || []).slice(0, MAX_RECENT_SEARCHES);
+                            setRecentSearches(searches);
+                        })
+                        .catch(err => {
+                            console.warn("Failed to save recent search:", err);
+                        });
+                }
             }
         };
 
@@ -311,37 +390,67 @@ export function SearchModal({ onClose }: SearchModalProps) {
         return { start, end };
     };
 
+    // 검색어 추천은 서버에서 가져오므로 클라이언트에서 처리할 필요 없음
+
     return (
         <div
-            className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm pt-8 sm:pt-16 md:pt-24 px-4 sm:px-6"
+            className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm pt-8 sm:pt-16 md:pt-24 px-4 sm:px-6"
             onClick={onClose}
         >
             <div
-                className="w-full max-w-2xl rounded-xl sm:rounded-2xl bg-card border border-border shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200 max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-8rem)] md:max-h-[calc(100vh-12rem)] flex flex-col"
+                className="w-full max-w-2xl rounded-xl sm:rounded-2xl bg-background/95 border border-border/50 shadow-2xl overflow-hidden animate-in fade-in-0 zoom-in-95 duration-200 max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-8rem)] md:max-h-[calc(100vh-12rem)] flex flex-col backdrop-blur-md"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* 상단 검색 인풋 영역 */}
-                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-4 border-b border-border bg-muted/60 relative">
-                    <Search className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
-                    <input
-                        autoFocus
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="책 / 노트 / 인용구를 한 번에 검색해보세요"
-                        className="flex-1 bg-transparent outline-none text-sm sm:text-base placeholder:text-muted-foreground pr-2"
-                    />
-                    <span className="hidden md:inline-flex items-center rounded-md border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground">
-                        ⌘K
-                    </span>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={onClose}
-                        className="h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0 md:hidden"
-                    >
-                        <X className="h-4 w-4" />
-                        <span className="sr-only">닫기</span>
-                    </Button>
+                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-border/50 bg-card/50">
+                    <div className="mb-3">
+                        <h2 className="font-serif text-lg sm:text-xl font-semibold text-foreground">나의 서재 검색</h2>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            책 제목, 저자, 노트 내용, 인용구를 검색할 수 있어요
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3 rounded-xl border border-border/50 bg-card/50 px-4 sm:px-5 py-3 sm:py-4 backdrop-blur-sm transition-all">
+                        <Search className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground/60 flex-shrink-0" />
+                        <input
+                            ref={inputRef}
+                            autoFocus
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="책, 노트, 인용구를 검색하세요..."
+                            className="flex-1 bg-transparent outline-none border-none text-sm sm:text-base placeholder:text-muted-foreground/60 pr-2 text-foreground focus:outline-none focus:ring-0"
+                        />
+                        {query && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setQuery("")}
+                                className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 rounded-lg hover:bg-muted/50 focus:outline-none focus:ring-0"
+                            >
+                                <X className="h-4 w-4 text-muted-foreground" />
+                                <span className="sr-only">검색어 지우기</span>
+                            </Button>
+                        )}
+                    </div>
+
+                    {/* 자동완성 제안 */}
+                    {suggestions.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {suggestions.map((suggestion, i) => (
+                                <button
+                                    key={i}
+                                    onClick={() => setQuery(suggestion)}
+                                    className="rounded-lg bg-primary/5 px-3 py-1 text-xs text-muted-foreground transition-all hover:bg-primary/10 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                >
+                                    {suggestion}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="hidden sm:inline">⌘K 또는 Ctrl+K로 빠른 검색</span>
+                        <span>ESC로 닫기</span>
+                    </div>
                 </div>
 
                 {/* 본문: 결과 영역 틀 */}
@@ -349,32 +458,32 @@ export function SearchModal({ onClose }: SearchModalProps) {
                     {!query && (
                         <>
                             <div className="text-center py-8 sm:py-12">
-                                <div className="flex justify-center mb-3">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                                        <Search className="h-6 w-6 text-primary" />
+                                <div className="flex justify-center mb-4">
+                                    <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-muted/50">
+                                        <Search className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground/40" />
                                     </div>
                                 </div>
-                                <p className="text-sm sm:text-base text-muted-foreground">
-                                    검색어를 입력하면 내 책, 노트, 인용구를 한 번에 보여드려요.
+                                <p className="mb-2 font-serif text-base sm:text-lg font-medium text-foreground">
+                                    무엇을 찾으시나요?
                                 </p>
-                                <p className="mt-2 text-xs text-muted-foreground hidden sm:block">
-                                    ⌘K 또는 Ctrl+K로 빠르게 검색할 수 있어요
+                                <p className="text-sm text-muted-foreground">
+                                    내 서재의 책, 노트, 인용구를 한 번에 검색하세요
                                 </p>
                             </div>
                             
                             {/* 최근 검색어 섹션 */}
                             {!isLoadingRecentSearches && recentSearches.length > 0 && (
-                                <div className="mt-auto pt-4 border-t border-border">
+                                <div className="mt-auto pt-4 border-t border-border/50">
                                     <div className="flex items-center gap-2 mb-3">
                                         <Clock className="w-4 h-4 text-muted-foreground" />
-                                        <h3 className="text-sm font-medium text-foreground">최근 검색</h3>
+                                        <h3 className="text-sm font-medium text-muted-foreground">최근 검색</h3>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {recentSearches.map((search) => (
                                             <div
                                                 key={search.id}
                                                 onClick={() => setQuery(search.query)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-muted hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
+                                                className="group inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-sm bg-[#8B7355]/5 border border-border/50 hover:bg-[#8B7355]/10 hover:border-[#8B7355]/30 hover:shadow-sm text-foreground transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50"
                                             >
                                                 <span>{search.query}</span>
                                                 <button
@@ -383,7 +492,7 @@ export function SearchModal({ onClose }: SearchModalProps) {
                                                         e.stopPropagation();
                                                         removeRecentSearch(search.id);
                                                     }}
-                                                    className="ml-1 hover:text-destructive transition-colors"
+                                                    className="ml-1 opacity-0 group-hover:opacity-100 hover:text-destructive transition-all focus:outline-none"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
@@ -420,7 +529,7 @@ export function SearchModal({ onClose }: SearchModalProps) {
                         <>
                             {/* 결과가 있는 경우 */}
                             {(transformedBooks.length > 0 || transformedNotes.length > 0 || transformedQuotes.length > 0) && (
-                                <div ref={resultsContainerRef} className="space-y-4">
+                                <div ref={resultsContainerRef} className="space-y-4 sm:space-y-6">
                                     <BookSearchSection
                                         items={transformedBooks}
                                         query={debouncedQuery}
@@ -449,17 +558,17 @@ export function SearchModal({ onClose }: SearchModalProps) {
                             {transformedBooks.length === 0 && 
                              transformedNotes.length === 0 && 
                              transformedQuotes.length === 0 && (
-                                <div className="text-center py-12 sm:py-16">
+                                <div className="text-center py-12 sm:py-16 rounded-xl border border-border/50 bg-card/30 backdrop-blur-sm">
                                     <div className="flex justify-center mb-3">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                                            <Search className="h-6 w-6 text-muted-foreground" />
+                                        <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-muted/50">
+                                            <Search className="h-6 w-6 sm:h-7 sm:w-7 text-muted-foreground/40" />
                                         </div>
                                     </div>
-                                    <p className="text-sm sm:text-base text-muted-foreground">
-                                        &apos;<span className="font-medium text-foreground">{query}</span>&apos;에 대한 검색 결과가 없습니다.
+                                    <p className="mb-1 text-sm sm:text-base font-medium text-foreground">
+                                        &apos;<span className="font-semibold">{query}</span>&apos;에 대한 결과가 없습니다
                                     </p>
-                                    <p className="mt-2 text-xs text-muted-foreground">
-                                        다른 검색어를 시도해보세요
+                                    <p className="text-xs sm:text-sm text-muted-foreground">
+                                        다른 키워드로 검색해보세요
                                     </p>
                                 </div>
                             )}
@@ -468,17 +577,17 @@ export function SearchModal({ onClose }: SearchModalProps) {
                 </div>
 
                 {/* 푸터 안내 */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 px-3 sm:px-4 py-2.5 sm:py-2 border-t border-border bg-muted/40">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 px-3 sm:px-4 py-2.5 sm:py-2 border-t border-border/50 bg-muted/40">
                     <p className="text-[10px] sm:text-[11px] text-muted-foreground hidden sm:block">
                         ↑↓ 로 이동 · Enter로 열기 · Esc 로 닫기
                     </p>
                     <p className="text-[10px] sm:text-[11px] text-muted-foreground sm:hidden">
                         Enter로 열기 · Esc 로 닫기
                     </p>
-                    {query && query.length >= 2 && (
+                    {query && query.length >= 2 && (transformedBooks.length > 0 || transformedNotes.length > 0 || transformedQuotes.length > 0) && (
                         <button
                             type="button"
-                            className="text-[10px] sm:text-[11px] text-primary hover:underline font-medium transition-colors"
+                            className="text-[10px] sm:text-[11px] text-primary hover:underline font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 rounded"
                             onClick={() => {
                                 // TODO: 전체 결과 보기 페이지로 이동
                                 console.log("전체 결과 보기:", query);

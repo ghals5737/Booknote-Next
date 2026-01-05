@@ -134,7 +134,7 @@ export default function NoteDetailClient({ noteDetail, bookDetail }: { noteDetai
           <h2 className="mb-4 text-lg font-semibold">이 노트가 속한 책</h2>
           <div className="flex items-center gap-4">
             <div className="relative h-32 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted shadow">
-              <Image src={bookDetail.coverImage || "/placeholder.svg"} alt={bookDetail.title} fill className="object-cover" />
+              <Image src={bookDetail.coverImage || "/placeholder.svg"} alt={bookDetail.title} fill sizes="96px" className="object-cover" />
             </div>
             <div className="flex-1">
               <h3 className="mb-1 font-semibold">{bookDetail.title}</h3>

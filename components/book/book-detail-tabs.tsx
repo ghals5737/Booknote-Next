@@ -117,9 +117,9 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, in
                   <span className="text-xs text-muted-foreground">
                     {formatRelativeDate(note.updateDate || note.startDate)}
                   </span>
-                  {(note as any).page && (
-                    <span className="text-xs font-medium text-primary">페이지 {(note as any).page}</span>
-                  )}
+                  {('page' in note && typeof (note as NoteResponse & { page?: number }).page === 'number' && (note as NoteResponse & { page?: number }).page) ? (
+                    <span className="text-xs font-medium text-primary">페이지 {(note as NoteResponse & { page?: number }).page}</span>
+                  ) : null}
                 </div>
                 <div className="mb-3">
                   <Markdown content={note.content} disableInternalLinks />
@@ -170,14 +170,22 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, in
               <Card key={quote.id} className="rounded-xl border border-amber-600/20 bg-gradient-to-br from-amber-50/50 to-card/50 p-6 transition-all duration-200 hover:border-amber-600/30 hover:shadow-md">
                 <div className="mb-4 flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">
-                    {formatRelativeDate((quote as any).createdAt || (quote as any).updateDate || null)}
+                    {formatRelativeDate(
+                      ('createdAt' in quote && typeof (quote as QuoteResponse & { createdAt?: string }).createdAt === 'string' 
+                        ? (quote as QuoteResponse & { createdAt?: string }).createdAt 
+                        : null) || 
+                      ('updateDate' in quote && typeof (quote as QuoteResponse & { updateDate?: string }).updateDate === 'string' 
+                        ? (quote as QuoteResponse & { updateDate?: string }).updateDate 
+                        : null) || 
+                      null
+                    )}
                   </span>
                   <span className="text-xs font-medium text-amber-700">페이지 {quote.page || '-'}</span>
                 </div>
                 <div className="relative mb-3 pl-4">
                   <div className="absolute left-0 top-0 h-full w-1 rounded-full bg-amber-600/30"></div>
                   <p className="font-serif italic leading-relaxed text-foreground">
-                    "{quote.content}"
+                    &ldquo;{quote.content}&rdquo;
                   </p>
                 </div>
                 {quote.memo && (

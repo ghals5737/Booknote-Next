@@ -14,7 +14,7 @@ export function LibraryBookCard({ book }: { book: UserBookResponse }) {
     <Link href={`/book/${book.id}`} className="h-full">
     <Card className="overflow-hidden transition-all hover:shadow-lg w-full h-full flex flex-col">
       <div className="relative w-full overflow-hidden bg-muted" style={{ aspectRatio: '260/235' }}>
-        <Image src={book.coverImage || "/placeholder.svg"} alt={book.title} fill className="object-cover object-top" />
+        <Image src={book.coverImage || "/placeholder.svg"} alt={book.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" className="object-cover object-top" />
       </div>
       <div className="p-4 flex flex-col flex-grow">
         <div className="flex-grow">

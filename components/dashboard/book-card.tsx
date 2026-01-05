@@ -14,7 +14,7 @@ interface BookCardProps {
   onClick?: () => void;
 }
 
-export function BookCard({ id, title, author, cover, progress, rating, noteCount, quoteCount, onClick }: BookCardProps) {
+export function BookCard({ title, author, cover, progress, rating, noteCount, quoteCount, onClick }: BookCardProps) {
   return (
     <div 
       className="group relative cursor-pointer"
@@ -48,7 +48,7 @@ export function BookCard({ id, title, author, cover, progress, rating, noteCount
         
         {/* 완독 오버레이 */}
         {progress === 100 && (
-          <div className="absolute inset-0 bg-gradient-to-t from-[#9CA986]/90 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end justify-center pb-4">
+          <div className="absolute inset-0 bg-gradient-to-t from-[#7A9B8E]/90 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end justify-center pb-4">
             <span className="text-xs font-semibold text-white">완독</span>
           </div>
         )}

@@ -12,7 +12,7 @@ interface MyLibrarySectionProps {
   onBookClick?: (bookId: number) => void;
 }
 
-export function MyLibrarySection({ books, onBookClick }: MyLibrarySectionProps) {
+export function MyLibrarySection({ books }: MyLibrarySectionProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('전체');

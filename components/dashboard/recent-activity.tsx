@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowRight, BookOpen, Check, Clock, FileText, Quote } from 'lucide-react';
+import Image from 'next/image';
 
 interface Activity {
   id: number;
@@ -33,13 +34,13 @@ export function RecentActivity({ activities }: RecentActivityProps) {
   const getActivityColor = (type: Activity['type']) => {
     switch (type) {
       case 'note':
-        return '[--activity-bar:#8A9A7B]'; // 세이지 그린
+        return '[--activity-bar:#8B7355]'; // 웜 브라운 (작성한 노트)
       case 'reading':
-        return '[--activity-bar:#9B8B7E]'; // 웜 그레이
+        return '[--activity-bar:#7A9B8E]'; // 세이지 그린 (읽은 책)
       case 'finished':
-        return '[--activity-bar:#B85C4F]'; // 테라코타
+        return '[--activity-bar:#7A9B8E]'; // 세이지 그린 (읽은 책)
       case 'quote':
-        return '[--activity-bar:#C9A961]'; // 앤티크 골드
+        return '[--activity-bar:#D4A574]'; // 앤티크 골드 (저장한 인용구)
     }
   };
 
@@ -59,13 +60,13 @@ export function RecentActivity({ activities }: RecentActivityProps) {
   const getActivityIconColor = (type: Activity['type']) => {
     switch (type) {
       case 'note':
-        return 'text-[#8A9A7B]';
+        return 'text-[#8B7355]'; // 웜 브라운 (작성한 노트)
       case 'reading':
-        return 'text-[#9B8B7E]';
+        return 'text-[#7A9B8E]'; // 세이지 그린 (읽은 책)
       case 'finished':
-        return 'text-[#B85C4F]';
+        return 'text-[#7A9B8E]'; // 세이지 그린 (읽은 책)
       case 'quote':
-        return 'text-[#C9A961]';
+        return 'text-[#D4A574]'; // 앤티크 골드 (저장한 인용구)
     }
   };
 
@@ -135,11 +136,12 @@ export function RecentActivity({ activities }: RecentActivityProps) {
               {/* 중앙: 책 정보 (컴팩트) */}
               <div className="flex gap-3">
                 {/* 작은 썸네일 */}
-                <div className="h-20 w-14 flex-shrink-0 overflow-hidden rounded shadow-sm">
-                  <img 
+                <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded shadow-sm">
+                  <Image 
                     src={activity.bookCover} 
                     alt={activity.bookTitle}
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
                   />
                 </div>
                 {/* 책 제목 */}

@@ -1,8 +1,8 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
-import { BookOpen, FileText, BookMarked, BookCheck } from "lucide-react"
-import { StatSummary } from "@/lib/types/statistics/statistics"
+import { Card, CardContent } from "@/components/ui/card";
+import { StatSummary } from "@/lib/types/statistics/statistics";
+import { BookCheck, BookMarked, BookOpen, FileText } from "lucide-react";
 
 interface StatSummaryCardsProps {
   summary: StatSummary;
@@ -22,7 +22,7 @@ export function StatSummaryCards({ summary }: StatSummaryCardsProps) {
       label: "읽은 책",
       value: summary.readBooks,
       unit: "권",
-      color: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+      color: "bg-[#7A9B8E]/10 text-[#7A9B8E] dark:bg-[#7A9B8E]/20 dark:text-[#7A9B8E]",
     },
     {
       icon: BookMarked,
@@ -36,7 +36,7 @@ export function StatSummaryCards({ summary }: StatSummaryCardsProps) {
       label: "작성한 노트",
       value: summary.totalNotes,
       unit: "개",
-      color: "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400",
+      color: "bg-[#8B7355]/10 text-[#8B7355] dark:bg-[#8B7355]/20 dark:text-[#8B7355]",
     },
   ]
 

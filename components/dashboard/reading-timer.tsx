@@ -95,6 +95,7 @@ export function ReadingTimer({ timer, onStop }: ReadingTimerProps) {
                 src={timer.bookCover}
                 alt={timer.bookTitle}
                 fill
+                sizes="56px"
                 className="object-cover"
               />
             </div>
