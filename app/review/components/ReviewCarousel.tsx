@@ -12,7 +12,7 @@ import { UIReviewItem } from "@/lib/types/review/review"
 import { useCallback, useEffect, useState } from "react"
 import { useCarouselKeyboard } from "../hooks/useCarouselKeyboard"
 import { useReviewProgress } from "../hooks/useReviewProgress"
-import { ReviewCarouselItem } from "./ReviewCarouselItem"
+import { FlashcardReviewItem } from "./FlashcardReviewItem"
 import { ReviewCompleteCard } from "./ReviewCompleteCard"
 import { ReviewProgressBar } from "./ReviewProgressBar"
 import { ReviewStartCard } from "./ReviewStartCard"
@@ -95,31 +95,35 @@ export function ReviewCarousel({ items, onItemComplete, nextReviewDate }: Review
       <div className="relative mt-4">
         <Carousel setApi={setApi} className="w-full" opts={{ align: "start", loop: false }}>
           <CarouselContent className="-ml-2 md:-ml-4">
-            {/* 시작 카드 */}
-            <CarouselItem className="pl-2 md:pl-4">
-              <ReviewStartCard
-                onStart={handleStart}
-                totalCount={totalCount}
-                isAllCompleted={showCompleteCard}
-              />
-            </CarouselItem>
-            
-            {/* 복습 카드들 */}
-            {items.map((item) => (
-              <CarouselItem key={item.id} className="pl-2 md:pl-4">
-                <ReviewCarouselItem
-                  item={item}
-                  isLoading={isLoading}
-                  onComplete={handleComplete}
-                />
-              </CarouselItem>
-            ))}
-
-            {/* 완료 카드 - 모든 항목이 완료되었을 때 또는 로컬 상태에서 완료로 판단될 때 표시 */}
-            {showCompleteCard && (
+            {/* 완료 상태면 완료 카드만 표시, 아니면 시작 카드 + 복습 카드들 */}
+            {showCompleteCard ? (
+              /* 완료 카드 - 모든 항목이 완료되었을 때 시작 카드 대신 표시 */
               <CarouselItem className="pl-2 md:pl-4">
                 <ReviewCompleteCard totalCount={totalCount} nextReviewDate={nextReviewDate} />
               </CarouselItem>
+            ) : (
+              <>
+                {/* 시작 카드 */}
+                <CarouselItem className="pl-2 md:pl-4">
+                  <ReviewStartCard
+                    onStart={handleStart}
+                    totalCount={totalCount}
+                    isAllCompleted={showCompleteCard}
+                  />
+                </CarouselItem>
+                
+                {/* 복습 카드들 */}
+                {items.map((item) => (
+                  <CarouselItem key={item.id} className="pl-2 md:pl-4">
+                    <FlashcardReviewItem
+                      item={item}
+                      isLoading={isLoading}
+                      onComplete={handleComplete}
+                      lastReviewHint={item.lastReviewText ? `지난번엔 ${item.lastReviewText}라고 하셨어요` : undefined}
+                    />
+                  </CarouselItem>
+                ))}
+              </>
             )}
           </CarouselContent>
 

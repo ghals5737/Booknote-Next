@@ -6,7 +6,7 @@ import { authenticatedApiRequest } from "@/lib/api/nextauth-api"
 import { PageResponse } from "@/lib/types/pagenation/pagenation"
 import { Review, ReviewItem, UIReviewItem } from "@/lib/types/review/review"
 import { getLastReviewDate, getLastReviewText } from "@/lib/utils/review-date"
-import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, Calendar, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RotateCcw } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
 import useSWR from "swr"
@@ -95,7 +95,7 @@ function convertToUIReviewItem(
       status,
       itemId: reviewItem.itemId,
       bookId: note.bookId > 0 ? note.bookId : undefined,
-      completedTime: reviewItem.completedTime,
+        completedTime: reviewItem.lastReviewTime || reviewItem.completedTime || review.completedTime || null,
       lastReviewTime: lastReviewDate?.toISOString() || null,
       reviewCount: reviewItem.reviewCount,
       lastReviewText,
@@ -123,7 +123,7 @@ function convertToUIReviewItem(
       status,
       itemId: reviewItem.itemId,
       bookId: quote.bookId,
-      completedTime: reviewItem.completedTime,
+        completedTime: reviewItem.lastReviewTime || reviewItem.completedTime || review.completedTime || null,
       lastReviewTime: lastReviewDate?.toISOString() || null,
       reviewCount: reviewItem.reviewCount,
       lastReviewText,
@@ -145,7 +145,7 @@ function convertToUIReviewItem(
     dueDate: review.plannedTime,
     status,
     itemId: reviewItem.itemId,
-    completedTime: reviewItem.completedTime,
+    completedTime: reviewItem.lastReviewTime || reviewItem.completedTime || review.completedTime || null,
     lastReviewTime: lastReviewDate?.toISOString() || null,
     reviewCount: reviewItem.reviewCount,
     lastReviewText,
@@ -157,14 +157,16 @@ function groupByDate(items: UIReviewItem[]): Array<[string, UIReviewItem[]]> {
   const groups: Record<string, UIReviewItem[]> = {}
   
   items.forEach(item => {
-    if (!item.completedTime) return
+    // lastReviewTime 또는 completedTime 사용
+    const timeToUse = item.lastReviewTime || item.completedTime
+    if (!timeToUse) return
     
-    const date = new Date(item.completedTime)
-    const dateKey = date.toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
+    const date = new Date(timeToUse)
+    // YYYY-MM-DD 형식으로 변경
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const dateKey = `${year}-${month}-${day}`
     
     if (!groups[dateKey]) {
       groups[dateKey] = []
@@ -173,8 +175,10 @@ function groupByDate(items: UIReviewItem[]): Array<[string, UIReviewItem[]]> {
   })
 
   return Object.entries(groups).sort((a, b) => {
-    const dateA = new Date(a[1][0]?.completedTime || 0)
-    const dateB = new Date(b[1][0]?.completedTime || 0)
+    const timeA = a[1][0]?.lastReviewTime || a[1][0]?.completedTime || ''
+    const timeB = b[1][0]?.lastReviewTime || b[1][0]?.completedTime || ''
+    const dateA = new Date(timeA || 0)
+    const dateB = new Date(timeB || 0)
     return dateB.getTime() - dateA.getTime()
   })
 }
@@ -184,6 +188,9 @@ export default function HistoryClient() {
   const [filter, setFilter] = useState<"all" | "note" | "quote">("all")
   const [page, setPage] = useState(0)
   const loadMoreRef = useRef<HTMLDivElement>(null)
+  const isInitialized = useRef(false)
+  // 날짜별 확장/축소 상태 관리 (기본적으로 첫 번째 날짜만 확장)
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set())
 
   const PAGE_SIZE = 20
 
@@ -235,8 +242,8 @@ export default function HistoryClient() {
       })
       
       return uiItems.sort((a, b) => {
-        const timeA = a.completedTime ? new Date(a.completedTime).getTime() : 0
-        const timeB = b.completedTime ? new Date(b.completedTime).getTime() : 0
+        const timeA = (a.lastReviewTime || a.completedTime) ? new Date(a.lastReviewTime || a.completedTime || '').getTime() : 0
+        const timeB = (b.lastReviewTime || b.completedTime) ? new Date(b.lastReviewTime || b.completedTime || '').getTime() : 0
         return timeB - timeA
       })
     } else {
@@ -249,8 +256,8 @@ export default function HistoryClient() {
         })
       })
       return uiItems.sort((a, b) => {
-        const timeA = a.completedTime ? new Date(a.completedTime).getTime() : 0
-        const timeB = b.completedTime ? new Date(b.completedTime).getTime() : 0
+        const timeA = (a.lastReviewTime || a.completedTime) ? new Date(a.lastReviewTime || a.completedTime || '').getTime() : 0
+        const timeB = (b.lastReviewTime || b.completedTime) ? new Date(b.lastReviewTime || b.completedTime || '').getTime() : 0
         return timeB - timeA
       })
     }
@@ -264,6 +271,27 @@ export default function HistoryClient() {
 
   // 날짜별 그룹화
   const groupedByDate = useMemo(() => groupByDate(filteredItems), [filteredItems])
+
+  // 첫 번째 날짜를 기본적으로 확장 (초기 로드 시에만)
+  useEffect(() => {
+    if (groupedByDate.length > 0 && !isInitialized.current) {
+      setExpandedDates(new Set([groupedByDate[0][0]]))
+      isInitialized.current = true
+    }
+  }, [groupedByDate])
+
+  // 날짜 섹션 토글 함수
+  const toggleDate = (date: string) => {
+    setExpandedDates(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(date)) {
+        newSet.delete(date)
+      } else {
+        newSet.add(date)
+      }
+      return newSet
+    })
+  }
 
   // 무한 스크롤: Intersection Observer
   useEffect(() => {
@@ -313,7 +341,7 @@ export default function HistoryClient() {
               </Button>
             </Link>
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold text-[#2D2D2D]">복습 히스토리</h1>
+              <h1 className="text-2xl sm:text-3xl font-serif text-[#2D2D2D]">복습 히스토리</h1>
               <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
                 완료된 복습을 날짜별로 확인할 수 있습니다
               </p>
@@ -433,16 +461,34 @@ export default function HistoryClient() {
 
         {!isLoading && !error && groupedByDate.length > 0 && (
           <>
-            <div className={isMobile ? "space-y-6" : "space-y-8"}>
-              {groupedByDate.map(([date, items]) => (
-                <div key={date}>
-                  <div className={`flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 ${isMobile ? 'sticky top-0 bg-[#F8F7F4] py-2 -mx-4 px-4 z-10 backdrop-blur-sm' : ''}`}>
-                    <h2 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-[#2D2D2D]`}>{date}</h2>
-                    <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground`}>
-                      ({items.length}개)
+            <div className={isMobile ? "space-y-4" : "space-y-6"}>
+              {groupedByDate.map(([date, items]) => {
+                const isExpanded = expandedDates.has(date)
+                return (
+                  <div key={date} className="bg-transparent">
+                    {/* 날짜 헤더 */}
+                    <button
+                      onClick={() => toggleDate(date)}
+                      className={`w-full flex items-center justify-between gap-2 sm:gap-3 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-tl-lg rounded-tr-lg px-3 sm:px-4 py-2.5 sm:py-3 transition-colors mb-0 ${!isExpanded ? 'rounded-bl-lg rounded-br-lg' : ''}`}
+                    >
+                      <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                        <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
+                        <span className={`${isMobile ? 'text-sm' : 'text-base'} font-medium text-[#2D2D2D]`}>
+                          {date}
+                        </span>
+                        <span className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>
+                          {items.length}개 복습
                     </span>
                   </div>
-                  <div className={isMobile ? "space-y-3" : "space-y-4"}>
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
+                      )}
+                    </button>
+                    {/* 복습 항목들 */}
+                    {isExpanded && (
+                      <div className={`${isMobile ? "space-y-3 pt-3" : "space-y-4 pt-4"}`}>
                     {items.map((item) => (
                       <ReviewListItem 
                         key={item.id} 
@@ -453,8 +499,10 @@ export default function HistoryClient() {
                       />
                     ))}
                   </div>
+                    )}
                 </div>
-              ))}
+                )
+              })}
             </div>
 
             {/* 모바일: 무한 스크롤 로더 */}

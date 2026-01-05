@@ -49,7 +49,9 @@ function convertToUIReviewItem(
   reviewItem: ReviewItem,
   review: Review
 ): UIReviewItem {
-  // /api/v1/reviews/today API는 오늘 복습할 항목만 반환하므로 status는 항상 "pending"
+  // 완료 상태 확인: reviewItem.completed 또는 review.completedTime이 있으면 완료
+  const isCompleted = reviewItem.completed || !!review.completedTime
+  const status: "completed" | "pending" = isCompleted ? "completed" : "pending"
   
   // NOTE 타입인 경우
   if (reviewItem.itemType === "NOTE" && reviewItem.note) {
@@ -74,6 +76,7 @@ function convertToUIReviewItem(
       title: note.title,
       dueDate: review.plannedTime,
       frequency: undefined,
+      status,
       itemId: reviewItem.itemId,
       bookId: note.bookId > 0 ? note.bookId : undefined,
       completedTime: reviewItem.completedTime,
@@ -103,6 +106,7 @@ function convertToUIReviewItem(
       title: undefined,
       dueDate: review.plannedTime,
       frequency: undefined,
+      status,
       itemId: reviewItem.itemId,
       bookId: quote.bookId,
       completedTime: reviewItem.completedTime,
@@ -126,6 +130,7 @@ function convertToUIReviewItem(
     date: new Date().toISOString().split('T')[0],
     tags: [],
     dueDate: review.plannedTime,
+    status,
     itemId: reviewItem.itemId,
     completedTime: reviewItem.completedTime,
     lastReviewTime: lastReviewDate?.toISOString() || null,

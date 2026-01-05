@@ -56,39 +56,39 @@ export function ReviewStartCard({ onStart, totalCount, isAllCompleted }: ReviewS
               중요한 노트들을 정기적으로 복습하면 기억에 오래 남아요
             </p>
 
-            <Button
-              size="lg"
-              onClick={onStart}
-              className="mt-4 px-8 py-6 text-lg bg-[#6366F1] hover:bg-[#6366F1]/90 text-white"
-            >
-              복습 시작하기
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <div className="mt-4 flex flex-col items-center gap-3">
+              <Button
+                size="lg"
+                onClick={onStart}
+                className="px-8 py-6 text-lg bg-[#6366F1] hover:bg-[#6366F1]/90 text-white"
+              >
+                복습 시작하기
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              
+              {/* 키보드 단축키 안내 - 버튼 아래 작은 텍스트 */}
+              <div className="flex items-center gap-2 text-xs text-[#888]">
+                <div className="flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 bg-[#F8F7F4] rounded text-xs font-mono border border-[#2D2D2D]/10">
+                    ←
+                  </kbd>
+                  <span>/</span>
+                  <kbd className="px-1.5 py-0.5 bg-[#F8F7F4] rounded text-xs font-mono border border-[#2D2D2D]/10">
+                    →
+                  </kbd>
+                  <span className="ml-1">이전/다음</span>
+                </div>
+                <span className="text-[#2D2D2D]/30">•</span>
+                <div className="flex items-center gap-1">
+                  <kbd className="px-2 py-0.5 bg-[#F8F7F4] rounded text-xs font-mono border border-[#2D2D2D]/10">
+                    Space
+                  </kbd>
+                  <span className="ml-1">내용 보기</span>
+                </div>
+              </div>
+            </div>
           </>
         )}
-
-        {/* 키보드 단축키 안내 */}
-        <div className="mt-8 pt-6 border-t border-[#2D2D2D]/10">
-          <p className="text-xs text-[#888] mb-3">키보드 단축키</p>
-          <div className="flex flex-col items-center gap-2 text-xs text-[#888]">
-            <div className="flex items-center gap-1.5">
-              <kbd className="px-2 py-1 bg-[#F8F7F4] rounded text-xs font-mono border border-[#2D2D2D]/10">
-                ←
-              </kbd>
-              <span>/</span>
-              <kbd className="px-2 py-1 bg-[#F8F7F4] rounded text-xs font-mono border border-[#2D2D2D]/10">
-                →
-              </kbd>
-              <span className="ml-1">이전/다음 카드</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <kbd className="px-6 py-1 bg-[#F8F7F4] rounded-md text-xs font-mono border border-[#2D2D2D]/10 min-w-[72px] text-center">
-                Space
-              </kbd>
-              <span className="ml-1">내용 보기</span>
-            </div>
-          </div>
-        </div>
       </div>
     </Card>
   )

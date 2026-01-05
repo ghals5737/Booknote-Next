@@ -1,8 +1,11 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { completeReviewItem } from "@/lib/api/review"
 import { UIReviewItem } from "@/lib/types/review/review"
+import { Lock } from "lucide-react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { EmptyState } from "./components/EmptyState"
@@ -16,7 +19,8 @@ interface ReviewClientProps {
 
 
 export default function ReviewClient({ items, nextReviewDate: initialNextReviewDate }: ReviewClientProps) {
-  const [mode, setMode] = useState<"carousel" | "list">("list")
+  // 오늘의 복습 항목이 있으면 바로 carousel 모드로 시작
+  const [mode, setMode] = useState<"carousel" | "list">(items.length > 0 ? "carousel" : "list")
   const router = useRouter()
   const { toast } = useToast()
 
@@ -121,23 +125,95 @@ export default function ReviewClient({ items, nextReviewDate: initialNextReviewD
     }
   }, [router, toast, items])
 
+  // 다음 복습 예정일 포맷팅
+  const formatNextReviewDate = (dateString?: string): string => {
+    if (!dateString) return ""
+    
+    try {
+      const date = new Date(dateString)
+      const today = new Date()
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      
+      // 날짜 비교 (시간 제외)
+      const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+      const tomorrowOnly = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate())
+      
+      if (dateOnly.getTime() === todayOnly.getTime()) {
+        return "오늘"
+      } else if (dateOnly.getTime() === tomorrowOnly.getTime()) {
+        return "내일"
+      } else {
+        return date.toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      }
+    } catch {
+      return ""
+    }
+  }
+
+  const formattedNextReviewDate = formatNextReviewDate(initialNextReviewDate)
+
   return (
     <div className="min-h-screen bg-[#F8F7F4]">
       <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-9 pb-12">
-       
-
         {/* Carousel Mode */}
         {mode === "carousel" && (
           items.length === 0 ? (
             <EmptyState />
           ) : (
-            <ReviewCarousel 
-              items={items} 
-              onItemComplete={async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null, isLastItem?: boolean) => {
-                await handleItemComplete(itemId, assessment, isLastItem)
-              }}
-              nextReviewDate={initialNextReviewDate}
-            />
+            <div className="space-y-6">
+              <ReviewCarousel 
+                items={items} 
+                onItemComplete={async (itemId: number, assessment?: "forgot" | "hard" | "easy" | null, isLastItem?: boolean) => {
+                  await handleItemComplete(itemId, assessment, isLastItem)
+                }}
+                nextReviewDate={initialNextReviewDate}
+              />
+              
+              {/* 다음 복습일 및 히스토리 링크 */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                {/* 다음 예정 복습 카드 */}
+                {initialNextReviewDate && formattedNextReviewDate && (
+                  <div className="bg-gradient-to-r from-[#6366F1]/10 to-[#8B5CF6]/10 border border-[#6366F1]/20 rounded-lg p-4 sm:p-6">
+                    <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#6366F1]/20 flex items-center justify-center flex-shrink-0">
+                        <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-[#6366F1]" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg sm:text-xl text-[#2D2D2D]">다음 예정 복습</h2>
+                      </div>
+                    </div>
+                    <div className="py-4">
+                      <p className="text-2xl sm:text-3xl font-bold text-[#2D2D2D]">
+                        {formattedNextReviewDate}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 완료된 복습 링크 */}
+                <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
+                  <div className="flex items-center justify-between h-full">
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-semibold text-[#2D2D2D] mb-1">완료된 복습</h2>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        지금까지 완료한 복습을 확인해보세요
+                      </p>
+                    </div>
+                    <Link href="/review/history">
+                      <Button variant="outline" size="lg">
+                        히스토리 보기
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
           )
         )}
 
