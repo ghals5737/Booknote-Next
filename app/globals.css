@@ -143,6 +143,31 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* 📚 Booknote Custom Color Palette - 서재 테마 */
+  /* Primary Colors */
+  --color-sepia-brown: #8B6F47;
+  --color-sepia-brown-hover: #73593A;
+  --color-antique-gold: #C9A961;
+  --color-antique-gold-light: #E8D4A8;
+  
+  /* Activity Type Colors */
+  --color-activity-note: #8A9A7B; /* Sage Green - 노트 */
+  --color-activity-reading: #9B8B7E; /* Warm Gray - 읽기 */
+  --color-activity-finished: #B85C4F; /* Terracotta - 완독 */
+  --color-activity-quote: #C9A961; /* Antique Gold - 인용구 */
+  
+  /* Activity Background Colors */
+  --color-activity-note-bg: #F3F5F1;
+  --color-activity-reading-bg: #FEFDFB;
+  --color-activity-finished-bg: #F9F0EE;
+  --color-activity-quote-bg: #FAF6ED;
+  
+  /* Neutral Colors */
+  --color-background-custom: #F8F6F0;
+  --color-card-custom: #FEFDFB;
+  --color-border-custom: #E5DFD3;
+  --color-muted-text-custom: #6B5D52;
 }
 #root {
   max-width: 1280px;
@@ -272,5 +297,38 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Animation utilities */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-in-from-bottom {
+    from {
+      transform: translateY(1rem);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-in {
+    animation: fade-in 0.5s ease-out;
+  }
+
+  .fade-in {
+    animation: fade-in 0.5s ease-out;
+  }
+
+  .slide-in-from-bottom-4 {
+    animation: slide-in-from-bottom 0.5s ease-out;
   }
 }
