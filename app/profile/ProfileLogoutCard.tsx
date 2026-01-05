@@ -1,18 +1,11 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { LogOut } from "lucide-react"
-
 export function ProfileLogoutCard() {
   return (
-    <Card>
-      <CardContent className="p-6">
-        <Button variant="destructive" className="w-full">
-          <LogOut className="mr-2 h-4 w-4" />
-          로그아웃
-        </Button>
-      </CardContent>
-    </Card>
+    <div className="rounded-xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm">
+      <button className="w-full rounded-lg bg-[#C94A3A] px-4 py-3 text-sm text-white transition-all hover:bg-[#B23F2F]">
+        로그아웃
+      </button>
+    </div>
   )
 }

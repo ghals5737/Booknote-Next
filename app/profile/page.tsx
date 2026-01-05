@@ -7,7 +7,6 @@ import { useEffect, useState } from "react"
 import { ProfileHeaderCard } from "./ProfileHeaderCard"
 import { ProfileLogoutCard } from "./ProfileLogoutCard"
 import { ProfileSettingsCard } from "./ProfileSettingsCard"
-import { ProfileStatsGrid } from "./ProfileStatsGrid"
 import { ReminderSettingsCard } from "./ReminderSettingsCard"
 
 interface NotificationTime {
@@ -282,7 +281,7 @@ export default function ProfilePage() {
               }}
             />
           )}
-          <ProfileStatsGrid stats={stats} />
+         
           <ProfileSettingsCard />
           <ReminderSettingsCard
             enabled={reminderEnabled}
