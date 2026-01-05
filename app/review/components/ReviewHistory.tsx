@@ -1,7 +1,9 @@
 "use client"
 
 import { authenticatedApiRequest } from '@/lib/api/nextauth-api';
+import { NoteResponse } from '@/lib/types/note/note';
 import { PageResponse } from '@/lib/types/pagenation/pagenation';
+import { QuoteResponse } from '@/lib/types/quote/quote';
 import { UIReviewItem } from '@/lib/types/review/review';
 import { BookOpen, ChevronDown, ChevronUp, History } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -14,8 +16,8 @@ interface ReviewHistoryItem {
   itemId: number;
   completed: boolean;
   completedTime: string | null;
-  note: any;
-  quote: any;
+  note: NoteResponse | null;
+  quote: QuoteResponse | null;
   bookTitle: string | null;
   lastReviewTime?: string | null;
   reviewCount?: number;
@@ -334,7 +336,7 @@ export function ReviewHistory() {
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
                               <p className="mb-3 font-serif leading-relaxed text-foreground line-clamp-2">
-                                "{item.content}"
+                                &quot;{item.content}&quot;
                               </p>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <BookOpen className="h-3.5 w-3.5" />

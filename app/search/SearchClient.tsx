@@ -4,6 +4,7 @@ import { BookCard } from "@/components/book/book-card"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Loading } from "@/components/ui/loading"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { authenticatedApiRequest } from "@/lib/api/nextauth-api"
 import { BookOpen, FileText, Quote, Search, SearchX, X } from "lucide-react"
@@ -42,7 +43,6 @@ export function SearchClient() {
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedQuery, setDebouncedQuery] = useState("")
   const [activeTab, setActiveTab] = useState("전체")
-  const [isLoading, setIsLoading] = useState(false)
   const [searchResults, setSearchResults] = useState<{
     books?: Array<{
       id: number
@@ -66,6 +66,7 @@ export function SearchClient() {
       bookTitle?: string
     }>
   } | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Debounce 처리 (400ms)
@@ -230,6 +231,20 @@ export function SearchClient() {
           </p>
           <p className="text-sm text-muted-foreground mt-2">
             책, 노트, 인용구를 통합 검색할 수 있습니다
+          </p>
+        </div>
+      ) : isLoading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loading size="lg" text="검색 중..." />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <SearchX className="h-16 w-16 text-destructive mb-4" />
+          <p className="text-lg font-medium text-foreground mb-2">
+            검색 중 오류가 발생했습니다
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {error}
           </p>
         </div>
       ) : !hasResults ? (

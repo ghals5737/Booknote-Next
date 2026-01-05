@@ -14,8 +14,13 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
 	const errorId = error?.digest || ErrorHandler.generateErrorId();
 
 	return (
-		<html>
-			<body>
+		<html lang="ko">
+			<head>
+				<meta charSet="utf-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<title>오류 발생 - Booknote</title>
+			</head>
+			<body style={{ margin: 0, padding: 0, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 				<ErrorState
 					kind={errorKind}
 					title="치명적 오류가 발생했어요"

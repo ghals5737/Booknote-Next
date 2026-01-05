@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { AddUserBookRequest, BOOK_CATEGORY_IDS, BOOK_CATEGORY_LABELS, SearchBookResponse } from "@/lib/types/book/book";
 import { ArrowLeft, BookOpen, Loader2, Search } from 'lucide-react';
+import Image from 'next/image';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -376,7 +377,7 @@ export default function AddBookPage() {
                     >
                       {book.image && (
                         <div className="h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted shadow-sm">
-                          <img
+                          <Image
                             src={book.image}
                             alt={book.title}
                             className="h-full w-full object-cover"
@@ -442,7 +443,7 @@ export default function AddBookPage() {
                 className="flex justify-center lg:w-64 lg:flex-shrink-0"
               >
                 <div className="relative aspect-[3/4] w-48 overflow-hidden rounded-xl shadow-lg lg:w-full">
-                  <img
+                  <Image
                     src={coverUrl}
                     alt="책 표지"
                     className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"

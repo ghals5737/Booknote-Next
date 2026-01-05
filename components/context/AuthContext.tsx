@@ -113,7 +113,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     }
   }, [checkAuthStatus])
 
-  const loginWithProvider = useCallback(async (provider: "google" | "github" | "kakao" | "naver") => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const loginWithProvider = useCallback(async (_provider: "google" | "github" | "kakao" | "naver") => {
     // SSO 로그인은 SSOButtons 컴포넌트에서 NextAuth의 signIn을 직접 사용합니다.
     // 이 함수는 더 이상 사용되지 않습니다.
     throw new Error("SSO 로그인은 SSOButtons 컴포넌트를 통해 처리됩니다.")

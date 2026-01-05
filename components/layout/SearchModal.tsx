@@ -40,6 +40,7 @@ export function SearchModal({ onClose }: SearchModalProps) {
     const [recentSearches, setRecentSearches] = useState<RecentSearchListItem[]>([]);
     const [isLoadingRecentSearches, setIsLoadingRecentSearches] = useState(false);
     const [suggestions, setSuggestions] = useState<string[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const resultsContainerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -357,7 +358,7 @@ export function SearchModal({ onClose }: SearchModalProps) {
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [allItems, selectedIndex, onClose, handleItemClick]);
+    }, [allItems, selectedIndex, onClose, handleItemClick, query]);
 
     // 선택된 항목으로 스크롤
     useEffect(() => {

@@ -18,6 +18,7 @@ export function StatsCards({ statisticsData, goalsData }: StatsCardsProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [showGoalSetup, setShowGoalSetup] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 이번달 읽은 책 수 계산

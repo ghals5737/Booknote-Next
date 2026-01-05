@@ -1,6 +1,7 @@
 'use client';
 
 import { FileText, Quote, Star } from 'lucide-react';
+import Image from 'next/image';
 
 interface BookCardProps {
   id?: number;
@@ -24,7 +25,7 @@ export function BookCard({ title, author, cover, progress, rating, noteCount, qu
       <div className="relative mb-3 overflow-hidden rounded-lg shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
         <div className="aspect-[2/3] overflow-hidden bg-muted">
           {cover ? (
-            <img 
+            <Image 
               src={cover} 
               alt={title}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

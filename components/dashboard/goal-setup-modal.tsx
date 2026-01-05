@@ -195,7 +195,7 @@ export function GoalSetupModal({ onClose, onSave }: GoalSetupModalProps) {
         {/* 격려 메시지 */}
         <div className="border-t border-border/50 bg-gradient-to-br from-primary/5 to-transparent px-8 py-4">
           <p className="text-center text-sm text-muted-foreground">
-            "작은 목표라도 괜찮아요. 꾸준함이 가장 중요합니다." 📚
+            &quot;작은 목표라도 괜찮아요. 꾸준함이 가장 중요합니다.&quot; 📚
           </p>
         </div>
       </div>
