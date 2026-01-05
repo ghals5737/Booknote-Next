@@ -207,8 +207,7 @@ export async function GET(request: NextRequest) {
 }
 
 // DELETE: 전체 검색어 삭제
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function DELETE(_request: NextRequest) {
+export async function DELETE() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.accessToken) {
