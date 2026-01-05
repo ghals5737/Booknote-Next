@@ -1,23 +1,13 @@
 'use client';
 
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedApiRequest } from "@/lib/api/nextauth-api";
 import { CreateGoalApiResponse, CreateGoalRequest, GoalsResponse } from "@/lib/types/goal/goal";
 import { StatisticsResponse } from "@/lib/types/statistics/statistics";
-import { BookOpen, Flame, Target, TrendingUp } from "lucide-react";
+import { ArrowUpRight, BookOpen, Flame, Plus, Target, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { GoalSetupModal } from "./goal-setup-modal";
 
 interface StatsCardsProps {
   statisticsData: StatisticsResponse | null;
@@ -27,8 +17,7 @@ interface StatsCardsProps {
 export function StatsCards({ statisticsData, goalsData }: StatsCardsProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [target, setTarget] = useState<string>('2');
+  const [showGoalSetup, setShowGoalSetup] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 이번달 읽은 책 수 계산
@@ -68,27 +57,19 @@ export function StatsCards({ statisticsData, goalsData }: StatsCardsProps) {
     return `${now.getFullYear()}년 ${now.getMonth() + 1}월`;
   };
 
-  // 목표 생성 핸들러
-  const handleCreateGoal = async () => {
-    const targetNumber = parseInt(target, 10);
-    
-    if (isNaN(targetNumber) || targetNumber < 1) {
-      toast({
-        title: '입력 오류',
-        description: '목표 책 수는 1권 이상이어야 합니다.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  // 목표 저장 핸들러
+  const handleGoalSave = async (goalData: {
+    type: 'monthly' | 'yearly';
+    targetValue: number;
+  }) => {
     setIsSubmitting(true);
     try {
       const now = new Date();
       const requestBody: CreateGoalRequest = {
-        type: 'monthly',
-        target: targetNumber,
+        type: goalData.type,
+        target: goalData.targetValue,
         year: now.getFullYear(),
-        month: now.getMonth() + 1,
+        month: goalData.type === 'monthly' ? now.getMonth() + 1 : undefined,
       };
 
       const result = await authenticatedApiRequest<CreateGoalApiResponse['data']>('/api/v1/goals', {
@@ -99,9 +80,9 @@ export function StatsCards({ statisticsData, goalsData }: StatsCardsProps) {
       if (result.success) {
         toast({
           title: '목표 설정 완료',
-          description: `이번 달 목표를 ${targetNumber}권으로 설정했습니다.`,
+          description: `${goalData.type === 'monthly' ? '이번 달' : '올해'} 목표를 ${goalData.targetValue}권으로 설정했습니다.`,
         });
-        setIsDialogOpen(false);
+        setShowGoalSetup(false);
         router.refresh(); // 페이지 새로고침하여 목표 데이터 갱신
       }
     } catch (error) {
@@ -158,22 +139,24 @@ export function StatsCards({ statisticsData, goalsData }: StatsCardsProps) {
           </div>
         ) : (
           <div 
-            className="relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-primary/5 to-primary/10 p-6 shadow-sm cursor-pointer hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/15 transition-colors"
-            onClick={() => setIsDialogOpen(true)}
+            className="relative overflow-hidden rounded-xl border-2 border-dashed border-border/50 bg-gradient-to-br from-primary/5 to-primary/10 p-6 shadow-sm cursor-pointer hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/15 transition-colors"
+            onClick={() => setShowGoalSetup(true)}
           >
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Target className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-medium">이번 달 목표</h3>
-                  <p className="text-xs text-muted-foreground">{getCurrentMonthString()}</p>
+            <div className="flex items-start gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                <Plus className="h-8 w-8 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-1">독서 목표 설정</h3>
+                <p className="text-sm text-muted-foreground mb-3">목표를 세워보세요</p>
+                <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+                  월간 또는 연간 독서 목표를 설정하고, 꾸준한 독서 습관을 만들어보세요.
+                </p>
+                <div className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                  <span>목표 설정하기</span>
+                  <ArrowUpRight className="h-4 w-4" />
                 </div>
               </div>
-            </div>
-            <div className="text-center py-4">
-              <p className="text-sm text-muted-foreground">목표 설정하기</p>
             </div>
           </div>
         )}
@@ -227,45 +210,13 @@ export function StatsCards({ statisticsData, goalsData }: StatsCardsProps) {
         </div>
       </div>
 
-      {/* 목표 설정 다이얼로그 */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>이번 달 목표 설정</DialogTitle>
-            <DialogDescription>
-              이번 달에 읽고 싶은 책의 목표 권수를 설정하세요.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="target">목표 책 수</Label>
-              <Input
-                id="target"
-                type="number"
-                min="1"
-                value={target}
-                onChange={(e) => setTarget(e.target.value)}
-                placeholder="예: 5"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDialogOpen(false)}
-              disabled={isSubmitting}
-            >
-              취소
-            </Button>
-            <Button
-              onClick={handleCreateGoal}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? '설정 중...' : '설정하기'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* 목표 설정 모달 */}
+      {showGoalSetup && (
+        <GoalSetupModal
+          onClose={() => setShowGoalSetup(false)}
+          onSave={handleGoalSave}
+        />
+      )}
     </>
   );
 }

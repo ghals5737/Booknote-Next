@@ -114,37 +114,9 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   }, [checkAuthStatus])
 
   const loginWithProvider = useCallback(async (provider: "google" | "github" | "kakao" | "naver") => {
-    setIsLoading(true)
-    try {
-      // Mock SSO login - 실제로는 OAuth 플로우
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      const providerNames = {
-        google: "구글",
-        github: "깃허브",
-        kakao: "카카오",
-        naver: "네이버",
-      }
-
-      const mockUser: User = {
-        id: "1",
-        email: `user@${provider}.com`,
-        name: `${providerNames[provider]} 사용자`,
-        avatar: `/placeholder.svg?height=40&width=40&query=${provider} user avatar`,
-        provider,
-        createdAt: new Date("2024-01-01"),
-        lastLoginAt: new Date(),
-      }
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("auth_token", "mock_token")
-      }
-      setUser(mockUser)
-    } catch {
-      throw new Error(`${provider} 로그인에 실패했습니다.`)
-    } finally {
-      setIsLoading(false)
-    }
+    // SSO 로그인은 SSOButtons 컴포넌트에서 NextAuth의 signIn을 직접 사용합니다.
+    // 이 함수는 더 이상 사용되지 않습니다.
+    throw new Error("SSO 로그인은 SSOButtons 컴포넌트를 통해 처리됩니다.")
   }, [])
 
   const register = useCallback(async (email: string, password: string, name: string) => {

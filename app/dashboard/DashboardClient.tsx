@@ -217,8 +217,8 @@ export default function DashboardClient({ booksData, statisticsData, goalsData, 
     };
 
     const handlePlayMusic = () => {
-        // TODO: 독서 분위기 음악 재생 기능 구현
-        console.log('독서 분위기 음악 재생');
+        // 독서 분위기 음악 재생 기능은 현재 구현되지 않았습니다.
+        // 향후 구현 예정입니다.
     };
 
     // 타이머 종료 후 콜백

@@ -5,81 +5,68 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { authenticatedApiRequest } from "@/lib/api/nextauth-api"
 import { BookOpen, FileText, Quote, Search, SearchX, X } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
-type SearchResultType = "BOOK" | "NOTE" | "QUOTE"
-
-interface SearchResult {
-  id: string
-  type: SearchResultType
-  title: string
-  content?: string
-  image?: string
-  subTitle?: string
-  date?: string
-  page?: number
-  bookId?: number
+interface UnifiedSearchResponse {
+  success: boolean
+  data?: {
+    books?: Array<{
+      id: number
+      title: string
+      author: string
+      cover?: string
+    }>
+    notes?: Array<{
+      id: number
+      title: string
+      content?: string
+      bookId: number
+      bookTitle?: string
+      createdAt?: string
+    }>
+    quotes?: Array<{
+      id: number
+      content: string
+      page?: number
+      bookId: number
+      bookTitle?: string
+    }>
+  }
+  message?: string
 }
-
-const MOCK_RESULTS: SearchResult[] = [
-  {
-    id: "1",
-    type: "BOOK",
-    title: "아토믹 해빗",
-    subTitle: "제임스 클리어",
-    image: "/placeholder.svg",
-  },
-  {
-    id: "2",
-    type: "BOOK",
-    title: "데미안",
-    subTitle: "헤르만 헤세",
-    image: "/placeholder.svg",
-  },
-  {
-    id: "3",
-    type: "NOTE",
-    title: "습관 형성의 4단계",
-    content: "습관은 작은 행동의 반복으로 만들어집니다. 신호, 갈망, 반응, 보상의 4단계를 통해...",
-    subTitle: "아토믹 해빗",
-    date: "2024-01-15",
-    bookId: 1,
-  },
-  {
-    id: "4",
-    type: "NOTE",
-    title: "성장 마인드셋의 중요성",
-    content: "고정 마인드셋과 성장 마인드셋의 차이를 이해하는 것이 중요합니다...",
-    subTitle: "마인드셋",
-    date: "2024-01-10",
-    bookId: 2,
-  },
-  {
-    id: "5",
-    type: "QUOTE",
-    title: "삶은 속도가 아니라 방향이다",
-    content: "삶은 속도가 아니라 방향이다. 중요한 것은 얼마나 빨리 가는가가 아니라 어디로 가는가이다.",
-    subTitle: "데미안",
-    page: 45,
-    bookId: 1,
-  },
-  {
-    id: "6",
-    type: "QUOTE",
-    title: "인생에서 가장 큰 영광은",
-    content: "인생에서 가장 큰 영광은 넘어지지 않는 것이 아니라 넘어질 때마다 일어서는 것이다.",
-    subTitle: "넬슨 만델라 자서전",
-    page: 120,
-    bookId: 3,
-  },
-]
 
 export function SearchClient() {
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedQuery, setDebouncedQuery] = useState("")
   const [activeTab, setActiveTab] = useState("전체")
+  const [isLoading, setIsLoading] = useState(false)
+  const [searchResults, setSearchResults] = useState<{
+    books?: Array<{
+      id: number
+      title: string
+      author: string
+      cover?: string
+    }>
+    notes?: Array<{
+      id: number
+      title: string
+      content?: string
+      bookId: number
+      bookTitle?: string
+      createdAt?: string
+    }>
+    quotes?: Array<{
+      id: number
+      content: string
+      page?: number
+      bookId: number
+      bookTitle?: string
+    }>
+  } | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   // Debounce 처리 (400ms)
   useEffect(() => {
@@ -90,32 +77,104 @@ export function SearchClient() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
+  // 실제 검색 API 호출
+  useEffect(() => {
+    if (!debouncedQuery.trim() || debouncedQuery.length < 2) {
+      setSearchResults(null)
+      setError(null)
+      return
+    }
+
+    const fetchSearchResults = async () => {
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const type = activeTab === "책" ? "books" : activeTab === "노트" ? "notes" : activeTab === "인용구" ? "quotes" : "all"
+        const response = await authenticatedApiRequest<UnifiedSearchResponse['data']>(
+          `/api/v1/search/unified?query=${encodeURIComponent(debouncedQuery)}&type=${type}&page=1&size=20`
+        )
+
+        if (response.success && response.data) {
+          setSearchResults(response.data)
+        } else {
+          setError(response.message || "검색 중 오류가 발생했습니다.")
+          setSearchResults(null)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "검색 요청에 실패했습니다.")
+        setSearchResults(null)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchSearchResults()
+  }, [debouncedQuery, activeTab])
+
   // 검색 결과 필터링
   const filteredResults = useMemo(() => {
-    if (!debouncedQuery.trim()) {
+    if (!searchResults) {
       return []
     }
 
-    let results = MOCK_RESULTS.filter((result) => {
-      const query = debouncedQuery.toLowerCase()
-      return (
-        result.title.toLowerCase().includes(query) ||
-        result.subTitle?.toLowerCase().includes(query) ||
-        result.content?.toLowerCase().includes(query)
-      )
-    })
+    const allResults: Array<{
+      id: string
+      type: "BOOK" | "NOTE" | "QUOTE"
+      title: string
+      content?: string
+      image?: string
+      subTitle?: string
+      date?: string
+      page?: number
+      bookId?: number
+    }> = []
 
-    // 탭별 필터링
-    if (activeTab === "책") {
-      results = results.filter((r) => r.type === "BOOK")
-    } else if (activeTab === "노트") {
-      results = results.filter((r) => r.type === "NOTE")
-    } else if (activeTab === "인용구") {
-      results = results.filter((r) => r.type === "QUOTE")
+    // 책 결과
+    if (searchResults.books) {
+      searchResults.books.forEach((book) => {
+        allResults.push({
+          id: book.id.toString(),
+          type: "BOOK",
+          title: book.title,
+          subTitle: book.author,
+          image: book.cover,
+        })
+      })
     }
 
-    return results
-  }, [debouncedQuery, activeTab])
+    // 노트 결과
+    if (searchResults.notes) {
+      searchResults.notes.forEach((note) => {
+        allResults.push({
+          id: note.id.toString(),
+          type: "NOTE",
+          title: note.title || "",
+          content: note.content,
+          subTitle: note.bookTitle,
+          date: note.createdAt,
+          bookId: note.bookId,
+        })
+      })
+    }
+
+    // 인용구 결과
+    if (searchResults.quotes) {
+      searchResults.quotes.forEach((quote) => {
+        allResults.push({
+          id: quote.id.toString(),
+          type: "QUOTE",
+          title: quote.content.substring(0, 50) + (quote.content.length > 50 ? "..." : ""),
+          content: quote.content,
+          subTitle: quote.bookTitle,
+          page: quote.page,
+          bookId: quote.bookId,
+        })
+      })
+    }
+
+    return allResults
+  }, [searchResults])
 
   const hasResults = filteredResults.length > 0
   const hasQuery = debouncedQuery.trim().length > 0
