@@ -281,14 +281,14 @@ export default function ProfilePage() {
               }}
             />
           )}
-         
-          <ProfileSettingsCard />
-          <ReminderSettingsCard
+         <ReminderSettingsCard
             enabled={reminderEnabled}
             time={reminderTime}
             onEnabledChange={handleEnabledChange}
             onTimeChange={handleTimeChange}
           />
+          <ProfileSettingsCard />
+          
           <ProfileLogoutCard />
         </div>
       </div>
