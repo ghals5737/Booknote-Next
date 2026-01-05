@@ -291,17 +291,19 @@ export default function DashboardClient({ booksData, statisticsData, goalsData, 
             <Greeting userName={userName || undefined} />
 
             {/* 통계 카드 섹션 */}
-            <StatsCards statisticsData={statisticsData} goalsData={goalsData} />
+            <div className="mt-8">
+                <StatsCards statisticsData={statisticsData} goalsData={goalsData} />
+            </div>
 
             {/* 실행 중인 타이머 */}
             {!isLoadingTimer && currentTimer && (
-                <div className="mb-8">
+                <div className="mb-12">
                     <ReadingTimer timer={currentTimer} onStop={handleTimerStop} />
                 </div>
             )}
 
             {/* QuickActions 섹션 */}
-            <div className="mb-8">
+            <div className="mb-12">
                 <QuickActions
                     onContinueReading={handleContinueReading}
                     onWriteNote={handleWriteNote}
@@ -319,14 +321,14 @@ export default function DashboardClient({ booksData, statisticsData, goalsData, 
             </div>
 
             {/* 오늘의 문학 인용구 */}
-            <div className="mb-12">
+            <div className="mb-16">
                 <QuoteOfTheDay {...todayQuote} />
             </div>
 
             {/* 최근 활동 */}
-            <section className="mb-16">
-                <div className="mb-6 flex items-center justify-between">
-                    <h2 className="text-2xl">최근 활동</h2>
+            <section className="mb-20">
+                <div className="mb-8 flex items-center justify-between">
+                    <h2 className="font-serif font-semibold text-2xl">최근 활동</h2>
                     <button 
                         onClick={() => router.push('/dashboard/activities')}
                         className="text-sm text-primary hover:underline transition-colors"

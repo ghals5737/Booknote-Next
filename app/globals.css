@@ -12,6 +12,9 @@
 /* 로고/헤더용 폰트 - Booknote */
 @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap');
 
+/* 세리프 폰트 - 타이포그래피 강화 */
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
 
 @import "tailwindcss"; /* v4에서는 이것만으로 preflight, utilities 모두 포함 */
 @import "tw-animate-css"; /* 외부 라이브러리 (필요시) */
@@ -213,7 +216,7 @@
 }
 
 .font-serif {
-  font-family: var(--font-sans);
+  font-family: 'Crimson Text', Georgia, 'Times New Roman', serif;
 }
 
 @layer components {

@@ -54,7 +54,7 @@ export function MyLibrarySection({ books }: MyLibrarySectionProps) {
   return (
     <section>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl">내 서재</h2>
+        <h2 className="font-serif font-semibold text-2xl">내 서재</h2>
         <Button
           onClick={() => router.push('/book/add')}
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md"

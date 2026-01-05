@@ -17,11 +17,11 @@ export function ReadingBooksSection({ books, onStartTimer }: ReadingBooksSection
 
   return (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-4">지금 읽던 책 이어서 읽기</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <h2 className="font-serif font-semibold text-2xl mb-8">읽는 중인 책</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {books.map((book) => (
           <Card key={book.id} className="overflow-hidden">
-            <div className="flex gap-4 p-4">
+            <div className="flex gap-5 p-5">
               <div className="relative h-24 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                 {book.coverImage ? (
                   <Image

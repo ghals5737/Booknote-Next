@@ -78,11 +78,13 @@ export function QuickActions({
             <ChevronDown className="h-4 w-4 opacity-75" />
           )}
         </div>
-        {currentBook && (
+        {currentBook ? (
           <>
-            <h3 className="mb-1 font-semibold text-lg">{currentBook.title}</h3>
+            <h3 className="mb-1 font-serif font-semibold text-lg text-primary-foreground opacity-100">{currentBook.title}</h3>
             <div className="text-sm opacity-75">{currentBook.progress}% 완료</div>
           </>
+        ) : (
+          <p className="text-sm opacity-75">읽고 있는 책이 없습니다</p>
         )}
       </div>
       {/* 배경 효과 */}
@@ -139,12 +141,19 @@ export function QuickActions({
       {/* 독서 타이머 */}
       <button
         onClick={onStartTimer}
-        className="flex flex-col justify-between rounded-lg border-2 border-border bg-secondary/30 p-4 text-left shadow-sm transition-all duration-200 hover:border-primary hover:bg-secondary/50 hover:shadow-md"
+        disabled={isTimerRunning}
+        className={`flex flex-col justify-between rounded-lg border-2 border-border bg-secondary/30 p-4 text-left shadow-sm transition-all duration-200 ${
+          isTimerRunning
+            ? 'cursor-not-allowed opacity-50'
+            : 'hover:border-primary hover:bg-secondary/50 hover:shadow-md'
+        }`}
       >
         <Timer className="mb-2 h-5 w-5 text-primary" />
         <div>
           <div className="text-sm text-muted-foreground">독서</div>
-          <div className="font-medium">타이머 시작</div>
+          <div className="font-medium">
+            {isTimerRunning ? '타이머 실행 중' : '타이머 시작'}
+          </div>
         </div>
       </button>
 

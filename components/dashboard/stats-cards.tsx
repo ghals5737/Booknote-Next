@@ -1,8 +1,6 @@
 'use client';
 
-import { StreakCard } from "@/components/statistics/StreakCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -13,12 +11,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedApiRequest } from "@/lib/api/nextauth-api";
 import { CreateGoalApiResponse, CreateGoalRequest, GoalsResponse } from "@/lib/types/goal/goal";
 import { StatisticsResponse } from "@/lib/types/statistics/statistics";
-import { BookOpen, Eye, Target } from "lucide-react";
+import { BookOpen, Flame, Target, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -64,6 +61,12 @@ export function StatsCards({ statisticsData, goalsData }: StatsCardsProps) {
   const monthlyGoal = goalsData?.monthly?.target || 0;
   const hasGoal = monthlyGoal > 0;
   const progressPercentage = monthlyGoal > 0 ? Math.min((thisMonthReadCount / monthlyGoal) * 100, 100) : 0;
+
+  // 현재 날짜 문자열 생성 (예: "2025년 1월")
+  const getCurrentMonthString = () => {
+    const now = new Date();
+    return `${now.getFullYear()}년 ${now.getMonth() + 1}월`;
+  };
 
   // 목표 생성 핸들러
   const handleCreateGoal = async () => {
@@ -115,75 +118,113 @@ export function StatsCards({ statisticsData, goalsData }: StatsCardsProps) {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* 이번달 목표 카드 */}
         {hasGoal ? (
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-muted-foreground" />
-                  <p className="text-muted-foreground text-sm font-medium">이번 달 목표</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <p className="text-2xl font-bold">
-                  {thisMonthReadCount} / {monthlyGoal}권
-                </p>
-                <Progress value={progressPercentage} className="h-2" />
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card 
-            className="cursor-pointer hover:bg-accent transition-colors"
-            onClick={() => setIsDialogOpen(true)}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-center h-full min-h-[100px]">
-                <div className="text-center space-y-2">
-                  <Target className="h-8 w-8 text-muted-foreground mx-auto" />
-                  <p className="text-muted-foreground text-sm font-medium">목표 설정하기</p>
-                  <p className="text-xs text-muted-foreground">이번 달 목표를 설정해보세요</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 연속독서 카드 */}
-        <StreakCard streakDays={streakDays} />
-
-        {/* 올해 읽은 책 카드 */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-2">
+          <div className="relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-primary/5 to-primary/10 p-6 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-muted-foreground" />
-                <p className="text-muted-foreground text-sm font-medium">올해 읽은 책</p>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Target className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">이번 달 목표</h3>
+                  <p className="text-xs text-muted-foreground">{getCurrentMonthString()}</p>
+                </div>
               </div>
             </div>
-            <p className="text-2xl font-bold mb-3">{thisYearReadCount} 권</p>
-            {/* 책 아이콘 시각화 (최대 10개) */}
-            {thisYearReadCount > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {Array.from({ length: Math.min(thisYearReadCount, 10) }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-primary"
-                  >
-                    <BookOpen className="h-3.5 w-3.5" />
-                  </div>
-                ))}
-                {thisYearReadCount > 10 && (
-                  <span className="text-xs text-muted-foreground ml-1">
-                    +{thisYearReadCount - 10}
-                  </span>
-                )}
+
+            <div className="mb-3">
+              <div className="mb-2 flex items-baseline gap-1">
+                <span className="text-3xl font-bold text-primary">{thisMonthReadCount}</span>
+                <span className="text-lg text-muted-foreground">/ {monthlyGoal}권</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              <div className="relative h-2 overflow-hidden rounded-full bg-secondary/30">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <TrendingUp className="h-3.5 w-3.5" />
+              <span>
+                {monthlyGoal - thisMonthReadCount > 0
+                  ? `${monthlyGoal - thisMonthReadCount}권 더 읽으면 달성`
+                  : '목표 달성 완료! 🎉'}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div 
+            className="relative overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-primary/5 to-primary/10 p-6 shadow-sm cursor-pointer hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/15 transition-colors"
+            onClick={() => setIsDialogOpen(true)}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Target className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">이번 달 목표</h3>
+                  <p className="text-xs text-muted-foreground">{getCurrentMonthString()}</p>
+                </div>
+              </div>
+            </div>
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">목표 설정하기</p>
+            </div>
+          </div>
+        )}
+
+        {/* 연속 독서 카드 */}
+        <div className="rounded-xl border border-border/50 bg-card/50 p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/40">
+              <Flame className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-medium">연속 독서</h3>
+              <p className="text-xs text-muted-foreground">매일 조금씩</p>
+            </div>
+          </div>
+
+          <div className="mb-2">
+            <span className="text-3xl font-bold">{streakDays}</span>
+            <span className="ml-1 text-lg text-muted-foreground">일째</span>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            {streakDays > 0
+              ? `${streakDays}일 연속 독서 중! 🔥`
+              : '오늘부터 시작해보세요'}
+          </p>
+        </div>
+
+        {/* 올해 읽은 책 카드 */}
+        <div className="rounded-xl border border-border/50 bg-card/50 p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/50">
+              <BookOpen className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-medium">올해 읽은 책</h3>
+              <p className="text-xs text-muted-foreground">{new Date().getFullYear()}년</p>
+            </div>
+          </div>
+
+          <div className="mb-2">
+            <span className="text-3xl font-bold">{thisYearReadCount}</span>
+            <span className="ml-1 text-lg text-muted-foreground">권</span>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            {thisYearReadCount > 0
+              ? `작년보다 ${Math.max(0, thisYearReadCount - 15)}권 더 읽었어요`
+              : '첫 책을 시작해보세요'}
+          </p>
+        </div>
       </div>
 
       {/* 목표 설정 다이얼로그 */}
@@ -228,4 +269,3 @@ export function StatsCards({ statisticsData, goalsData }: StatsCardsProps) {
     </>
   );
 }
-

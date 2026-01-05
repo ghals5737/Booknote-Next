@@ -34,8 +34,8 @@ export function Greeting({ userName = '독서가' }: GreetingProps) {
   const { greeting, message } = getTimeBasedGreeting();
 
   return (
-    <div className="mb-8">
-      <h1 className="mb-2 text-3xl font-semibold text-foreground">
+    <div className="mb-10">
+      <h1 className="mb-2 font-serif text-3xl font-semibold text-foreground">
         {greeting}, {userName}님
       </h1>
       <p className="text-muted-foreground">{message}</p>

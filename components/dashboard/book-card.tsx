@@ -49,7 +49,7 @@ export function BookCard({ id, title, author, cover, progress, rating, noteCount
 
       {/* 책 정보 */}
       <div className="space-y-1">
-        <h3 className="font-semibold line-clamp-2 leading-snug">{title}</h3>
+        <h3 className="font-serif font-semibold line-clamp-2 leading-snug">{title}</h3>
         <p className="text-sm text-muted-foreground line-clamp-1">{author}</p>
         
         {/* 별점 & 노트 수 */}

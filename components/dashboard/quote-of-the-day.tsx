@@ -10,12 +10,17 @@ interface QuoteOfTheDayProps {
 
 export function QuoteOfTheDay({ quote, author, bookTitle }: QuoteOfTheDayProps) {
   return (
-    <div className="relative overflow-hidden rounded-lg border-2 border-border bg-gradient-to-br from-card to-secondary/30 p-6 shadow-md">
-      {/* 장식용 따옴표 */}
-      <Quote className="absolute right-4 top-4 h-16 w-16 text-border/50" />
+    <div className="relative overflow-hidden rounded-lg border border-primary/20 bg-gradient-to-br from-card to-secondary/30 p-8 shadow-md">
+      {/* 큰 세리프 인용 부호 배경 워터마크 */}
+      <div className="absolute left-4 top-4 font-serif text-[120px] leading-none text-primary/5 pointer-events-none">
+        &ldquo;
+      </div>
+      
+      {/* 우측 하단 작은 Quote 아이콘 장식 */}
+      <Quote className="absolute bottom-4 right-4 h-8 w-8 text-primary/20" />
       
       <div className="relative z-10">
-        <p className="mb-3 text-lg leading-relaxed text-foreground">
+        <p className="mb-3 font-serif text-lg italic leading-relaxed text-foreground">
           &ldquo;{quote}&rdquo;
         </p>
         <div className="text-sm text-muted-foreground">
