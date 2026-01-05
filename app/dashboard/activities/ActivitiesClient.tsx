@@ -3,11 +3,11 @@
 import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { Button } from '@/components/ui/button';
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { ActivityResponse } from '@/lib/types/dashboard/dashboard';
 import { PageResponse } from '@/lib/types/pagenation/pagenation';
@@ -147,15 +147,6 @@ export function ActivitiesClient({ activitiesData, currentType }: ActivitiesClie
             다음
             <ChevronRight className="h-4 w-4" />
           </Button>
-        </div>
-      )}
-
-      {activitiesData.empty && (
-        <div className="rounded-lg border border-dashed border-border bg-card/50 p-12 text-center">
-          <p className="text-muted-foreground">활동 기록이 없습니다.</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            독서를 시작하고 노트를 작성해보세요!
-          </p>
         </div>
       )}
     </main>

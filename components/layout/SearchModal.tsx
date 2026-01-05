@@ -1,6 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+    deleteRecentSearch,
+    getRecentSearches
+} from "@/lib/api/search-recent";
+import type { RecentSearchListItem } from "@/lib/types/search/recent";
 import type { UnifiedSearchResponse } from "@/lib/types/search/unified";
 import { transformBooks, transformNotes, transformQuotes } from "@/lib/utils/search-transform";
 import { Clock, Loader2, Search, X } from "lucide-react";
@@ -20,9 +25,6 @@ type SearchableItem = {
     bookId?: string;
 };
 
-const RECENT_SEARCHES_KEY = "booknote_recent_searches";
-const MAX_RECENT_SEARCHES = 10;
-
 export function SearchModal({ onClose }: SearchModalProps) {
     const router = useRouter();
     const [query, setQuery] = useState("");
@@ -31,59 +33,71 @@ export function SearchModal({ onClose }: SearchModalProps) {
     const [error, setError] = useState<string | null>(null);
     const [searchResults, setSearchResults] = useState<UnifiedSearchResponse["data"] | null>(null);
     const [selectedIndex, setSelectedIndex] = useState(-1);
-    const [recentSearches, setRecentSearches] = useState<string[]>([]);
+    const [recentSearches, setRecentSearches] = useState<RecentSearchListItem[]>([]);
+    const [isLoadingRecentSearches, setIsLoadingRecentSearches] = useState(false);
     const resultsContainerRef = useRef<HTMLDivElement>(null);
 
-    // 최근 검색어 로드
+    // 최근 검색어 로드 (서버에서)
     useEffect(() => {
-        if (typeof window !== "undefined") {
+        // 기존 localStorage에 저장된 최근 검색어 데이터 정리 (마이그레이션)
+        if (typeof window !== 'undefined') {
             try {
-                const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    setRecentSearches(Array.isArray(parsed) ? parsed : []);
+                // 가능한 모든 localStorage 키 패턴 확인 및 삭제
+                const keysToRemove: string[] = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (
+                        key.toLowerCase().includes('recent') && key.toLowerCase().includes('search') ||
+                        key === 'recentSearches' ||
+                        key === 'recent_searches' ||
+                        key === 'search_history'
+                    )) {
+                        keysToRemove.push(key);
+                    }
                 }
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                    console.log(`[SearchModal] Removed old localStorage key: ${key}`);
+                });
             } catch (err) {
-                console.error("Failed to load recent searches:", err);
+                // localStorage 접근 실패 시 무시
+                console.warn("Failed to clean up localStorage:", err);
             }
         }
+
+        const loadRecentSearches = async () => {
+            setIsLoadingRecentSearches(true);
+            try {
+                const response = await getRecentSearches(10, 'all');
+                setRecentSearches(response.data.recentSearches || []);
+            } catch (err) {
+                console.warn("Failed to load recent searches (backend may not be implemented yet):", err);
+                setRecentSearches([]);
+            } finally {
+                setIsLoadingRecentSearches(false);
+            }
+        };
+
+        loadRecentSearches();
     }, []);
 
-    // 최근 검색어 저장 (ref를 사용하여 최신 상태 참조)
-    const recentSearchesRef = useRef<string[]>(recentSearches);
-    
-    useEffect(() => {
-        recentSearchesRef.current = recentSearches;
-    }, [recentSearches]);
+    // 최근 검색어는 unified search API에서 결과가 있을 때 서버에서 자동으로 저장됨
+    // 프론트엔드에서는 별도로 저장하지 않음
 
-    const saveRecentSearch = useCallback((searchTerm: string) => {
-        if (!searchTerm.trim() || searchTerm.length < 2) return;
-
-        if (typeof window === "undefined") return;
-
+    // 최근 검색어 삭제 (서버에서)
+    const removeRecentSearch = useCallback(async (searchId: number) => {
         try {
-            const trimmed = searchTerm.trim();
-            const current = recentSearchesRef.current.filter((s) => s !== trimmed);
-            const updated = [trimmed, ...current].slice(0, MAX_RECENT_SEARCHES);
-            localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
-            setRecentSearches(updated);
+            await deleteRecentSearch(searchId);
+            // 삭제 후 최근 검색어 목록 다시 로드
+            const response = await getRecentSearches(10, 'all');
+            setRecentSearches(response.data.recentSearches || []);
         } catch (err) {
-            console.error("Failed to save recent search:", err);
+            // 백엔드가 아직 구현되지 않았거나 에러가 발생해도 조용히 처리
+            console.warn("Failed to remove recent search (backend may not be implemented yet):", err);
+            // 로컬 상태에서만 제거 (백엔드가 없을 때를 대비)
+            setRecentSearches(prev => prev.filter(s => s.id !== searchId));
         }
     }, []);
-
-    // 최근 검색어 삭제
-    const removeRecentSearch = useCallback((searchTerm: string) => {
-        if (typeof window === "undefined") return;
-
-        try {
-            const updated = recentSearches.filter((s) => s !== searchTerm);
-            localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
-            setRecentSearches(updated);
-        } catch (err) {
-            console.error("Failed to remove recent search:", err);
-        }
-    }, [recentSearches]);
 
     // Debounce 검색어 (300ms)
     useEffect(() => {
@@ -145,13 +159,28 @@ export function SearchModal({ onClose }: SearchModalProps) {
 
                 if (data.success) {
                     // data가 없어도 빈 배열로 설정하여 결과가 없다는 것을 표시
-                    setSearchResults({
+                    const results = {
                         books: data.data?.books || [],
                         notes: data.data?.notes || [],
                         quotes: data.data?.quotes || []
-                    });
-                    // 검색 성공 시 최근 검색어에 추가
-                    saveRecentSearch(debouncedQuery);
+                    };
+                    setSearchResults(results);
+                    
+                    // 최근 검색어는 unified search API에서 결과가 있을 때 서버에서 자동으로 저장됨
+                    // 검색 결과가 있을 때 최근 검색어 목록 다시 로드
+                    const hasResults = (results.books?.length || 0) > 0 || 
+                                     (results.notes?.length || 0) > 0 || 
+                                     (results.quotes?.length || 0) > 0;
+                    if (hasResults) {
+                        // 서버에서 자동 저장되었으므로 목록만 다시 로드
+                        try {
+                            const response = await getRecentSearches(10, 'all');
+                            setRecentSearches(response.data.recentSearches || []);
+                        } catch (err) {
+                            // 조용히 실패 처리 (백엔드가 아직 구현되지 않았을 수 있음)
+                            console.warn("Failed to reload recent searches:", err);
+                        }
+                    }
                 } else {
                     setError(data.message || "검색 중 오류가 발생했습니다.");
                     setSearchResults(null);
@@ -170,7 +199,7 @@ export function SearchModal({ onClose }: SearchModalProps) {
         };
 
         fetchSearchResults();
-    }, [debouncedQuery, saveRecentSearch]);
+    }, [debouncedQuery]);
 
     // API 응답을 컴포넌트 타입에 맞게 변환
     const transformedBooks = useMemo(
@@ -334,32 +363,31 @@ export function SearchModal({ onClose }: SearchModalProps) {
                             </div>
                             
                             {/* 최근 검색어 섹션 */}
-                            {recentSearches.length > 0 && (
+                            {!isLoadingRecentSearches && recentSearches.length > 0 && (
                                 <div className="mt-auto pt-4 border-t border-border">
                                     <div className="flex items-center gap-2 mb-3">
                                         <Clock className="w-4 h-4 text-muted-foreground" />
                                         <h3 className="text-sm font-medium text-foreground">최근 검색</h3>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        {recentSearches.map((searchTerm, index) => (
-                                            <button
-                                                key={index}
-                                                type="button"
-                                                onClick={() => setQuery(searchTerm)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                                        {recentSearches.map((search) => (
+                                            <div
+                                                key={search.id}
+                                                onClick={() => setQuery(search.query)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-muted hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
                                             >
-                                                <span>{searchTerm}</span>
+                                                <span>{search.query}</span>
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        removeRecentSearch(searchTerm);
+                                                        removeRecentSearch(search.id);
                                                     }}
                                                     className="ml-1 hover:text-destructive transition-colors"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
-                                            </button>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
