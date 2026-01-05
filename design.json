@@ -1,0 +1,101 @@
+{
+  "designSystem": {
+    "metadata": {
+      "appName": "Booknote",
+      "theme": "Warm Minimalist",
+      "baseFontSize": "16px"
+    },
+    "colorPalette": {
+      "backgrounds": {
+        "appCanvas": "#F4F2F0", 
+        "surfacePrimary": "#FFFFFF",
+        "surfaceSecondary": "#FAFAFA",
+        "overlayDark": "rgba(44, 38, 34, 0.6)"
+      },
+      "brand": {
+        "primary": "#4E4036",
+        "primaryHover": "#3A3029",
+        "accent": "#E6DCCA",
+        "highlight": "#FF7F50" 
+      },
+      "text": {
+        "heading": "#2C2622",
+        "body": "#4A4A4A",
+        "muted": "#8C8C8C",
+        "inverse": "#FFFFFF"
+      },
+      "status": {
+        "success": "#6B8E23",
+        "warning": "#DAA520"
+      },
+      "border": {
+        "subtle": "#EAEAEA",
+        "focus": "#4E4036"
+      }
+    },
+    "typography": {
+      "fontFamily": {
+        "headings": "'Noto Serif KR', 'Times New Roman', serif",
+        "body": "'Pretendard', 'San Francisco', sans-serif"
+      },
+      "weights": {
+        "regular": 400,
+        "medium": 500,
+        "bold": 700
+      }
+    },
+    "componentStyles": {
+      "cards": {
+        "dashboardCard": {
+          "borderRadius": "12px",
+          "backgroundColor": "#FFFFFF",
+          "boxShadow": "0 4px 12px rgba(0, 0, 0, 0.03)",
+          "padding": "24px"
+        },
+        "bookCover": {
+          "borderRadius": "4px",
+          "boxShadow": "0 4px 8px rgba(0, 0, 0, 0.15)"
+        }
+      },
+      "navigation": {
+        "topBar": {
+          "backgroundColor": "#F4F2F0",
+          "height": "64px",
+          "textColor": "#4E4036"
+        }
+      },
+      "inputs": {
+        "searchBar": {
+          "backgroundColor": "#FFFFFF",
+          "borderRadius": "8px",
+          "border": "1px solid #EAEAEA",
+          "placeholderColor": "#8C8C8C",
+          "height": "48px"
+        }
+      },
+      "controls": {
+        "buttons": {
+          "primary": {
+            "backgroundColor": "#4E4036",
+            "textColor": "#FFFFFF",
+            "borderRadius": "6px",
+            "padding": "10px 20px"
+          },
+          "filterTab": {
+            "activeBg": "#4E4036",
+            "activeText": "#FFFFFF",
+            "inactiveBg": "#FFFFFF",
+            "inactiveText": "#4A4A4A",
+            "borderRadius": "6px"
+          }
+        },
+        "progressBar": {
+          "trackColor": "#EAEAEA",
+          "fillColor": "#4E4036",
+          "height": "6px",
+          "borderRadius": "3px"
+        }
+      }
+    }
+  }
+}

@@ -5,11 +5,13 @@
  */
 
 /* 폰트 및 Tailwind CSS 코어 임포트 */
+
 /* 세리프 폰트 - 책 제목용 */
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600;700&display=swap');
 
 /* 산세리프 폰트 - 본문 및 UI */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
 
 @import "tailwindcss"; /* v4에서는 이것만으로 preflight, utilities 모두 포함 */
 @import "tw-animate-css"; /* 외부 라이브러리 (필요시) */
@@ -188,59 +190,16 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-sans);
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Pretendard', 'San Francisco', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
+  /* Typography optimized for reading - Warm Minimalist */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Noto Serif KR', 'Times New Roman', serif;
+    @apply font-semibold tracking-tight;
+    color: hsl(20 12% 15%); /* heading color */
 
-  html {
-    font-size: var(--font-size);
-  }
-
-  h1 {
-    font-size: var(--text-2xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h2 {
-    font-size: var(--text-xl);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h3 {
-    font-size: var(--text-lg);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  h4 {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  label {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  button {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.5;
-  }
-
-  input {
-    font-size: var(--text-base);
-    font-weight: var(--font-weight-normal);
-    line-height: 1.5;
   }
 
   /* Code and markdown */
@@ -259,9 +218,10 @@
 }
 
 @layer components {
-  /* Knowledge Management Components */
+  /* Knowledge Management Components - Warm Minimalist */
   .knowledge-card {
-    @apply bg-card rounded-lg border shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-medium)] transition-[var(--transition-smooth)];
+    @apply bg-card rounded-xl border shadow-[var(--shadow-medium)] hover:shadow-[var(--shadow-knowledge)] transition-[var(--transition-smooth)];
+    padding: 24px; /* dashboardCard padding */
   }
 
   .note-link {
