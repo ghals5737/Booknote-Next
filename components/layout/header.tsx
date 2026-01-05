@@ -76,7 +76,7 @@ export function Header() {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
             <BookOpen className="h-6 w-6 text-primary-foreground" />
           </div>
-          <span className="font-serif text-xl font-semibold">Booknote</span>
+          <span className="text-xl font-semibold" style={{ fontFamily: "'Lora', serif" }}>Booknote</span>
         </div>
         {/* 데스크톱 네비게이션 */}
         <nav className="hidden md:flex items-center gap-6">
@@ -134,7 +134,7 @@ export function Header() {
                     <BookOpen className="h-5 w-5 text-primary-foreground" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-serif text-lg font-semibold">Booknote</span>
+                    <span className="text-lg font-semibold" style={{ fontFamily: "'Lora', serif" }}>Booknote</span>
                     <span className="text-xs text-muted-foreground">메뉴</span>
                   </div>
                 </div>

@@ -78,8 +78,8 @@ export default {
 				}
 			},
 			fontFamily: {
-				sans: ['Pretendard', 'San Francisco', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-				serif: ['Noto Serif KR', 'Times New Roman', 'serif'],
+				sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+				serif: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
 				mono: ['JetBrains Mono', 'monospace']
 			},
 			backgroundImage: {
