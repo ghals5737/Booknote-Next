@@ -1,31 +1,33 @@
 'use client';
 
-import { Bookmark, FileText, Star } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
+import { FileText, Quote, Star } from 'lucide-react';
 
 interface BookCardProps {
-  id: number;
+  id?: number;
   title: string;
   author: string;
   cover: string;
   progress: number;
   rating: number;
   noteCount: number;
+  quoteCount?: number;
+  onClick?: () => void;
 }
 
-export function BookCard({ id, title, author, cover, progress, rating, noteCount }: BookCardProps) {
+export function BookCard({ id, title, author, cover, progress, rating, noteCount, quoteCount, onClick }: BookCardProps) {
   return (
-    <Link href={`/book/${id}`} className="group relative">
+    <div 
+      className="group relative cursor-pointer"
+      onClick={onClick}
+    >
       {/* 책 표지 */}
-      <div className="relative mb-3 overflow-hidden rounded-lg shadow-sm transition-shadow duration-300 hover:shadow-md">
+      <div className="relative mb-3 overflow-hidden rounded-lg shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
         <div className="aspect-[2/3] overflow-hidden bg-muted">
           {cover ? (
-            <Image
-              src={cover}
+            <img 
+              src={cover} 
               alt={title}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-muted-foreground text-xs">
@@ -34,60 +36,54 @@ export function BookCard({ id, title, author, cover, progress, rating, noteCount
           )}
         </div>
         
-        {/* 진행률 표시 - 북마크 스타일 */}
+        {/* 진행률 바 - 하단 */}
         {progress > 0 && progress < 100 && (
-          <div className="absolute right-2 top-0">
-            <div className="relative">
-              <Bookmark className="h-10 w-8 fill-primary text-primary" />
-              <span className="absolute inset-0 flex items-center justify-center pt-1 text-xs text-primary-foreground font-semibold">
-                {progress}%
-              </span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 책 정보 */}
-      <div className="space-y-1">
-        <h3 className="font-serif font-semibold line-clamp-2 leading-snug">{title}</h3>
-        <p className="text-sm text-muted-foreground line-clamp-1">{author}</p>
-        
-        {/* 별점 & 노트 수 */}
-        <div className="flex items-center gap-3 pt-1">
-          {rating > 0 && (
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-3.5 w-3.5 ${
-                    i < rating 
-                      ? 'fill-primary text-primary' 
-                      : 'fill-transparent text-border'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-          
-          {noteCount > 0 && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <FileText className="h-3.5 w-3.5" />
-              <span>{noteCount}</span>
-            </div>
-          )}
-        </div>
-
-        {/* 읽기 진행률 바 */}
-        {progress > 0 && (
-          <div className="mt-2 h-0.5 w-full overflow-hidden rounded-full bg-secondary">
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20">
             <div 
               className="h-full bg-primary transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
         )}
+        
+        {/* 완독 오버레이 */}
+        {progress === 100 && (
+          <div className="absolute inset-0 bg-gradient-to-t from-[#9CA986]/90 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end justify-center pb-4">
+            <span className="text-xs font-semibold text-white">완독</span>
+          </div>
+        )}
       </div>
-    </Link>
+
+      {/* 책 정보 */}
+      <div className="space-y-1.5">
+        <h3 className="font-serif line-clamp-2 leading-snug transition-colors duration-200">{title}</h3>
+        <p className="text-sm text-muted-foreground/80">{author}</p>
+        
+        {/* 메타 정보 - hover시에만 표시 */}
+        <div className="flex min-h-[20px] items-center gap-3 pt-0.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          {rating > 0 && (
+            <div className="flex items-center gap-0.5">
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+              <span className="text-xs font-medium text-muted-foreground">{rating}</span>
+            </div>
+          )}
+          
+          {noteCount > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground/70">
+              <FileText className="h-3 w-3" />
+              <span>{noteCount}</span>
+            </div>
+          )}
+          
+          {quoteCount != null && quoteCount > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground/70">
+              <Quote className="h-3 w-3" />
+              <span>{quoteCount}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

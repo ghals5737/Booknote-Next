@@ -1,19 +1,18 @@
 'use client';
 
 import { BookCard } from "@/components/dashboard/book-card";
-import { BookmarkFilter } from "@/components/dashboard/bookmark-filter";
 import { LibrarySearch } from "@/components/dashboard/library-search";
-import { Button } from "@/components/ui/button";
 import { BOOK_CATEGORY_LABELS, UserBookResponse } from "@/lib/types/book/book";
-import { Plus } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
 interface MyLibrarySectionProps {
   books: UserBookResponse[];
+  onBookClick?: (bookId: number) => void;
 }
 
-export function MyLibrarySection({ books }: MyLibrarySectionProps) {
+export function MyLibrarySection({ books, onBookClick }: MyLibrarySectionProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('전체');
@@ -52,59 +51,127 @@ export function MyLibrarySection({ books }: MyLibrarySectionProps) {
   }, [books, activeCategory, searchQuery]);
 
   return (
-    <section>
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="font-serif font-semibold text-2xl">내 서재</h2>
-        <Button
-          onClick={() => router.push('/book/add')}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground shadow-sm transition-all duration-200 hover:bg-primary/90 hover:shadow-md"
-        >
-          <Plus className="h-5 w-5" />
-          <span>책 추가</span>
-        </Button>
-      </div>
-      
-      {/* 검색바 */}
-      <div className="mb-6">
-        <LibrarySearch value={searchQuery} onChange={setSearchQuery} />
-      </div>
+    <>
+      {/* 읽는 중인 책 */}
+      {books.length > 0 && (
+        <section>
+          {/* 헤더 with 통계 */}
+          <div className="mb-8">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-end gap-6">
+                <h2 className="font-serif text-3xl font-semibold">
+                  내 서재
+                </h2>
+              </div>
+              <button
+                onClick={() => router.push('/book/add')}
+                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground shadow-md transition-all duration-200 hover:bg-primary/90 hover:shadow-lg hover:-translate-y-0.5"
+              >
+                <Plus className="h-5 w-5" />
+                <span>책 추가하기</span>
+              </button>
+            </div>
 
-      {/* 책갈피 필터 */}
-      <div className="mb-8">
-        <BookmarkFilter
-          categories={categories}
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-        />
-      </div>
+            {/* 검색 & 필터 */}
+            <div className="space-y-4">
+              {/* 검색바 */}
+              <div className="relative">
+                <LibrarySearch
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                />
+              </div>
 
-      {/* 책 그리드 */}
-      <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-        {filteredBooks.map((book) => (
-          <BookCard
-            key={book.id}
-            id={book.id}
-            title={book.title}
-            author={book.author}
-            cover={book.coverImage || ''}
-            progress={book.progress}
-            rating={book.rating || 0}
-            noteCount={book.noteCnt}
-          />
-        ))}
-      </div>
+              {/* 카테고리 필터 - 심플한 탭 */}
+              <div className="flex gap-2 border-b border-border/40">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setActiveCategory(category)}
+                    className={`relative pb-3 px-4 text-sm font-medium transition-colors ${
+                      activeCategory === category
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {category}
+                    {activeCategory === category && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary transition-all duration-200" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
-      {/* 검색 결과 없음 */}
-      {filteredBooks.length === 0 && (
-        <div className="py-20 text-center">
-          <p className="text-muted-foreground">
-            {searchQuery 
-              ? '검색 결과가 없습니다.' 
-              : '이 카테고리에 책이 없습니다.'}
+          {/* 책 그리드 */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:gap-x-5 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {filteredBooks.map((book, index) => (
+              <div
+                key={book.id}
+                className="animate-in fade-in slide-in-from-bottom-4"
+                style={{
+                  animationDelay: `${index * 50}ms`,
+                  animationFillMode: 'both',
+                }}
+              >
+                <BookCard
+                  id={book.id}
+                  title={book.title}
+                  author={book.author}
+                  cover={book.coverImage || ''}
+                  progress={book.progress}
+                  rating={book.rating || 0}
+                  noteCount={book.noteCnt || 0}
+                  quoteCount={book.quoteCnt || 0}
+                  onClick={() => router.push(`/book/${book.id}`)}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* 검색 결과 없음 */}
+          {filteredBooks.length === 0 && (
+            <div className="rounded-2xl border border-border/50 bg-card/30 py-16 text-center backdrop-blur-sm animate-in fade-in">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted/50">
+                <BookOpen className="h-10 w-10 text-muted-foreground/40" />
+              </div>
+              <h3 className="mb-2 font-serif text-lg font-semibold">
+                {searchQuery
+                  ? "검색 결과가 없습니다"
+                  : "이 카테고리에 책이 없습니다"}
+              </h3>
+              <p className="mb-6 text-sm text-muted-foreground">
+                {searchQuery
+                  ? "다른 키워드로 검색해보세요"
+                  : "새로운 책을 추가해보세요"}
+              </p>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="rounded-lg bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+                >
+                  검색 초기화
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* 데이터가 없을 때 */}
+      {books.length === 0 && (
+        <div className="rounded-xl border border-border/50 bg-card/50 py-20 text-center backdrop-blur-sm animate-in fade-in">
+          <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground/30" />
+          <p className="mb-2 text-muted-foreground">
+            아직 등록된 책이 없습니다
+          </p>
+          <p className="text-sm text-muted-foreground/60">
+            내 서재에서 새로운 책을 추가해보세요
           </p>
         </div>
       )}
-    </section>
+    </>
   );
 }
 
