@@ -240,10 +240,6 @@
   }
 }
 
-.font-serif {
-  font-family: 'Crimson Text', Georgia, 'Times New Roman', serif;
-}
-
 @layer components {
   /* Knowledge Management Components - Warm Minimalist */
   .knowledge-card {

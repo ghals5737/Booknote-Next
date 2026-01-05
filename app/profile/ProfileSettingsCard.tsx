@@ -7,9 +7,7 @@ export function ProfileSettingsCard() {
       <h2 className="mb-5 text-sm">설정</h2>
       <div className="space-y-0">
        
-        <button className="w-full border-b border-border/30 py-3.5 text-left text-sm transition-colors hover:text-foreground">
-          독서 목표 설정
-        </button>
+       
         <button className="w-full border-b border-border/30 py-3.5 text-left text-sm transition-colors hover:text-foreground">
           테마 변경
         </button>
