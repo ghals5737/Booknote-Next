@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { BookDetailData } from "@/lib/types/book/book";
 import { NoteResponsePage } from "@/lib/types/note/note";
 import { QuoteResponsePage } from "@/lib/types/quote/quote";
-import { ArrowLeft, Plus, Share2 } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Clock, Edit3, Quote, Share2 } from "lucide-react";
 import { getServerSession } from 'next-auth';
 import Image from "next/image";
 import Link from "next/link";
@@ -75,98 +75,155 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
     return <div>책을 찾을 수 없습니다.</div>
   }
 
+  // 독서 시간 계산 (진행률 기반 추정)
+  const readingTime = Math.floor(initialData.bookDetail.progress / 10);
+
   return (
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <Link href="/dashboard" className="mb-6 inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="mr-2 h-4 w-4" />내 서재로 돌아가기
-        </Link>
+        {/* 헤더 - 뒤로가기 + 액션 버튼들 */}
+        <div className="mb-8 flex items-center justify-between">
+          <Link 
+            href="/dashboard" 
+            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span>돌아가기</span>
+          </Link>
 
-        <Card className="mb-8 p-6 sm:p-8">
-          <div className="flex flex-col gap-6 sm:flex-row">
+          {/* 상단 액션 버튼들 */}
+          <div className="flex items-center gap-2">
+            <BookmarkButton bookId={bookId} isBookmarked={initialData.bookDetail.isBookmarked || false} />
+            <Button variant="outline" size="icon" title="공유">
+              <Share2 className="h-5 w-5" />
+            </Button>
+            <BookActionButtons bookId={bookId} />
+          </div>
+        </div>
+
+        {/* 책 정보 헤더 */}
+        <div className="mb-12 flex flex-col gap-8 md:flex-row">
+            {/* 책 표지 */}
             <div className="flex-shrink-0">
-              <div className="relative h-80 w-56 overflow-hidden rounded-lg bg-muted shadow-lg">
-                <Image src={initialData.bookDetail.coverImage || "/placeholder.svg"} alt={initialData.bookDetail.title} fill className="object-cover" />
+              <div className="relative h-80 w-60 overflow-hidden rounded-xl bg-muted shadow-2xl">
+                <Image 
+                  src={initialData.bookDetail.coverImage || "/placeholder.svg"} 
+                  alt={initialData.bookDetail.title} 
+                  fill 
+                  className="object-cover" 
+                />
               </div>
             </div>
 
-            <div className="flex-1">
-              <div className="mb-4 flex items-start justify-between">
-                <div>
-                  <h1 className="mb-2 text-3xl font-bold text-balance">{initialData.bookDetail.title}</h1>
-                  <p className="mb-3 text-lg text-muted-foreground">{initialData.bookDetail.author}</p>
+            {/* 책 정보 */}
+            <div className="flex flex-1 flex-col">
+              {/* 읽는 중 배지 */}
+              {initialData.bookDetail.progress < 100 && (
+                <div className="mb-2 inline-block self-start rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                  읽는 중
                 </div>
-                <BookActionButtons bookId={bookId} />
-              </div>
+              )}
+              {initialData.bookDetail.progress >= 100 && (
+                <div className="mb-2 inline-block self-start rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                  완독
+                </div>
+              )}
+              
+              <h1 className="mb-2 font-serif text-4xl font-bold">{initialData.bookDetail.title}</h1>
+              <p className="mb-6 text-xl text-muted-foreground">{initialData.bookDetail.author}</p>
 
-              <div className="mb-6 grid grid-cols-4 gap-4 text-center">
-                <div>
-                  <div className="mb-1 text-3xl font-bold text-primary">{initialData.bookDetail.progress}%</div>
-                  <div className="text-xs text-muted-foreground">진행률</div>
+              {/* 별점 */}
+              {initialData.bookDetail.rating && initialData.bookDetail.rating > 0 && (
+                <div className="mb-6 flex items-center gap-2">
+                  <StarRatingWrapper
+                    bookId={Number(initialData.bookDetail.id)}
+                    initialRating={initialData.bookDetail.rating || 0}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {initialData.bookDetail.rating}.0
+                  </span>
                 </div>
-                <div>
-                  <div className="mb-1 text-3xl font-bold text-green-600">{initialData.notesData.totalElements}</div>
-                  <div className="text-xs text-muted-foreground">노트</div>
-                </div>
-                <div>
-                  <div className="mb-1 text-3xl font-bold text-purple-600">{initialData.bookDetail.currentPage}</div>
-                  <div className="text-xs text-muted-foreground">현재 페이지</div>
-                </div>
-                <div>
-                  <div className="mb-1 flex items-center justify-center">
-                    <StarRatingWrapper
-                      bookId={Number(initialData.bookDetail.id)}
-                      initialRating={initialData.bookDetail.rating || 0}
-                    />
-                  </div>
-                  <div className="text-xs text-muted-foreground">평점</div>
-                </div>
-              </div>
+              )}
 
-              <div className="mb-4">
-                <div className="mb-2 h-3 overflow-hidden rounded-full bg-secondary">
+              {/* 독서 진행률 */}
+              <div className="mb-8">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="font-medium">독서 진행률</span>
+                  <span className="text-2xl font-bold text-primary">{initialData.bookDetail.progress}%</span>
+                </div>
+                <div className="h-3 overflow-hidden rounded-full bg-secondary/30">
                   <div
-                    className="h-full bg-gradient-to-r from-primary to-primary/80 transition-all"
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-primary/80 transition-all duration-500"
                     style={{ width: `${initialData.bookDetail.progress}%` }}
                   />
                 </div>
-                <div className="text-right text-sm text-muted-foreground">
-                  {initialData.bookDetail.currentPage} / {initialData.bookDetail.totalPages}
-                </div>
+                {initialData.bookDetail.totalPages > 0 && (
+                  <div className="mt-2 text-right text-sm text-muted-foreground">
+                    {initialData.bookDetail.currentPage} / {initialData.bookDetail.totalPages}
+                  </div>
+                )}
               </div>
 
-              <div className="flex flex-col gap-2">
-                {/* 완독 버튼 (진행률이 100% 미만일 때만 표시) */}
-                {initialData.bookDetail.progress < 100 && (
-                  <CompleteBookButton
-                    bookId={bookId}
-                    bookDetail={initialData.bookDetail}
-                  />
+              {/* 액션 버튼 */}
+              <div className="flex flex-wrap gap-3">
+                {initialData.bookDetail.progress < 100 ? (
+                  <>
+                    <Link href={`/book/${bookId}/read`} className="flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground shadow-md transition-all duration-200 hover:bg-primary/90 hover:shadow-lg">
+                      <BookOpen className="h-5 w-5" />
+                      <span>이어서 읽기</span>
+                    </Link>
+                    <CompleteBookButton
+                      bookId={bookId}
+                      bookDetail={initialData.bookDetail}
+                    />
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-lg bg-green-50 px-6 py-3 text-green-700">
+                    <Check className="h-5 w-5" />
+                    <span className="font-medium">완독한 책</span>
+                  </div>
                 )}
-                
-                <div className="flex gap-2">
-                  <Link href={`/book/${bookId}/note/new`} className="flex-1">
-                    <Button className="w-full">
-                      <Plus className="mr-2 h-4 w-4" />
-                      노트 추가
-                    </Button>
-                  </Link>
-                  <Link href={`/book/${bookId}/quote/new`} className="flex-1">
-                    <Button className="w-full">
-                      <Plus className="mr-2 h-4 w-4" />
-                      인용구 추가
-                    </Button>
-                  </Link>
-                  <BookmarkButton bookId={bookId} isBookmarked={initialData.bookDetail.isBookmarked || false} />
-                  <Button variant="outline">
-                    <Share2 className="mr-2 h-4 w-4" />
-                    공유
-                  </Button>
-                </div>
+                <Link href={`/book/${bookId}/note/new`} className="flex items-center gap-2 rounded-lg border-2 border-border bg-card px-6 py-3 font-medium transition-all duration-200 hover:border-primary hover:bg-secondary/50">
+                  <Edit3 className="h-5 w-5" />
+                  <span>노트 작성</span>
+                </Link>
+                <Link href={`/book/${bookId}/quote/new`} className="flex items-center gap-2 rounded-lg border-2 border-border bg-card px-6 py-3 font-medium transition-all duration-200 hover:border-primary hover:bg-secondary/50">
+                  <Quote className="h-5 w-5" />
+                  <span>인용구 추가</span>
+                </Link>
               </div>
             </div>
-          </div>
-        </Card>
+        </div>
+
+        {/* 통계 카드 */}
+        <div className="mb-12 grid gap-4 sm:grid-cols-3">
+          <Card className="rounded-xl border border-border/50 bg-card/50 p-6">
+            <div className="mb-2 flex items-center gap-2 text-muted-foreground">
+              <Edit3 className="h-4 w-4" />
+              <span className="text-sm">작성한 노트</span>
+            </div>
+            <p className="text-3xl font-bold">{initialData.notesData.totalElements}</p>
+          </Card>
+
+          <Card className="rounded-xl border border-border/50 bg-card/50 p-6">
+            <div className="mb-2 flex items-center gap-2 text-muted-foreground">
+              <Quote className="h-4 w-4" />
+              <span className="text-sm">저장한 인용구</span>
+            </div>
+            <p className="text-3xl font-bold">{initialData.quotesData.totalElements}</p>
+          </Card>
+
+          <Card className="rounded-xl border border-border/50 bg-card/50 p-6">
+            <div className="mb-2 flex items-center gap-2 text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm">독서 시간</span>
+            </div>
+            <p className="text-3xl font-bold">
+              {readingTime}
+              <span className="ml-1 text-base font-normal text-muted-foreground">시간</span>
+            </p>
+          </Card>
+        </div>
 
         <BookDetailTabs
           bookId={initialData.bookDetail.id}
@@ -176,10 +233,6 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
           initialQuotes={initialData.quotesData.content}
           bookDetail={initialData.bookDetail}
         />
-
-        <Button size="lg" className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg" aria-label="노트 추가">
-          <Plus className="h-6 w-6" />
-        </Button>
       </main>
     </div>
   )

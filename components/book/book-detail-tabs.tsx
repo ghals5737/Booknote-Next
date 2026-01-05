@@ -1,11 +1,12 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { BOOK_CATEGORY_LABELS, BookDetailData } from "@/lib/types/book/book"
 import { NoteResponse } from "@/lib/types/note/note"
 import { QuoteResponse } from "@/lib/types/quote/quote"
-import { formatDateYMD } from "@/lib/utils"
-import { Star, Trash2 } from "lucide-react"
+import { formatKoreanDate, formatRelativeDate } from "@/lib/utils"
+import { BookOpen, Calendar, Edit3, Quote, Star } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -72,11 +73,11 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, in
 
   return (
     <>
-      <div className="mb-6">
-        <div className="flex gap-4 border-b">
+      <div className="mb-6 border-b border-border">
+        <div className="flex gap-6">
           <button
             onClick={() => setActiveTab("notes")}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={`pb-3 font-medium transition-colors ${
               activeTab === "notes"
                 ? "border-b-2 border-primary text-primary"
                 : "text-muted-foreground hover:text-foreground"
@@ -86,7 +87,7 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, in
           </button>
           <button
             onClick={() => setActiveTab("highlights")}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={`pb-3 font-medium transition-colors ${
               activeTab === "highlights"
                 ? "border-b-2 border-primary text-primary"
                 : "text-muted-foreground hover:text-foreground"
@@ -96,7 +97,7 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, in
           </button>
           <button
             onClick={() => setActiveTab("info")}
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
+            className={`pb-3 font-medium transition-colors ${
               activeTab === "info"
                 ? "border-b-2 border-primary text-primary"
                 : "text-muted-foreground hover:text-foreground"
@@ -109,159 +110,196 @@ export function BookDetailTabs({ bookId, noteCount, quoteCount, initialNotes, in
 
       {activeTab === "notes" && (
         <div className="space-y-4">
-          {notes.map((note) => (
-            <Link key={note.id} href={`/book/${bookId}/note/${note.id}`}>
-              <Card className="p-6 transition-shadow hover:shadow-md mb-4">
-                <div className="mb-3 flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{note.title}</h3>
-                    {note.isImportant && <span className="text-sm text-red-500">★ 중요</span>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => handleDeleteNote(e, note.id)}
-                      className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
-                      aria-label="노트 삭제"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+          {notes.length > 0 ? (
+            notes.map((note) => (
+              <Card key={note.id} className="rounded-xl border border-border/50 bg-card/50 p-6 transition-all duration-200 hover:border-border hover:shadow-md">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {formatRelativeDate(note.updateDate || note.startDate)}
+                  </span>
+                  {(note as any).page && (
+                    <span className="text-xs font-medium text-primary">페이지 {(note as any).page}</span>
+                  )}
                 </div>
-                {/* <p className="mb-4 text-sm leading-relaxed text-muted-foreground">{note.content}</p> */}
-                <Markdown content={note.content} disableInternalLinks />
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-wrap gap-2">
-                    {note.tagList.map((tag) => (
-                      <span key={tag} className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <span className="text-xs text-muted-foreground">{formatDateYMD(note.startDate)}</span>
+                <div className="mb-3">
+                  <Markdown content={note.content} disableInternalLinks />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link 
+                    href={`/book/${bookId}/note/${note.id}/edit`}
+                    className="text-xs text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    수정
+                  </Link>
+                  <span className="text-xs text-muted-foreground">·</span>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDeleteNote(e, note.id);
+                    }}
+                    className="text-xs text-destructive hover:underline"
+                  >
+                    삭제
+                  </button>
                 </div>
               </Card>
-            </Link>
-          ))}
+            ))
+          ) : (
+            <Card className="rounded-xl border border-border/50 bg-card/50 p-12 text-center">
+              <Edit3 className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
+              <p className="mb-2 font-medium">아직 작성한 노트가 없습니다</p>
+              <p className="mb-6 text-sm text-muted-foreground">
+                책을 읽으며 떠오르는 생각을 기록해보세요
+              </p>
+              <Link href={`/book/${bookId}/note/new`}>
+                <Button className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-primary/90">
+                  첫 노트 작성하기
+                </Button>
+              </Link>
+            </Card>
+          )}
         </div>
       )}
 
       {activeTab === "highlights" && (
         <div className="space-y-4">
-          {quotes.map((quote) => (
-            <Link key={quote.id} href={`/book/${bookId}/quote/${quote.id}`}>
-              <Card className="p-6 transition-shadow hover:shadow-md cursor-pointer">
-                <div className="mb-3 flex items-start justify-between">
-                <div>
-                {quote.isImportant && (
-                  <div className="mb-3 flex items-center gap-2 text-sm text-yellow-600">
-                    <Star className="h-4 w-4 fill-yellow-600" />
-                    <span className="font-medium">중요 인용구</span>
-                  </div>
-                )}
+          {quotes.length > 0 ? (
+            quotes.map((quote) => (
+              <Card key={quote.id} className="rounded-xl border border-amber-600/20 bg-gradient-to-br from-amber-50/50 to-card/50 p-6 transition-all duration-200 hover:border-amber-600/30 hover:shadow-md">
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {formatRelativeDate((quote as any).createdAt || (quote as any).updateDate || null)}
+                  </span>
+                  <span className="text-xs font-medium text-amber-700">페이지 {quote.page || '-'}</span>
                 </div>
-                 <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      handleDeleteQuote(e, quote.id)
-                    }}
-                    className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
-                    aria-label="인용구 삭제"
+                <div className="relative mb-3 pl-4">
+                  <div className="absolute left-0 top-0 h-full w-1 rounded-full bg-amber-600/30"></div>
+                  <p className="font-serif italic leading-relaxed text-foreground">
+                    "{quote.content}"
+                  </p>
+                </div>
+                {quote.memo && (
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    {quote.memo}
+                  </p>
+                )}
+                <div className="flex items-center gap-2">
+                  <Link 
+                    href={`/book/${bookId}/quote/${quote.id}/edit`}
+                    className="text-xs text-amber-700 hover:underline"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    수정
+                  </Link>
+                  <span className="text-xs text-muted-foreground">·</span>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDeleteQuote(e, quote.id);
+                    }}
+                    className="text-xs text-destructive hover:underline"
+                  >
+                    삭제
                   </button>
                 </div>
-                <blockquote className="mb-4 border-l-4 border-muted pl-4 text-base leading-relaxed">
-                  {quote.content}
-                </blockquote>
-               
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{quote.page}페이지</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {/* {quote.tagList.map((tag) => (
-                    <span key={tag} className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
-                      {tag}
-                    </span>
-                  ))} */}
-                </div>
               </Card>
-            </Link>
-          ))}
+            ))
+          ) : (
+            <Card className="rounded-xl border border-border/50 bg-card/50 p-12 text-center">
+              <Quote className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
+              <p className="mb-2 font-medium">아직 저장한 인용구가 없습니다</p>
+              <p className="mb-6 text-sm text-muted-foreground">
+                마음에 드는 구절을 저장해보세요
+              </p>
+              <Link href={`/book/${bookId}/quote/new`}>
+                <Button className="rounded-lg bg-primary px-6 py-2 text-sm font-medium text-primary-foreground transition-all duration-200 hover:bg-primary/90">
+                  첫 인용구 추가하기
+                </Button>
+              </Link>
+            </Card>
+          )}
         </div>
       )}
 
       {activeTab === "info" && (
-        <Card className="p-6">
-          <div className="space-y-6">
-            <div>
-              <h3 className="mb-4 text-xl font-semibold">기본 정보</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">제목</p>
-                  <p className="mt-1 text-base">{bookDetail.title}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">저자</p>
-                  <p className="mt-1 text-base">{bookDetail.author}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">출판사</p>
-                  <p className="mt-1 text-base">{bookDetail.publisher || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">출판일</p>
-                  <p className="mt-1 text-base">{bookDetail.pubdate || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">ISBN</p>
-                  <p className="mt-1 text-base">{bookDetail.isbn || "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">카테고리</p>
-                  <p className="mt-1 text-base">
-                    {bookDetail.category ? (BOOK_CATEGORY_LABELS[bookDetail.category as keyof typeof BOOK_CATEGORY_LABELS] || bookDetail.category) : "-"}
-                  </p>
-                </div>
+        <div className="space-y-6">
+          {/* 기본 정보 그리드 */}
+          <div className="grid gap-6 rounded-xl border border-border/50 bg-card/50 p-6 md:grid-cols-2">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="mb-1 text-sm text-muted-foreground">제목</h3>
+                <p className="font-medium">{bookDetail.title}</p>
               </div>
             </div>
 
-            {bookDetail.description && (
-              <div>
-                <h3 className="mb-4 text-xl font-semibold">책 소개</h3>
-                <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">{bookDetail.description}</p>
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <Edit3 className="h-5 w-5 text-primary" />
               </div>
-            )}
+              <div className="flex-1">
+                <h3 className="mb-1 text-sm text-muted-foreground">저자</h3>
+                <p className="font-medium">{bookDetail.author}</p>
+              </div>
+            </div>
 
-            <div>
-              <h3 className="mb-4 text-xl font-semibold">읽기 정보</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">시작일</p>
-                  <p className="mt-1 text-base">{bookDetail.startDate ? formatDateYMD(bookDetail.startDate) : "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">최근 업데이트</p>
-                  <p className="mt-1 text-base">{bookDetail.updateDate ? formatDateYMD(bookDetail.updateDate) : "-"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">진행률</p>
-                  <p className="mt-1 text-base">{bookDetail.progress}%</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">페이지</p>
-                  <p className="mt-1 text-base">{bookDetail.currentPage} / {bookDetail.totalPages}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">평점</p>
-                  <p className="mt-1 text-base">
-                    {bookDetail.rating ? `${bookDetail.rating} / 5` : "-"}
-                  </p>
-                </div>
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <Star className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="mb-1 text-sm text-muted-foreground">카테고리</h3>
+                <p className="font-medium">
+                  {bookDetail.category ? (BOOK_CATEGORY_LABELS[bookDetail.category as keyof typeof BOOK_CATEGORY_LABELS] || bookDetail.category) : "-"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <Calendar className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="mb-1 text-sm text-muted-foreground">출판일</h3>
+                <p className="font-medium">{bookDetail.pubdate ? formatKoreanDate(bookDetail.pubdate) : "-"}</p>
               </div>
             </div>
           </div>
-        </Card>
+
+          {/* 출판 정보 */}
+          <div className="rounded-xl border border-border/50 bg-card/50 p-6">
+            <h3 className="mb-4 font-bold tracking-tight">출판 정보</h3>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">출판사</p>
+                <p className="font-medium">{bookDetail.publisher || "-"}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">페이지</p>
+                <p className="font-medium">{bookDetail.totalPages > 0 ? `${bookDetail.totalPages}쪽` : "-"}</p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">ISBN</p>
+                <p className="font-medium">{bookDetail.isbn || "-"}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 책 소개 */}
+          {bookDetail.description && (
+            <div className="rounded-xl border border-border/50 bg-gradient-to-br from-secondary/30 to-card/50 p-6">
+              <h3 className="mb-4 font-bold tracking-tight">책 소개</h3>
+              <p className="leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                {bookDetail.description}
+              </p>
+            </div>
+          )}
+        </div>
       )}
     </>
   )

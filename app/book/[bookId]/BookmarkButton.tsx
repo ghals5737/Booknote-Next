@@ -43,11 +43,15 @@ export function BookmarkButton({ bookId, isBookmarked: initialIsBookmarked }: Bo
   return (
     <Button 
       variant="outline" 
+      size="icon"
       onClick={toggleBookmark}
       disabled={isLoading}
+      className={`rounded-lg border border-border p-2 transition-all duration-200 hover:border-primary hover:bg-secondary/50 ${
+        isBookmarked ? 'bg-primary/10 text-primary' : ''
+      }`}
+      title="북마크"
     >
-      <Bookmark className={`mr-2 h-4 w-4 ${isBookmarked ? "fill-current" : ""}`} />
-      북마크
+      <Bookmark className={`h-5 w-5 ${isBookmarked ? "fill-current" : ""}`} />
     </Button>
   );
 }

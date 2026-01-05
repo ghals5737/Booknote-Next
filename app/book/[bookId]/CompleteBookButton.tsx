@@ -12,7 +12,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedApiRequest } from "@/lib/api/nextauth-api";
 import { BookDetailData } from "@/lib/types/book/book";
-import { CheckCircle2 } from "lucide-react";
+import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -81,13 +81,13 @@ export function CompleteBookButton({ bookId, bookDetail }: CompleteBookButtonPro
 
   return (
     <>
-      <Button
+      <button
         onClick={() => setIsConfirmOpen(true)}
-        className="bg-green-600 hover:bg-green-700 text-white"
+        className="flex items-center gap-2 rounded-lg border-2 border-primary bg-card px-6 py-3 font-medium text-primary transition-all duration-200 hover:bg-primary hover:text-primary-foreground"
       >
-        <CheckCircle2 className="mr-2 h-4 w-4" />
-        완독하기
-      </Button>
+        <Check className="h-5 w-5" />
+        <span>완독 처리</span>
+      </button>
 
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <DialogContent className="sm:max-w-[360px]">
