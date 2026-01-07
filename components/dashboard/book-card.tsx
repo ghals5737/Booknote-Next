@@ -23,12 +23,14 @@ export function BookCard({ title, author, cover, progress, rating, noteCount, qu
     >
       {/* 책 표지 */}
       <div className="relative mb-3 overflow-hidden rounded-lg shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-        <div className="aspect-[2/3] overflow-hidden bg-muted">
+        <div className="relative aspect-[2/3] overflow-hidden bg-muted">
           {cover ? (
             <Image 
               src={cover} 
               alt={title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-muted-foreground text-xs">
