@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useNextAuth } from "@/hooks/use-nextauth"
-import { BarChart3, BookOpen, LogOut, Menu, RotateCcw, Search, User } from "lucide-react"
+import { BarChart3, BookOpen, Home, LogOut, Menu, RotateCcw, Search, User } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { SearchModal } from "./SearchModal"
@@ -17,10 +17,16 @@ export function Header() {
 
   const menuItems = [
     {
-      href: "/dashboard",
+      href: "/home",
+      label: "홈",
+      icon: Home,
+      isActive: pathname === "/home",
+    },
+    {
+      href: "/library",
       label: "내 서재",
       icon: BookOpen,
-      isActive: pathname === "/dashboard",
+      isActive: pathname === "/library",
     },
     {
       label: "검색",
@@ -80,16 +86,47 @@ export function Header() {
         </div>
         {/* 데스크톱 네비게이션 */}
         <nav className="hidden md:flex items-center gap-6">
-          <a href="/dashboard" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+          <a 
+            href="/home" 
+            className={`text-sm font-medium transition-colors ${
+              pathname === "/home" 
+                ? "text-foreground" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            홈
+          </a>
+          <a 
+            href="/library" 
+            className={`text-sm font-medium transition-colors ${
+              pathname === "/library" 
+                ? "text-foreground" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
             내 서재
           </a>
           <button onClick={() => setIsSearchOpen(true)} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             검색
           </button>
-          <a href="/review" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <a 
+            href="/review" 
+            className={`text-sm font-medium transition-colors ${
+              pathname === "/review" 
+                ? "text-foreground" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
             리마인드
           </a>
-          <a href="/statistics" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <a 
+            href="/statistics" 
+            className={`text-sm font-medium transition-colors ${
+              pathname === "/statistics" 
+                ? "text-foreground" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
             통계
           </a>
           <a
