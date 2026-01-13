@@ -314,7 +314,7 @@ export default function AddBookPage() {
         <div className="min-h-screen bg-[#F5F1EB]">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <Link
-          href="/dashboard"
+          href="/library"
           className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -376,11 +376,12 @@ export default function AddBookPage() {
                       className="flex w-full items-center gap-4 border-b border-border/30 p-4 text-left transition-colors last:border-b-0 hover:bg-secondary/30"
                     >
                       {book.image && (
-                        <div className="h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted shadow-sm">
+                        <div className="relative h-16 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted shadow-sm">
                           <Image
                             src={book.image}
                             alt={book.title}
-                            className="h-full w-full object-cover"
+                            fill
+                            className="object-cover"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
                             }}
@@ -446,7 +447,8 @@ export default function AddBookPage() {
                   <Image
                     src={coverUrl}
                     alt="책 표지"
-                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                    fill
+                    className="object-cover transition-transform duration-300 hover:scale-105"
                   />
                   <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-border/20" />
                 </div>
