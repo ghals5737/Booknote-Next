@@ -1,5 +1,4 @@
 import { ActionTabs } from '@/components/home/action-tabs';
-import { BookClubTrends } from '@/components/home/book-club-trends';
 import { HomeGreeting } from '@/components/home/home-greeting';
 import { RecentActivityList } from '@/components/home/recent-activity-list';
 import { TodayReviewCard } from '@/components/home/today-review-card';
@@ -166,7 +165,7 @@ export default async function Home() {
         )}
 
         {/* 북클럽 트렌드 섹션 */}
-        <BookClubTrends />
+        {/* <BookClubTrends /> */}
 
         {/* 최근 활동 섹션 */}
         <RecentActivityList activities={recentActivities} />
