@@ -5,6 +5,7 @@ import { LibrarySearch } from '@/components/library/library-search';
 import { LibraryTabs } from '@/components/library/library-tabs';
 import { LibraryFolders } from '@/components/library/library-folders';
 import { LibraryBooksGrid } from '@/components/library/library-books-grid';
+import { SearchModal } from '@/components/layout/SearchModal';
 import { UserBookResponsePage, BOOK_CATEGORY_LABELS } from '@/lib/types/book/book';
 import { useMemo, useState } from 'react';
 
@@ -15,6 +16,7 @@ interface LibraryClientProps {
 export function LibraryClient({ booksData }: LibraryClientProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('전체');
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   const books = booksData.content || [];
   const totalCount = booksData.totalElements || 0;
@@ -113,8 +115,15 @@ export function LibraryClient({ booksData }: LibraryClientProps) {
 
         {/* 검색 바 */}
         <div className="mb-6">
-          <LibrarySearch value={searchQuery} onChange={setSearchQuery} />
+          <div onClick={() => setIsSearchModalOpen(true)}>
+            <LibrarySearch value={searchQuery} onChange={setSearchQuery} />
+          </div>
         </div>
+
+        {/* 검색 모달 */}
+        {isSearchModalOpen && (
+          <SearchModal onClose={() => setIsSearchModalOpen(false)} />
+        )}
 
         {/* 탭 */}
         <LibraryTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />

@@ -4,14 +4,12 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useNextAuth } from "@/hooks/use-nextauth"
-import { BarChart3, BookOpen, Home, LogOut, Menu, RotateCcw, Search, User } from "lucide-react"
+import { BarChart3, BookOpen, Home, LogOut, Menu, RotateCcw, User } from "lucide-react"
 import { usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
-import { SearchModal } from "./SearchModal"
+import { useState } from "react"
 
 export function Header() {
   const { isAuthenticated, logout } = useNextAuth()
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
 
@@ -29,11 +27,6 @@ export function Header() {
       isActive: pathname === "/library",
     },
     {
-      label: "검색",
-      icon: Search,
-      onClick: () => setIsSearchOpen(true),
-    },
-    {
       href: "/review",
       label: "리마인드",
       icon: RotateCcw,
@@ -46,26 +39,6 @@ export function Header() {
       isActive: pathname === "/statistics",
     },
   ]
-
-  // Command+K (Mac) 또는 Ctrl+K (Windows/Linux) 단축키 처리
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Command+K (Mac) 또는 Ctrl+K (Windows/Linux)
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-        event.preventDefault()
-        setIsSearchOpen(true)
-      }
-      // ESC 키로 모달 닫기
-      if (event.key === 'Escape' && isSearchOpen) {
-        setIsSearchOpen(false)
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isSearchOpen])
 
   const handleLogout = async () => {
     try {
@@ -106,9 +79,6 @@ export function Header() {
           >
             내 서재
           </a>
-          <button onClick={() => setIsSearchOpen(true)} className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-            검색
-          </button>
           <a 
             href="/review" 
             className={`text-sm font-medium transition-colors ${
@@ -247,10 +217,6 @@ export function Header() {
           </Sheet>
         </div>
       </div>
-      {/* 검색 모달 */}
-      {isSearchOpen && (
-        <SearchModal onClose={() => setIsSearchOpen(false)} />
-      )}
     </header>
   )
 }

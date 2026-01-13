@@ -84,7 +84,7 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
         {/* 헤더 - 뒤로가기 + 액션 버튼들 */}
         <div className="mb-8 flex items-center justify-between">
           <Link 
-            href="/dashboard" 
+            href="/library" 
             className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />

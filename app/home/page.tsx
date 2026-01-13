@@ -1,9 +1,10 @@
-import { HomeGreeting } from '@/components/home/home-greeting';
 import { ActionTabs } from '@/components/home/action-tabs';
-import { TodayReviewCard } from '@/components/home/today-review-card';
 import { BookClubTrends } from '@/components/home/book-club-trends';
+import { HomeGreeting } from '@/components/home/home-greeting';
 import { RecentActivityList } from '@/components/home/recent-activity-list';
+import { TodayReviewCard } from '@/components/home/today-review-card';
 import { authOptions } from '@/lib/auth';
+import { UserBookResponsePage } from '@/lib/types/book/book';
 import { ActivityResponse } from '@/lib/types/dashboard/dashboard';
 import { getServerSession } from 'next-auth';
 
@@ -111,11 +112,44 @@ async function getRecentActivities(): Promise<ActivityResponse[]> {
   }
 }
 
+async function getBooksData(): Promise<UserBookResponsePage | null> {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.accessToken) {
+      return null;
+    }
+    
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9100';
+    const response = await fetch(`${baseUrl}/api/v1/user/books?page=0&size=100`, {
+      headers: {
+        'Authorization': `Bearer ${session.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch books data:', response.status, response.statusText);
+      return null;
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error('Error fetching books data:', error);
+    return null;
+  }
+}
+
 export default async function Home() {
   const session = await getServerSession(authOptions);
   const userName = session ? await getUserName() : null;
   const reviewCount = session ? await getTodayReviewCount() : 0;
   const recentActivities = session ? await getRecentActivities() : [];
+  const booksData = session ? await getBooksData() : null;
+
+  const books = booksData?.content || [];
 
   return (
     <main className="min-h-screen bg-[#F4F2F0]">
@@ -124,7 +158,7 @@ export default async function Home() {
         <HomeGreeting userName={userName || undefined} />
 
         {/* 액션 탭 버튼 */}
-        <ActionTabs />
+        <ActionTabs books={books} />
 
         {/* 오늘의 복습 카드 */}
         {session && (
