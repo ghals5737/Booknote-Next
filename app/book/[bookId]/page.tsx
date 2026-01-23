@@ -81,7 +81,6 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
   return (
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* 헤더 - 뒤로가기 + 액션 버튼들 */}
         <div className="mb-8 flex items-center justify-between">
           <Link 
             href="/library" 
@@ -90,8 +89,6 @@ export default async function BookDetailPage({ params }: { params: Promise<{ boo
             <ArrowLeft className="h-5 w-5" />
             <span>돌아가기</span>
           </Link>
-
-          {/* 상단 액션 버튼들 */}
           <div className="flex items-center gap-2">
             <BookmarkButton bookId={bookId} isBookmarked={initialData.bookDetail.isBookmarked || false} />
             <Button variant="outline" size="icon" title="공유">

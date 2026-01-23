@@ -103,21 +103,6 @@ export default function QuoteAddClient({ bookId }: { bookId: string }) {
           </div>
         </div>
 
-        {/* <Card className="mb-6 p-4">
-          <div className="flex items-center gap-4">
-            <div className="relative h-20 w-14 flex-shrink-0 overflow-hidden rounded bg-muted">
-              <Image src={book.cover || "/placeholder.svg"} alt={book.title} fill sizes="56px" className="object-cover" />
-            </div>
-            <div>
-              <h3 className="mb-1 font-semibold">{book.title}</h3>
-              <p className="mb-2 text-sm text-muted-foreground">{book.author}</p>
-              <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                {book.category}
-              </span>
-            </div>
-          </div>
-        </Card> */}
-
         <div className="space-y-6">
           <div>
             <Label htmlFor="quote-content" className="mb-2 block text-sm font-medium">

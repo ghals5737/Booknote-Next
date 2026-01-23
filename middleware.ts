@@ -7,7 +7,7 @@ export default withAuth(
     const token = req.nextauth.token
 
     // 인증이 필요한 페이지들
-    const protectedRoutes = ['/books', '/notes', '/profile', '/statistics', '/dashboard']
+    const protectedRoutes = ['/books', '/notes', '/profile', '/statistics', '/home']
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
     // 인증이 필요한 페이지에 접근하는데 토큰이 없는 경우
@@ -17,13 +17,13 @@ export default withAuth(
 
     // 이미 로그인된 사용자가 인증 페이지에 접근하는 경우에만 리디렉션
     if (token && (pathname.startsWith('/auth') || pathname.startsWith('/signup'))) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      return NextResponse.redirect(new URL('/home', req.url))
     }
 
     // 루트 경로 리다이렉트: 토큰이 있으면 /dashboard, 없으면 /auth
     if (pathname === '/') {
       if (token) {
-        return NextResponse.redirect(new URL('/dashboard', req.url))
+        return NextResponse.redirect(new URL('/home', req.url))
       } else {
         return NextResponse.redirect(new URL('/auth', req.url))
       }
